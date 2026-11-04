@@ -87,6 +87,22 @@
  patterns. This limited scan is not a guarantee that every possible secret or
  business-sensitive document has been reviewed. Nothing has been pushed.
 
+ Full browser regression, 4 November 2026: all 105 checks passed in one fresh
+ isolated schema on Next.js 16.4.5, with zero skips/failures (5.8 minutes).
+ Includes desktop/mobile visual comparisons, public catalogue/search recovery,
+ support and sourcing workflows, employee receipt/scanning/inspection/measurement,
+ shipment events/customer timeline, account/session/identity and profile/address
+ recovery assertions. An initial run passed 103, failed one login after unrelated
+ portal tests exhausted the shared IP budget, and skipped one serial successor.
+ Account-review default and explicit contexts now share a separate synthetic
+ client address only inside generated verification schemas. Login thresholds,
+ server code and production ingress proof were not changed. Security regressions
+ passed; final TypeScript/lint/whitespace checks passed. HTML/JUnit reports for
+ both runs were retained; the disposable schemas and database container were
+ removed. Browser execution used the development runtime with synthetic data
+ and explicit provider mocks. It does not establish live provider acceptance,
+ full cross-browser/physical-device coverage or production readiness.
+
  Framework maintenance, 4 November 2026: upgraded Next.js and eslint-config-next
  from 16.4.3 to exactly 16.4.5 with registry integrity hashes in the lockfile.
  Full ESLint, TypeScript, dependency integrity (11 direct/104 locked production

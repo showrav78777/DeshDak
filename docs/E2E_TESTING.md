@@ -1,6 +1,17 @@
 # Browser testing
 
-Latest full inventory verification: **2 November 2026**, 99 distinct cases passed
+Latest full inventory verification: **4 November 2026**, all **105 checks passed
+in one isolated run** on Next.js 16.4.5, with zero failures, errors or skips
+(5.8 minutes). Includes both reviewed macOS visual comparisons. HTML report:
+`playwright-report-full105-20261104/`; JUnit and artifacts:
+`test-results-full105-20261104/`. An initial run had 103 passes, one login-IP
+rate-limit failure and one serially skipped case. Account-review contexts now
+represent a separate synthetic client; production rate limits are unchanged.
+The initial report remains under `playwright-report-full-browser-initial-20261104/`
+and `test-results-full-browser-initial-20261104/`. This covers the configured
+Chromium/emulated-mobile suite, not every physical device or live integration.
+
+Previous full inventory verification: **2 November 2026**, 99 distinct cases passed
 across three isolated schemas (35 executions each, including repeated setup).
 Reports: `playwright-report-full99-20261102-{1,2,3}/`; JUnit/logs:
 `test-results-full99-20261102-{1,2,3}/`. The coverage summary confirms no missing
@@ -71,6 +82,15 @@ at teardown. Authentication setup/customer projects disable traces/screenshots.
 Do not run credentialed suites concurrently in the same checkout. Interrupted
 runs may leave a state file; revoke the dedicated account's session from Security
 and devices, then remove that exact state file. Never publish `.auth` artifacts.
+
+Account-review tests use a separate synthetic client address (`198.18.0.20`)
+only when `DATABASE_URL` identifies a generated disposable verification schema.
+Default page/request fixtures and explicitly created browser contexts share that
+address so unrelated portal logins do not exhaust the account-review client's
+IP budget. This uses the existing development-only forwarded-IP path; production
+ingress authentication and rate-limit thresholds are unchanged. Do not clear
+rate-limit rows, raise production thresholds or retry denied logins to make a
+full suite pass.
 
 ## Local execution and debugging
 

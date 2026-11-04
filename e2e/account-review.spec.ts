@@ -1,6 +1,13 @@
 import { test, expect } from "./fixtures";
 import type { Page } from "@playwright/test";
 
+// Account-review contexts represent a separate synthetic client. Keep their
+// login budget independent of unrelated portal tests, using the existing local
+// development ingress path only inside a generated disposable schema.
+const accountClientHeaders: Record<string, string> = /^crossly_launch_verify_[a-f0-9]{16}$/.test(
+  new URL(process.env.DATABASE_URL ?? "postgresql://localhost/unused").searchParams.get("schema") ?? "",
+) ? { "x-forwarded-for": "198.18.0.20" } : {};
+
 const fixture = () => JSON.parse(process.env.E2E_ACCOUNT_REVIEW!) as { orderId: string; orderNumber: string; foreignOrderId: string; foreignOrderNumber: string; emptyEmail: string };
 async function fits(page: Page) {
   await expect(async () => {
@@ -10,6 +17,7 @@ async function fits(page: Page) {
 }
 
 test.describe("customer account review", () => {
+  test.use({ extraHTTPHeaders: accountClientHeaders });
   test.describe.configure({ mode: "serial", retries: 0 });
   for (const [name, viewport] of [["desktop", { width: 1440, height: 1000 }], ["mobile", { width: 375, height: 812 }]] as const) {
     test(`${name}: dashboard privacy recovery and complete order quantity`, async ({ page, request, baseURL, browser }) => {
@@ -44,7 +52,7 @@ test.describe("customer account review", () => {
         await expect(checkbox).toHaveJSProperty("checked", !original);
         await fits(page);
         await test.info().attach(`dashboard-${name}`, { body: await page.screenshot({ fullPage: true }), contentType: "image/png" });
-        const noScript = await browser.newContext({ baseURL, viewport, javaScriptEnabled: false, storageState: "e2e/.auth/customer.json" });
+        const noScript = await browser.newContext({ baseURL, extraHTTPHeaders: accountClientHeaders, viewport, javaScriptEnabled: false, storageState: "e2e/.auth/customer.json" });
         try {
           const fallback = await noScript.newPage();
           await fallback.goto("/dashboard");
@@ -129,7 +137,7 @@ test.describe("customer account review", () => {
     test(`${name}: empty dashboard and orders give usable next steps`, async ({ browser, baseURL }) => {
       test.skip(!process.env.E2E_ACCOUNT_REVIEW, "Requires isolated account fixtures.");
       test.setTimeout(60_000);
-      const context = await browser.newContext({ baseURL, viewport });
+      const context = await browser.newContext({ baseURL, extraHTTPHeaders: accountClientHeaders, viewport });
       try {
         const login = await context.request.post("/api/v1/auth/login", { headers: { Origin: baseURL! }, data: { email: fixture().emptyEmail, password: process.env.E2E_CUSTOMER_PASSWORD, portal: "customer" } });
         expect(login.status()).toBe(200);
@@ -155,7 +163,7 @@ test.describe("customer account review", () => {
       const id = (JSON.parse(process.env.E2E_CLAIM_DETAILS!) as Record<string, string>)[name];
       const path = `/rmas/${id}`;
       const api = `/api/v1/rmas/${id}`;
-      const noScript = await browser.newContext({ baseURL, viewport, javaScriptEnabled: false, storageState: "e2e/.auth/customer.json" });
+      const noScript = await browser.newContext({ baseURL, extraHTTPHeaders: accountClientHeaders, viewport, javaScriptEnabled: false, storageState: "e2e/.auth/customer.json" });
       try {
         const fallback = await noScript.newPage();
         await fallback.goto(path);
@@ -207,7 +215,7 @@ test.describe("customer account review", () => {
       expect(persisted.returnTrackingNumber).toBe(`RET-${name}-TEST`);
       expect(persisted.status).toBe("RETURN_IN_TRANSIT");
       await fits(page);
-      const foreign = await browser.newContext({ baseURL, storageState: { cookies: [], origins: [] } });
+      const foreign = await browser.newContext({ baseURL, extraHTTPHeaders: accountClientHeaders, storageState: { cookies: [], origins: [] } });
       try {
         for (const [suffix, data] of [["messages", { body: "Synthetic foreign message" }], ["return", { trackingNumber: "RET-FOREIGN-TEST" }]] as const) {
           expect((await foreign.request.post(`${api}/${suffix}`, { headers: { Origin: baseURL! }, data })).status()).toBe(401);
@@ -229,7 +237,7 @@ test.describe("customer account review", () => {
     test(`customer account review ${name}: session sign-out recovery and current browser protection`, async ({ browser, baseURL, request }) => {
       test.skip(!process.env.E2E_ACCOUNT_REVIEW, "Requires isolated account fixtures.");
       test.setTimeout(90_000);
-      const contexts = await Promise.all(["Safari/605 Macintosh", "Firefox/100 Linux", "Chrome/120 Windows"].map(userAgent => browser.newContext({ baseURL, viewport, userAgent, storageState: { cookies: [], origins: [] } })));
+      const contexts = await Promise.all(["Safari/605 Macintosh", "Firefox/100 Linux", "Chrome/120 Windows"].map(userAgent => browser.newContext({ baseURL, extraHTTPHeaders: accountClientHeaders, viewport, userAgent, storageState: { cookies: [], origins: [] } })));
       const [current, target, remaining] = contexts;
       try {
         for (const context of contexts) expect((await context.request.post("/api/v1/auth/login", { headers: { Origin: baseURL! }, data: { email: fixture().emptyEmail, password: process.env.E2E_CUSTOMER_PASSWORD, portal: "customer" } })).status()).toBe(200);
@@ -238,7 +246,7 @@ test.describe("customer account review", () => {
         await expect(page.getByRole("heading", { name: "Devices and sessions." })).toBeVisible();
         const row = page.locator(".session-list article").filter({ has: page.getByRole("heading", { name: "Mozilla Firefox on Linux" }) }).filter({ has: page.locator("em.active") });
         const all = page.getByRole("button", { name: "Sign out all other sessions", exact: true });
-        const noScript = await browser.newContext({ baseURL, viewport, javaScriptEnabled: false, storageState: await current.storageState() });
+        const noScript = await browser.newContext({ baseURL, extraHTTPHeaders: accountClientHeaders, viewport, javaScriptEnabled: false, storageState: await current.storageState() });
         try {
           const fallback = await noScript.newPage(); await fallback.goto("/security/sessions");
           for (const button of await fallback.getByRole("button", { name: /^Sign out/ }).all()) await expect(button).toBeDisabled();
@@ -293,7 +301,7 @@ test.describe("customer account review", () => {
     test(`customer account review ${name}: phone and identity request recovery`, async ({ browser, baseURL }) => {
       test.skip(!process.env.E2E_ACCOUNT_REVIEW, "Requires isolated account fixtures.");
       test.setTimeout(90_000);
-      const context = await browser.newContext({ baseURL, viewport, storageState: { cookies: [], origins: [] } });
+      const context = await browser.newContext({ baseURL, extraHTTPHeaders: accountClientHeaders, viewport, storageState: { cookies: [], origins: [] } });
       try {
         expect((await context.request.post("/api/v1/auth/login", { headers: { Origin: baseURL! }, data: { email: fixture().emptyEmail, password: process.env.E2E_CUSTOMER_PASSWORD, portal: "customer" } })).status()).toBe(200);
         const page = await context.newPage();
@@ -301,7 +309,7 @@ test.describe("customer account review", () => {
         page.on("pageerror", error => errors.push(error.message));
         await page.goto("/profile");
         const panel = page.locator(".identity-verification-panel");
-        const fallbackContext = await browser.newContext({ baseURL, viewport, javaScriptEnabled: false, storageState: await context.storageState() });
+        const fallbackContext = await browser.newContext({ baseURL, extraHTTPHeaders: accountClientHeaders, viewport, javaScriptEnabled: false, storageState: await context.storageState() });
         try {
           const fallback = await fallbackContext.newPage(); await fallback.goto("/profile");
           for (const button of await fallback.locator(".identity-verification-panel button").all()) await expect(button).toBeDisabled();
@@ -374,7 +382,7 @@ test.describe("customer account review", () => {
       test.skip(!process.env.E2E_PROFILE_CUSTOMERS, "Requires isolated profile fixtures.");
       test.setTimeout(90_000);
       const customer = (JSON.parse(process.env.E2E_PROFILE_CUSTOMERS!) as Record<string, { email: string }>)[name];
-      const context = await browser.newContext({ baseURL, viewport, storageState: { cookies: [], origins: [] } });
+      const context = await browser.newContext({ baseURL, extraHTTPHeaders: accountClientHeaders, viewport, storageState: { cookies: [], origins: [] } });
       try {
         expect((await context.request.post("/api/v1/auth/login", { headers: { Origin: baseURL! }, data: { email: customer.email, password: process.env.E2E_CUSTOMER_PASSWORD, portal: "customer" } })).status()).toBe(200);
         const page = await context.newPage(); await page.goto("/profile");
@@ -383,7 +391,7 @@ test.describe("customer account review", () => {
         const book = manager.locator(".address-book");
         const add = book.locator(".new-address form");
         await profile.getByLabel("Full name", { exact: true }).fill(`Synthetic updated ${name}`);
-        const noScript = await browser.newContext({ baseURL, viewport, javaScriptEnabled: false, storageState: await context.storageState() });
+        const noScript = await browser.newContext({ baseURL, extraHTTPHeaders: accountClientHeaders, viewport, javaScriptEnabled: false, storageState: await context.storageState() });
         try {
           const fallback = await noScript.newPage(); await fallback.goto("/profile");
           for (const button of await fallback.locator(".profile-manager button").all()) await expect(button).toBeDisabled();
@@ -464,7 +472,7 @@ test.describe("customer account review", () => {
     test.skip(!process.env.E2E_ACCOUNT_REVIEW, "Requires isolated account fixtures.");
     test.setTimeout(60_000);
     for (const state of [undefined, "e2e/.auth/warehouse.json"]) {
-      const context = await browser.newContext({ baseURL, storageState: state });
+      const context = await browser.newContext({ baseURL, extraHTTPHeaders: accountClientHeaders, storageState: state });
       try {
         const page = await context.newPage();
         for (const path of ["/dashboard", "/orders", `/orders/${fixture().orderId}`]) {
