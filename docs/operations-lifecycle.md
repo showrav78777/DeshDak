@@ -1,0 +1,19 @@
+# Operations lifecycle (API-independent)
+
+After a gateway-confirmed payment creates an order, operations follows the documented state machine: PAID → SOURCING → PURCHASED → SUPPLIER_SHIPPED → WAREHOUSE_RECEIVED → INSPECTION → MEASURED → shipping approval/payment as needed → READY_TO_SHIP → IN_TRANSIT → CUSTOMS → BD_WAREHOUSE → OUT_FOR_DELIVERY → DELIVERED.
+
+Warehouse Workers use the dedicated `/warehouse` scanner-first portal, never the Admin operations page. Admin assigns each worker to one or more warehouses from Admin → Warehouses. Package lookup, receive, measurement, put-away, notes, identifiers, and label printing are limited on the server to those active assignments. Warehouse responses show product/task information only and exclude customer PII, payment details, supplier costs, margins, and credentials.
+
+Inspectors use the separate `/inspector` scanner-first portal and can access only received packages at actively assigned warehouses. They can record Basic, Photo, or Video inspection decisions, but cannot receive, measure, put away, print labels, update shipment events, or view customer PII and financial data. Photo/Video decisions require an approved internal media reference. Warehouse and Logistics permissions remain separate. Every scan and physical decision writes an immutable `PackageEvent`, security audit record, and formal order status history where applicable; external carrier APIs will later add shipment events through verified adapters.
+
+Logistics Workers use the separate `/logistics` scanner-first portal. They can create shipments only from paid `READY_TO_SHIP` packages at an actively assigned origin warehouse, and can access existing shipments only when assigned to the origin or destination warehouse. The server enforces the full ordered handoff/export/transit/customs/destination/delivery state machine, immutable events, offline idempotency, exception notes, private proof of delivery, and the seven-day delivery claim deadline. When active packages travel in separate shipments, customer order status advances only after every active package reaches the corresponding milestone; one serious shipment exception places the order on hold. Logistics responses exclude customer PII and all commercial fields.
+
+Shipment creation is retry-safe: the mutation key is bound to a canonical request fingerprint, exact retries replay the original result, and changed-payload reuse conflicts. A database uniqueness constraint prevents any package from being attached to two shipments even under concurrent worker requests.
+
+Shipment route selection also fails closed. Origin and destination warehouses must have the correct operational roles, must be different, and their country codes must match every selected package order's stored origin/destination route. Destination-only workers may process arrivals but cannot create origin shipments.
+
+Tracking-event mutations use the same payload-bound retry rule. The fingerprint includes shipment, status, location, description, recipient, and evidence reference; this prevents a reused offline key from silently accepting changed operational facts.
+
+Warehouse parcel mismatches are recorded separately at `/warehouse/exceptions`. An assigned worker cannot silently add or remove an expected parcel: the report enters the Admin queue, generates a customer-safe review notice, and blocks final shipping quotation until an audited Admin resolution is published.
+
+Customer-requested consolidation, splitting, and repacking use a separate controlled register. Admin approval is required before execution. Warehouse completion requires an exact scan of every approved active source package, preserves source/result lineage, creates fresh replacement codes, and removes inactive source packages from Warehouse and Inspector action queues. All replacement packages repeat inspection and measurement before quotation.

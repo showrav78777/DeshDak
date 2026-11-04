@@ -1,0 +1,13 @@
+import Link from "next/link";
+import { redirect } from "next/navigation";
+import { AdminSellerOrderReview } from "@/components/seller-order-actions";
+import { prisma } from "@/lib/prisma";
+import { ROLE } from "@/lib/roles";
+import { getServerSession } from "@/lib/server-session";
+
+export default async function AdminSellerOrdersPage() {
+  const session = await getServerSession();
+  if (!session?.roles.includes(ROLE.ADMIN)) redirect("/admin/login");
+  const sellerOrders = await prisma.sellerOrder.findMany({ where: { status: "PENDING_ADMIN_REVIEW" }, include: { sellerProfile: { select: { businessName: true, originCountryCode: true } }, order: { select: { orderNumber: true, type: true, destinationCountryCode: true, customer: { select: { fullName: true, email: true } } } }, items: { orderBy: { createdAt: "asc" } } }, orderBy: { createdAt: "asc" } });
+  return <main className="dashboard-shell"><nav className="site-nav"><Link className="brand" href="/admin"><span className="brand-mark">D</span><span>DeshDak Admin</span></Link><span className="dashboard-user">{session.fullName}</span></nav><section className="admin-content"><p className="eyebrow">SELLER ORDER REVIEW</p><h1>Review before release to sellers.</h1><p className="admin-intro">Payment is already verified. Confirm seller, product, inventory, destination, and compliance readiness before allowing preparation. Every decision is audited.</p>{sellerOrders.length ? <div className="seller-review-list">{sellerOrders.map((sellerOrder) => <article className="seller-review-card" key={sellerOrder.id}><div><p className="eyebrow">{sellerOrder.order.orderNumber} · {sellerOrder.order.type.replaceAll("_", " ")}</p><h2>{sellerOrder.sellerProfile.businessName}</h2><dl><div><dt>Customer</dt><dd>{sellerOrder.order.customer.fullName}<br />{sellerOrder.order.customer.email}</dd></div><div><dt>Route</dt><dd>{sellerOrder.sellerProfile.originCountryCode} → {sellerOrder.order.destinationCountryCode ?? "BD"}</dd></div><div><dt>Seller subtotal</dt><dd>{sellerOrder.currency} {sellerOrder.productSubtotal.toString()}</dd></div><div><dt>Products</dt><dd>{sellerOrder.items.reduce((sum, item) => sum + item.quantity, 0)} item(s)</dd></div></dl><ul className="admin-order-items">{sellerOrder.items.map((item) => <li key={item.id}><b>{item.productTitle}</b><span>{item.quantity} × ৳{item.unitPrice.toString()}</span></li>)}</ul></div><AdminSellerOrderReview sellerOrderId={sellerOrder.id} /></article>)}</div> : <div className="dashboard-card"><h2>No seller orders need review</h2><p>Paid Bangladesh-seller orders will appear here before being released for preparation.</p></div>}</section></main>;
+}

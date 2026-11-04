@@ -1,0 +1,19 @@
+.sourcing-staff-form { display: grid; gap: 16px; }
+.sourcing-staff-form fieldset { border: 0; display: grid; gap: 16px; margin: 0; padding: 0; min-width: 0; }
+.sourcing-staff-form label { display: grid; gap: 8px; font-size: 14px; }
+.sourcing-staff-form input { box-sizing: border-box; width: 100%; min-width: 0; min-height: 48px; font-size: 16px; padding: 12px; border: 1px solid #b7ceda; border-radius: 10px; }
+.sourcing-staff-form button,.sourcing-staff-revoke button { min-height: 48px; white-space: normal; }
+.sourcing-staff-form :is(input,button):focus-visible,.sourcing-staff-revoke button:focus-visible { outline: 3px solid #167e95; outline-offset: 3px; }
+.sourcing-staff-form :is(p,.form-help),.sourcing-staff-revoke p { font-size: 14px; line-height: 1.6; overflow-wrap: anywhere; }
+.sourcing-staff-revoke { display: grid; gap: 12px; }
+.sourcing-review-form { display: grid; gap: 16px; min-width: 0; }
+.sourcing-review-form fieldset { border: 0; display: grid; gap: 16px; margin: 0; padding: 0; min-width: 0; }
+.sourcing-review-form label { display: grid; gap: 8px; font-size: 14px; }
+.sourcing-review-form textarea { box-sizing: border-box; width: 100%; min-height: 120px; min-width: 0; font-size: 16px; padding: 12px; border: 1px solid #b7ceda; border-radius: 10px; resize: vertical; }
+.sourcing-review-actions { display: flex; flex-wrap: wrap; gap: 12px; }
+.sourcing-review-form button { min-height: 48px; white-space: normal; }
+.sourcing-review-form :is(textarea,button):focus-visible { outline: 3px solid #167e95; outline-offset: 3px; }
+.sourcing-review-form p { font-size: 14px; line-height: 1.6; overflow-wrap: anywhere; }
+.country-list-card:has(.sourcing-staff-form) .compliance-rule-list { grid-template-columns: minmax(0,1fr); min-width: 0; }
+.country-list-card:has(.sourcing-staff-form) .compliance-rule-list :is(article,header,header>div) { min-width: 0; overflow-wrap: anywhere; }
+.country-list-card:has(.sourcing-staff-form) .compliance-rule-list header { flex-wrap: wrap; gap: 12px; }

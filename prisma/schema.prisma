@@ -1,0 +1,3481 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserStatus {
+  ACTIVE
+  PENDING_VERIFICATION
+  SUSPENDED
+}
+
+enum SecurityTokenPurpose {
+  EMAIL_VERIFICATION
+  PASSWORD_RESET
+  PHONE_VERIFICATION
+}
+
+enum MaintenanceRunStatus {
+  RUNNING
+  SUCCEEDED
+  FAILED
+  SKIPPED
+}
+
+enum LaunchReadinessCategory {
+  INFRASTRUCTURE
+  PAYMENTS
+  IDENTITY_DELIVERY
+  MEDIA
+  LEGAL_COMPLIANCE
+  OPERATIONS
+  STAFFING
+  SECURITY
+  AUTOMATION
+  OTHER
+}
+
+enum LaunchReadinessStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  BLOCKED
+  EVIDENCE_RECORDED
+  VERIFIED
+}
+
+enum CustomerAccountType {
+  PERSONAL
+  BUSINESS
+}
+
+enum CouponStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+  EXPIRED
+}
+
+enum CouponDiscountType {
+  PERCENTAGE
+  FIXED_AMOUNT
+}
+
+enum ExchangeRateStatus {
+  DRAFT
+  ACTIVE
+  REVOKED
+}
+
+enum ExchangeRateSource {
+  MANUAL
+  PRIMARY_PROVIDER
+  FALLBACK_PROVIDER
+}
+
+enum KycStatus {
+  NOT_REQUIRED
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+enum IdentityDocumentType {
+  NATIONAL_ID
+  PASSPORT
+  DRIVING_LICENSE
+}
+
+enum UserEventCategory {
+  SECURITY
+  COMMERCE
+  BEHAVIORAL
+  SUPPORT
+}
+
+enum UserEventSource {
+  SERVER
+  WEB
+  MOBILE
+}
+
+enum SellerStatus {
+  DRAFT
+  PENDING_REVIEW
+  APPROVED
+  REJECTED
+  SUSPENDED
+}
+
+enum SellerStoreRevisionStatus {
+  PENDING_REVIEW
+  APPROVED
+  REJECTED
+  WITHDRAWN
+}
+
+enum ProductStatus {
+  DRAFT
+  PENDING_REVIEW
+  ACTIVE
+  REJECTED
+  ARCHIVED
+}
+
+enum ProductComplianceStatus {
+  CLEAR
+  BLOCKED
+  REVIEW_REQUIRED
+}
+
+enum ProductReviewStatus {
+  PENDING_MODERATION
+  PUBLISHED
+  REJECTED
+  REMOVED
+}
+
+enum ProductReviewDecision {
+  PUBLISHED
+  REJECTED
+  REMOVED
+}
+
+enum RestrictedGoodsRuleStatus {
+  DRAFT
+  SCHEDULED
+  ACTIVE
+  PAUSED
+  ARCHIVED
+}
+
+enum RestrictedGoodsAction {
+  BLOCK
+  MANUAL_REVIEW
+}
+
+enum ComplianceScreeningSubject {
+  SOURCING_REQUEST
+  CHECKOUT
+  SHIP_FOR_ME
+  PRODUCT_PUBLICATION
+}
+
+enum ComplianceScreeningOutcome {
+  CLEAR
+  BLOCKED
+  REVIEW_REQUIRED
+  APPROVED
+  REJECTED
+}
+
+enum ProductRevisionStatus {
+  PENDING_REVIEW
+  APPROVED
+  REJECTED
+  WITHDRAWN
+}
+
+enum SellerCatalogImportStatus {
+  PREVIEW_READY
+  COMPLETED
+  CANCELLED
+  EXPIRED
+}
+
+enum SellerCatalogImportRowStatus {
+  VALID
+  INVALID
+  IMPORTED
+}
+
+enum SellerCatalogConnectionStatus {
+  PENDING_REVIEW
+  CHANGES_REQUESTED
+  CONFIGURATION_SAVED
+  REJECTED
+  REVOKED
+}
+
+enum SellerCatalogAuthMethod {
+  API_KEY
+  OAUTH2
+  SIGNED_REQUEST
+  CUSTOM_REVIEW
+}
+
+enum ProductMediaKind {
+  IMAGE
+  VIDEO
+  DOCUMENT
+}
+
+enum ProductMediaStatus {
+  PENDING_SCAN
+  READY
+  REJECTED
+}
+
+enum ReelStatus {
+  DRAFT
+  PENDING_REVIEW
+  ACTIVE
+  REJECTED
+  ARCHIVED
+}
+
+enum ReelEngagementType {
+  VIEW
+  SHARE
+  PRODUCT_CLICK
+}
+
+enum ReelReactionType {
+  LIKE
+  SAVE
+}
+
+enum ReelCommentStatus {
+  PENDING_MODERATION
+  PUBLISHED
+  REJECTED
+  REMOVED
+}
+
+enum SourcePlatformType {
+  PINDUODUO
+  SOURCE_1688
+  ALIBABA
+  LOCAL_SELLER
+}
+
+enum OrderType {
+  BUY_AND_SHIP
+  SHIP_FOR_ME
+  LOCAL_SELLER
+  EXPORT_MARKETPLACE
+}
+
+enum ShipForMeRequestStatus {
+  ADDRESS_ISSUED
+  TRACKING_SUBMITTED
+  PARTIALLY_RECEIVED
+  WAREHOUSE_RECEIVED
+  CANCELLED
+}
+
+enum OrderStatus {
+  DRAFT
+  PENDING_PAYMENT
+  PAID
+  PENDING_PURCHASE_REVIEW
+  PENDING_EXPORT_REVIEW
+  SELLER_PREPARING
+  READY_FOR_COLLECTION
+  SOURCING
+  PURCHASED
+  SUPPLIER_SHIPPED
+  WAREHOUSE_RECEIVED
+  INSPECTION
+  MEASURED
+  SHIPPING_QUOTE_PENDING_CUSTOMER_APPROVAL
+  SHIPPING_QUOTE_READY
+  SHIPPING_PAYMENT_PENDING
+  READY_TO_SHIP
+  IN_TRANSIT
+  CUSTOMS
+  BD_WAREHOUSE
+  DESTINATION_WAREHOUSE
+  OUT_FOR_DELIVERY
+  DELIVERED
+  CANCELLED
+  REFUNDED
+  ON_HOLD
+}
+
+enum SellerOrderStatus {
+  PENDING_PAYMENT
+  PENDING_ADMIN_REVIEW
+  APPROVED
+  SELLER_PREPARING
+  READY_FOR_COLLECTION
+  RECEIVED_AT_ORIGIN_HUB
+  ON_HOLD
+  CANCELLED
+  COMPLETED
+}
+
+enum InventoryReservationStatus {
+  ACTIVE
+  CONSUMED
+  RELEASED
+  EXPIRED
+}
+
+enum PaymentStatus {
+  CREATED
+  PENDING
+  SUCCEEDED
+  FAILED
+  CANCELLED
+  REFUNDED
+}
+
+enum PaymentRiskDecisionType {
+  APPROVED
+  REJECTED
+}
+
+enum PaymentSettlementBatchStatus {
+  RECONCILED
+  EXCEPTIONS
+}
+
+enum PaymentSettlementMatchStatus {
+  MATCHED
+  PAYMENT_NOT_FOUND
+  PAYMENT_NOT_SUCCEEDED
+  AMOUNT_MISMATCH
+  CURRENCY_MISMATCH
+  DUPLICATE_TRANSACTION
+  REVIEW_REQUIRED
+}
+
+enum PaymentSettlementResolutionType {
+  CONFIRMED_DUPLICATE
+  PROVIDER_REPORT_ERROR
+  PAYMENT_REFERENCE_CORRECTED
+  CHARGEBACK_CONFIRMED
+  MANUAL_EVIDENCE_ACCEPTED
+}
+
+enum PaymentSettlementResolutionDecisionType {
+  APPROVED
+  REJECTED
+}
+
+enum PaymentMethodKind {
+  MOBILE_WALLET
+  CARD
+  BANK_TRANSFER
+  LOCAL_METHOD
+  OTHER
+}
+
+enum SourcingRequestStatus {
+  DRAFT
+  SUBMITTED
+  UNDER_REVIEW
+  QUOTED
+  APPROVED
+  DECLINED
+  CANCELLED
+}
+
+enum QuoteStatus {
+  DRAFT
+  SENT
+  ACCEPTED
+  REJECTED
+  EXPIRED
+}
+
+enum ShippingQuoteStatus {
+  SENT
+  ACCEPTED
+  REJECTED
+  EXPIRED
+  PAID
+  CANCELLED
+}
+
+enum ShippingApprovalStatus {
+  NOT_REQUIRED
+  PENDING
+  ACCEPTED
+  CANCELLED
+  TIMED_OUT
+}
+
+enum WalletTransactionType {
+  REFUND_CREDIT
+  PAYMENT_DEBIT
+  MANUAL_CREDIT
+  MANUAL_DEBIT
+  HOLD
+  RELEASE
+  REVERSAL
+}
+
+enum WalletTransactionStatus {
+  POSTED
+  REVERSED
+}
+
+enum RefundStatus {
+  PENDING_APPROVAL
+  APPROVED
+  PROCESSING
+  SUCCEEDED
+  REJECTED
+  FAILED
+  REVERSED
+}
+
+enum RefundGatewayOperationType {
+  INITIATE
+  STATUS_QUERY
+}
+
+enum RefundDestination {
+  ORIGINAL_METHOD
+  WALLET
+}
+
+enum RmaStatus {
+  RETURN_REQUESTED
+  RETURN_APPROVED
+  RETURN_REJECTED
+  RETURN_IN_TRANSIT
+  RETURN_RECEIVED
+  INSPECTED
+  REFUNDED
+  REPLACED
+  CLOSED
+}
+
+enum RmaReason {
+  NOT_DELIVERED
+  LOST
+  WRONG_ITEM
+  DAMAGED
+  NOT_AS_DESCRIBED
+  MISSING_PARTS
+  MINOR_COSMETIC
+  OTHER
+}
+
+enum RmaDecision {
+  PENDING
+  FULL_REFUND
+  PARTIAL_REFUND
+  REPLACEMENT
+  REJECT
+}
+
+enum LiabilityParty {
+  PENDING
+  CUSTOMER
+  PLATFORM
+  SUPPLIER
+  CARRIER
+}
+
+enum TicketStatus {
+  OPEN
+  ASSIGNED
+  WAITING_FOR_CUSTOMER
+  WAITING_FOR_SUPPORT
+  RESOLVED
+  CLOSED
+}
+
+enum TicketPriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+enum TicketCategory {
+  ORDER
+  PAYMENT
+  SHIPPING
+  RETURN_REFUND
+  SOURCING
+  ACCOUNT
+  TECHNICAL
+  GENERAL
+}
+
+enum ConversationStatus {
+  OPEN
+  CLOSED
+}
+
+enum SupportAgentAvailability {
+  AVAILABLE
+  BUSY
+  OFFLINE
+}
+
+enum SupportQualityOutcome {
+  PASS
+  COACHING_REQUIRED
+  ESCALATED
+}
+
+enum SupportShiftStatus {
+  SCHEDULED
+  CANCELLED
+}
+
+enum HelpArticleStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum AiConversationStatus {
+  ACTIVE
+  HANDED_OFF
+  EXPIRED
+  CLOSED
+}
+
+enum AiConversationMessageRole {
+  USER
+  ASSISTANT
+}
+
+enum JournalEntryDirection {
+  DEBIT
+  CREDIT
+}
+
+enum AiCapability {
+  TEXT_SEARCH
+  IMAGE_SEARCH
+  CHATBOT
+  RECOMMENDATIONS
+}
+
+enum AiConfigurationMode {
+  INTERNAL_RULES
+  EXTERNAL_ADAPTER
+}
+
+enum AiConfigurationStatus {
+  DISABLED
+  CONFIGURATION_SAVED
+  LIVE
+}
+
+enum NotificationCategory {
+  TRANSACTIONAL
+  MARKETING
+  SECURITY
+}
+
+enum NotificationChannel {
+  IN_APP
+  EMAIL
+  PUSH
+  SMS
+  WHATSAPP
+}
+
+enum NotificationDeliveryStatus {
+  QUEUED
+  SENT
+  DELIVERED
+  FAILED
+  READ
+}
+
+enum NotificationPriority {
+  NORMAL
+  HIGH
+  CRITICAL
+}
+
+enum MarketingCampaignStatus {
+  SCHEDULED
+  PROCESSING
+  SENT
+  CANCELLED
+  FAILED
+}
+
+enum AdvertisementStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+}
+
+enum AdvertisementPlacement {
+  GLOBAL_BANNER
+  ENTRY_POPUP
+  HOME_FEED
+  PRODUCT_LIST
+  PRODUCT_DETAIL
+  CART
+  REELS
+}
+
+enum PackageStatus {
+  EXPECTED
+  RECEIVED
+  INSPECTED
+  MEASURED
+  READY_TO_SHIP
+  SHIPPED
+}
+
+enum PackageEventType {
+  RECEIVED
+  SCANNED
+  INSPECTED
+  MEASURED
+  PUT_AWAY
+  NOTE_ADDED
+  LABEL_PRINTED
+}
+
+enum PackageExceptionType {
+  MISSING_EXPECTED
+  EXTRA_UNEXPECTED
+  TRACKING_MISMATCH
+  DAMAGED_ON_ARRIVAL
+  MISSING_REFERENCE
+  RESTRICTED_ITEM
+  OTHER
+}
+
+enum PackageExceptionStatus {
+  OPEN
+  RESOLVED
+  CANCELLED
+}
+
+enum PackageServiceType {
+  CONSOLIDATE
+  SPLIT
+  REPACK
+}
+
+enum PackageServiceStatus {
+  REQUESTED
+  APPROVED
+  REJECTED
+  COMPLETED
+  CANCELLED
+}
+
+enum PackageServicePackageRole {
+  SOURCE
+  RESULT
+}
+
+enum ShipmentStatus {
+  CREATED
+  PICKUP_PENDING
+  PICKED_UP
+  ORIGIN_WAREHOUSE
+  CONSOLIDATED
+  READY_FOR_EXPORT
+  DEPARTED_ORIGIN
+  IN_TRANSIT
+  DESTINATION_ARRIVAL
+  CUSTOMS
+  CUSTOMS_CLEARED
+  DESTINATION_WAREHOUSE
+  OUT_FOR_DELIVERY
+  DELIVERED
+  FAILED_DELIVERY
+  DAMAGED
+  LOST
+  HELD
+  RETURNED
+  CUSTOMS_EXCEPTION
+  EXCEPTION
+}
+
+model User {
+  id                          String                                @id @default(uuid())
+  personCode                  String                                @unique @default(dbgenerated())
+  email                       String                                @unique
+  phone                       String?                               @unique
+  phoneVerifiedAt             DateTime?
+  residenceCountryCode        String                                @default("BD") @db.VarChar(2)
+  passwordHash                String
+  fullName                    String
+  status                      UserStatus                            @default(PENDING_VERIFICATION)
+  locale                      String                                @default("bn")
+  accountType                 CustomerAccountType                   @default(PERSONAL)
+  googleSubject               String?                               @unique
+  googleLinkedAt              DateTime?
+  preferredCurrency           String                                @default("BDT")
+  kycStatus                   KycStatus                             @default(NOT_REQUIRED)
+  analyticsConsent            Boolean                               @default(false)
+  analyticsConsentAt          DateTime?
+  roles                       UserRole[]
+  sellerProfile               SellerProfile?
+  auditLogs                   AuditLog[]                            @relation("AuditActor")
+  paymentRiskDecisions        PaymentRiskDecision[]                 @relation("PaymentRiskReviewer")
+  paymentSettlementImports    PaymentSettlementBatch[]              @relation("PaymentSettlementImporter")
+  paymentSettlementProposals  PaymentSettlementResolutionProposal[] @relation("PaymentSettlementProposer")
+  paymentSettlementDecisions  PaymentSettlementResolutionDecision[] @relation("PaymentSettlementDecisionReviewer")
+  refundGatewayOperations     RefundGatewayOperation[]              @relation("RefundGatewayOperationActor")
+  sourcingRequests            SourcingRequest[]
+  shipForMeRequests           ShipForMeRequest[]
+  orders                      Order[]
+  supplierOrderRecords        SupplierOrderRecord[]
+  supplierRecordCorrections   SupplierRecordCorrection[]
+  supplierInboundDispatches   SupplierInboundDispatch[]
+  addresses                   Address[]
+  authSessions                AuthSession[]
+  mfaMethod                   MfaMethod?
+  mfaEnrollment               MfaEnrollment?
+  userEvents                  UserEvent[]
+  notifications               Notification[]
+  notificationPreferences     NotificationPreference[]
+  marketingCampaignsCreated   MarketingCampaign[]                   @relation("MarketingCampaignCreator")
+  advertisementsCreated       Advertisement[]                       @relation("AdvertisementCreator")
+  marketingCampaignRecipients MarketingCampaignRecipient[]          @relation("MarketingCampaignRecipientUser")
+  securityTokens              SecurityToken[]
+  identityVerifications       IdentityVerification[]                @relation("IdentityVerificationCustomer")
+  identityVerificationsReviewed IdentityVerification[]              @relation("IdentityVerificationReviewer")
+  maintenanceRuns             MaintenanceJobRun[]                   @relation("MaintenanceRunActor")
+  maintenanceConfigs          MaintenanceConfiguration[]            @relation("MaintenanceConfigActor")
+  launchReadinessCreated      LaunchReadinessItem[]                 @relation("LaunchReadinessCreator")
+  launchReadinessUpdated      LaunchReadinessItem[]                 @relation("LaunchReadinessUpdater")
+  launchReadinessVerified     LaunchReadinessItem[]                 @relation("LaunchReadinessVerifier")
+  launchReadinessEvents       LaunchReadinessEvent[]                @relation("LaunchReadinessEventActor")
+  carts                       Cart[]
+  wallets                     Wallet[]
+  warehouseAssignments        WarehouseStaffAssignment[]            @relation("WarehouseStaff")
+  warehouseAssignmentsMade    WarehouseStaffAssignment[]            @relation("WarehouseStaffAssigner")
+  packageEvents               PackageEvent[]                        @relation("PackageEventActor")
+  inspectionsPerformed        Inspection[]                          @relation("InspectionInspector")
+  inspectionEvidenceUploaded  InspectionEvidence[]                  @relation("InspectionEvidenceUploader")
+  shipmentEvents              ShipmentEvent[]                       @relation("ShipmentEventActor")
+  rmas                        Rma[]                                 @relation("RmaCustomer")
+  rmaDeadlineOverrides        Rma[]                                 @relation("RmaDeadlineOverrider")
+  rmaInspections              Rma[]                                 @relation("RmaInspector")
+  rmaRefundDecisions          Rma[]                                 @relation("RmaRefundDecisionMaker")
+  sourcingQuotesReviewed      SourcingQuote[]                       @relation("SourcingQuoteReviewer")
+  rmaEvents                   RmaEvent[]                            @relation("RmaEventActor")
+  rmaMessages                 RmaMessage[]                          @relation("RmaMessageSender")
+  supportTickets              Ticket[]                              @relation("TicketCustomer")
+  assignedSupportTickets      Ticket[]                              @relation("TicketAssignedAgent")
+  supportAgentProfile         SupportAgentProfile?                  @relation("SupportAgentProfileUser")
+  supportProfilesUpdated      SupportAgentProfile[]                 @relation("SupportAgentProfileUpdater")
+  supportReviewsReceived      SupportQualityReview[]                @relation("SupportQualityAgent")
+  supportReviewsMade          SupportQualityReview[]                @relation("SupportQualityReviewer")
+  supportPoliciesUpdated      SupportOperatingPolicy[]              @relation("SupportPolicyUpdater")
+  supportShifts               SupportShift[]                        @relation("SupportShiftAgent")
+  supportShiftsCreated        SupportShift[]                        @relation("SupportShiftCreator")
+  supportRatingsSubmitted     SupportSatisfactionRating[]           @relation("SupportSatisfactionCustomer")
+  supportRatingsReceived      SupportSatisfactionRating[]           @relation("SupportSatisfactionAgent")
+  helpCategoriesCreated       HelpCategory[]                        @relation("HelpCategoryCreator")
+  helpCategoriesUpdated       HelpCategory[]                        @relation("HelpCategoryUpdater")
+  helpArticlesCreated         HelpArticle[]                         @relation("HelpArticleCreator")
+  helpArticlesUpdated         HelpArticle[]                         @relation("HelpArticleUpdater")
+  productRevisionsReviewed    ProductRevision[]                     @relation("ProductRevisionReviewer")
+  productReviews              ProductReview[]                       @relation("ProductReviewCustomer")
+  wishlistItems               WishlistItem[]
+  productReviewsModerated     ProductReview[]                       @relation("ProductReviewModerator")
+  productReviewDecisions      ProductReviewModeration[]             @relation("ProductReviewDecisionModerator")
+  storeRevisionsReviewed      SellerStoreRevision[]                 @relation("SellerStoreRevisionReviewer")
+  catalogConnectionsReviewed  SellerCatalogConnection[]             @relation("SellerCatalogConnectionReviewer")
+  ticketEvents                TicketEvent[]                         @relation("TicketEventActor")
+  conversationMessages        ConversationMessage[]                 @relation("ConversationMessageSender")
+  aiConversations             AiConversation[]
+  packageExceptionsReported   PackageException[]                    @relation("PackageExceptionReporter")
+  packageExceptionsResolved   PackageException[]                    @relation("PackageExceptionResolver")
+  warehousePoliciesUpdated    WarehouseExceptionPolicy[]            @relation("WarehouseExceptionPolicyUpdater")
+  packageServicesRequested    PackageServiceRequest[]               @relation("PackageServiceCustomer")
+  packageServicesReviewed     PackageServiceRequest[]               @relation("PackageServiceReviewer")
+  packageServicesCompleted    PackageServiceRequest[]               @relation("PackageServiceWorker")
+  couponRedemptions           CouponRedemption[]
+  promotionApplications       PromotionApplication[]
+  reelsModerated              Reel[]                                @relation("ReelModerator")
+  reelEngagements             ReelEngagement[]
+  reelReactions               ReelReaction[]
+  reelComments                ReelComment[]                         @relation("ReelCommentAuthor")
+  reelCommentsModerated       ReelComment[]                         @relation("ReelCommentModerator")
+  businessAccount             BusinessAccount?                      @relation("BusinessAccountOwner")
+  kamAssignments              KamAssignment[]                       @relation("KamAssignee")
+  kamAssignmentsMade          KamAssignment[]                       @relation("KamAssigner")
+  accountActivities           AccountActivity[]                     @relation("AccountActivityAuthor")
+  salesOpportunities          SalesOpportunity[]                    @relation("SalesOpportunityOwner")
+  opportunityStageChanges     OpportunityStageChange[]              @relation("OpportunityStageActor")
+  createdAt                   DateTime                              @default(now())
+  updatedAt                   DateTime                              @updatedAt
+  deletedAt                   DateTime?
+
+  @@index([residenceCountryCode, createdAt])
+}
+
+model IdentityVerification {
+  id                   String               @id @default(uuid())
+  userId               String
+  documentType         IdentityDocumentType
+  issuingCountryCode   String               @db.VarChar(2)
+  documentNumberLast4  String               @db.VarChar(4)
+  documentPhotoCiphertext String?           @db.Text
+  documentPhotoIv         String?           @db.VarChar(32)
+  documentPhotoTag        String?           @db.VarChar(32)
+  documentPhotoMimeType   String?           @db.VarChar(64)
+  documentPhotoSizeBytes  Int?
+  documentPhotoSha256     String?           @db.VarChar(64)
+  status               KycStatus            @default(PENDING)
+  submittedAt          DateTime             @default(now())
+  reviewedAt           DateTime?
+  reviewedById         String?
+  reviewNote           String?
+  version              Int                  @default(1)
+  user                 User                 @relation("IdentityVerificationCustomer", fields: [userId], references: [id], onDelete: Cascade)
+  reviewedBy           User?                @relation("IdentityVerificationReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
+
+  @@index([userId, status, submittedAt])
+  @@index([status, submittedAt])
+}
+
+model Notification {
+  id                         String                      @id @default(uuid())
+  userId                     String
+  eventType                  String
+  category                   NotificationCategory        @default(TRANSACTIONAL)
+  priority                   NotificationPriority        @default(NORMAL)
+  title                      String
+  body                       String
+  titleBn                    String?
+  bodyBn                     String?
+  deepLink                   String?
+  entityType                 String?
+  entityId                   String?
+  idempotencyKey             String                      @unique
+  readAt                     DateTime?
+  user                       User                        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deliveries                 NotificationDelivery[]
+  marketingCampaignRecipient MarketingCampaignRecipient?
+  createdAt                  DateTime                    @default(now())
+
+  @@index([userId, readAt, createdAt])
+  @@index([entityType, entityId])
+}
+
+model NotificationDelivery {
+  id                      String                     @id @default(uuid())
+  notificationId          String
+  channel                 NotificationChannel
+  status                  NotificationDeliveryStatus @default(QUEUED)
+  idempotencyKey          String                     @unique
+  attempts                Int                        @default(0)
+  nextAttemptAt           DateTime?
+  providerReference       String?
+  lastError               String?
+  securePayloadCiphertext String?
+  securePayloadIv         String?
+  securePayloadTag        String?
+  sentAt                  DateTime?
+  deliveredAt             DateTime?
+  failedAt                DateTime?
+  readAt                  DateTime?
+  notification            Notification               @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+  createdAt               DateTime                   @default(now())
+  updatedAt               DateTime                   @updatedAt
+
+  @@index([channel, status, nextAttemptAt])
+  @@index([notificationId, channel])
+}
+
+model SecurityToken {
+  id        String               @id @default(uuid())
+  userId    String
+  purpose   SecurityTokenPurpose
+  tokenHash String               @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  user      User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime             @default(now())
+
+  @@index([userId, purpose, usedAt, expiresAt])
+  @@index([expiresAt])
+}
+
+model SecurityRateLimit {
+  id              String    @id @default(uuid())
+  scope           String
+  keyHash         String
+  attempts        Int       @default(0)
+  windowStartedAt DateTime  @default(now())
+  blockedUntil    DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@unique([scope, keyHash])
+  @@index([blockedUntil])
+  @@index([updatedAt])
+}
+
+model MaintenanceConfiguration {
+  key                         String   @id
+  securityTokenRetentionDays  Int      @default(30)
+  rateLimitRetentionHours     Int      @default(24)
+  mfaEnrollmentRetentionHours Int      @default(24)
+  inventoryBatchSize          Int      @default(100)
+  updatedById                 String?
+  updatedBy                   User?    @relation("MaintenanceConfigActor", fields: [updatedById], references: [id], onDelete: SetNull)
+  createdAt                   DateTime @default(now())
+  updatedAt                   DateTime @updatedAt
+}
+
+model WarehouseExceptionPolicy {
+  key                      String   @id @default("GLOBAL")
+  expectedParcelAlertHours Int      @default(168)
+  exceptionResolutionHours Int      @default(24)
+  storageWarningDays       Int      @default(30)
+  updatedById              String?
+  updatedBy                User?    @relation("WarehouseExceptionPolicyUpdater", fields: [updatedById], references: [id], onDelete: SetNull)
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
+}
+
+model MaintenanceJobState {
+  jobKey         String                @id
+  lockedUntil    DateTime?
+  lastStartedAt  DateTime?
+  lastFinishedAt DateTime?
+  lastStatus     MaintenanceRunStatus?
+  lastSummary    Json?
+  lastErrorCode  String?
+  updatedAt      DateTime              @updatedAt
+}
+
+model MaintenanceJobRun {
+  id            String               @id @default(uuid())
+  jobKey        String
+  triggerSource String
+  status        MaintenanceRunStatus @default(RUNNING)
+  triggeredById String?
+  startedAt     DateTime             @default(now())
+  finishedAt    DateTime?
+  summary       Json?
+  errorCode     String?
+  triggeredBy   User?                @relation("MaintenanceRunActor", fields: [triggeredById], references: [id], onDelete: SetNull)
+
+  @@index([jobKey, startedAt])
+  @@index([status, startedAt])
+}
+
+model NotificationTemplate {
+  id          String              @id @default(uuid())
+  templateKey String
+  channel     NotificationChannel
+  locale      String              @default("en")
+  version     Int                 @default(1)
+  subject     String?
+  body        String
+  isActive    Boolean             @default(false)
+  updatedById String?
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+
+  @@unique([templateKey, channel, locale, version])
+  @@index([templateKey, channel, locale, isActive])
+}
+
+model NotificationPreference {
+  id        String               @id @default(uuid())
+  userId    String
+  category  NotificationCategory
+  channel   NotificationChannel
+  enabled   Boolean              @default(true)
+  locale    String               @default("en")
+  user      User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime             @default(now())
+  updatedAt DateTime             @updatedAt
+
+  @@unique([userId, category, channel])
+  @@index([userId, enabled])
+}
+
+model MarketingCampaign {
+  id                       String                       @id @default(uuid())
+  campaignCode             String                       @unique
+  idempotencyKey           String                       @unique
+  requestFingerprint       String
+  title                    String
+  body                     String
+  titleBn                  String?
+  bodyBn                   String?
+  deepLink                 String?
+  audienceAccountType      CustomerAccountType?
+  audienceLocale           String?
+  targetUserId             String?
+  status                   MarketingCampaignStatus      @default(SENT)
+  matchedConsentCount      Int
+  frequencySuppressedCount Int
+  recipientCount           Int
+  createdById              String
+  createdBy                User                         @relation("MarketingCampaignCreator", fields: [createdById], references: [id], onDelete: Restrict)
+  recipients               MarketingCampaignRecipient[]
+  scheduledFor             DateTime?
+  sentAt                   DateTime?
+  cancelledAt              DateTime?
+  failureCode              String?
+  createdAt                DateTime                     @default(now())
+
+  @@index([sentAt])
+  @@index([createdById, sentAt])
+  @@index([status, scheduledFor])
+}
+
+model WebsiteAppearance {
+  id        String   @id @default("main")
+  version   Int      @default(1)
+  content   Json
+  updatedAt DateTime @updatedAt
+}
+
+model WebsiteAppearanceDraft {
+  id        String   @id @default("main")
+  version   Int      @default(1)
+  content   Json
+  updatedAt DateTime @updatedAt
+}
+
+model WebsiteMedia {
+  id        String   @id @default(uuid())
+  title     String
+  bytes     Bytes
+  sizeBytes Int
+  width     Int
+  height    Int
+  createdAt DateTime @default(now())
+}
+
+model Advertisement {
+  id             String                 @id @default(uuid())
+  adCode         String                 @unique
+  advertiserName String
+  title          String
+  body           String?
+  imageUrl       String?
+  targetUrl      String
+  altText        String?
+  placement      AdvertisementPlacement
+  pagePath       String?
+  status         AdvertisementStatus    @default(DRAFT)
+  displayOrder   Int                    @default(0)
+  startsAt       DateTime?
+  endsAt         DateTime?
+  isDismissible  Boolean                @default(true)
+  createdById    String
+  createdBy      User                   @relation("AdvertisementCreator", fields: [createdById], references: [id], onDelete: Restrict)
+  createdAt      DateTime               @default(now())
+  updatedAt      DateTime               @updatedAt
+
+  @@index([status, placement, startsAt, endsAt])
+  @@index([pagePath, status])
+  @@index([createdById, createdAt])
+}
+
+model MarketingCampaignRecipient {
+  id                         String              @id @default(uuid())
+  campaignId                 String
+  userId                     String
+  notificationId             String              @unique
+  localeSnapshot             String
+  accountTypeSnapshot        CustomerAccountType
+  consentPreferenceId        String
+  consentPreferenceUpdatedAt DateTime
+  campaign                   MarketingCampaign   @relation(fields: [campaignId], references: [id], onDelete: Restrict)
+  user                       User                @relation("MarketingCampaignRecipientUser", fields: [userId], references: [id], onDelete: Restrict)
+  notification               Notification        @relation(fields: [notificationId], references: [id], onDelete: Restrict)
+  createdAt                  DateTime            @default(now())
+
+  @@unique([campaignId, userId])
+  @@index([userId, createdAt])
+}
+
+model Order {
+  id                         String                  @id @default(uuid())
+  orderNumber                String                  @unique
+  customerId                 String
+  sourcingRequestId          String?                 @unique
+  type                       OrderType               @default(BUY_AND_SHIP)
+  status                     OrderStatus             @default(PENDING_PAYMENT)
+  currency                   String                  @default("BDT")
+  productTotal               Decimal                 @default(0) @db.Decimal(12, 2)
+  shippingTotal              Decimal                 @default(0) @db.Decimal(12, 2)
+  inspectionTotal            Decimal                 @default(0) @db.Decimal(12, 2)
+  customsTotal               Decimal                 @default(0) @db.Decimal(12, 2)
+  discountTotal              Decimal                 @default(0) @db.Decimal(12, 2)
+  grandTotal                 Decimal                 @db.Decimal(12, 2)
+  shippingAddress            Json?
+  originCountryCode          String?
+  destinationCountryCode     String?
+  shippingLaneId             String?
+  checkoutIdempotencyKey     String?                 @unique
+  checkoutRequestFingerprint String?
+  weightDiscrepancyFlag      Boolean                 @default(false)
+  shippingApprovalStatus     ShippingApprovalStatus  @default(NOT_REQUIRED)
+  shippingApprovalAt         DateTime?
+  customer                   User                    @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  shippingLane               ShippingLane?           @relation(fields: [shippingLaneId], references: [id], onDelete: Restrict)
+  sourcingRequest            SourcingRequest?        @relation(fields: [sourcingRequestId], references: [id], onDelete: Restrict)
+  shipForMeRequest           ShipForMeRequest?
+  paymentIntent              PaymentIntent?
+  shippingPayment            ShippingPayment?
+  statusHistory              OrderStatusHistory[]
+  items                      OrderItem[]
+  supplierOrderRecords       SupplierOrderRecord[]
+  sellerOrders               SellerOrder[]
+  inventoryReservations      InventoryReservation[]
+  packages                   Package[]
+  shippingQuotes             ShippingQuote[]
+  refunds                    Refund[]
+  rmas                       Rma[]
+  tickets                    Ticket[]
+  packageExceptions          PackageException[]
+  packageServiceRequests     PackageServiceRequest[]
+  couponRedemption           CouponRedemption?
+  promotionApplication       PromotionApplication?
+  createdAt                  DateTime                @default(now())
+  updatedAt                  DateTime                @updatedAt
+
+  @@index([customerId, status])
+  @@index([shippingLaneId, status])
+  @@index([type, destinationCountryCode, status])
+}
+
+model Coupon {
+  id                      String               @id @default(uuid())
+  code                    String               @unique
+  name                    String
+  description             String?
+  status                  CouponStatus         @default(DRAFT)
+  discountType            CouponDiscountType
+  discountValue           Decimal              @db.Decimal(12, 2)
+  minimumOrderAmount      Decimal              @default(0) @db.Decimal(12, 2)
+  maximumDiscount         Decimal?             @db.Decimal(12, 2)
+  totalUsageLimit         Int?
+  perCustomerLimit        Int                  @default(1)
+  perDayLimit             Int?
+  redeemedCount           Int                  @default(0)
+  eligibleAccountType     CustomerAccountType?
+  firstOrderOnly          Boolean              @default(false)
+  allowsAutomaticStacking Boolean              @default(false)
+  startsAt                DateTime
+  endsAt                  DateTime
+  version                 Int                  @default(1)
+  redemptions             CouponRedemption[]
+  createdAt               DateTime             @default(now())
+  updatedAt               DateTime             @updatedAt
+
+  @@index([status, startsAt, endsAt])
+}
+
+model AutomaticPromotion {
+  id                   String                 @id @default(uuid())
+  name                 String
+  internalDescription  String?
+  customerMessage      String
+  status               CouponStatus           @default(DRAFT)
+  discountType         CouponDiscountType
+  discountValue        Decimal                @db.Decimal(12, 2)
+  minimumOrderAmount   Decimal                @default(0) @db.Decimal(12, 2)
+  maximumDiscount      Decimal?               @db.Decimal(12, 2)
+  totalUsageLimit      Int?
+  perCustomerLimit     Int                    @default(1)
+  perDayLimit          Int?
+  redeemedCount        Int                    @default(0)
+  eligibleAccountType  CustomerAccountType?
+  firstOrderOnly       Boolean                @default(false)
+  allowsCouponStacking Boolean                @default(false)
+  priority             Int                    @default(0)
+  startsAt             DateTime
+  endsAt               DateTime
+  version              Int                    @default(1)
+  applications         PromotionApplication[]
+  createdAt            DateTime               @default(now())
+  updatedAt            DateTime               @updatedAt
+
+  @@index([status, startsAt, endsAt, priority])
+}
+
+model PromotionApplication {
+  id                      String             @id @default(uuid())
+  promotionId             String
+  orderId                 String             @unique
+  customerId              String
+  promotionNameSnapshot   String
+  customerMessageSnapshot String
+  discountTypeSnapshot    String
+  discountValueSnapshot   Decimal            @db.Decimal(12, 2)
+  eligibleSubtotal        Decimal            @db.Decimal(12, 2)
+  discountAmount          Decimal            @db.Decimal(12, 2)
+  promotionVersion        Int
+  promotion               AutomaticPromotion @relation(fields: [promotionId], references: [id], onDelete: Restrict)
+  order                   Order              @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  customer                User               @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  appliedAt               DateTime           @default(now())
+
+  @@index([promotionId, customerId, appliedAt])
+  @@index([promotionId, appliedAt])
+}
+
+model CouponRedemption {
+  id                    String   @id @default(uuid())
+  couponId              String
+  orderId               String   @unique
+  customerId            String
+  couponCodeSnapshot    String
+  couponNameSnapshot    String
+  discountTypeSnapshot  String
+  discountValueSnapshot Decimal  @db.Decimal(12, 2)
+  eligibleSubtotal      Decimal  @db.Decimal(12, 2)
+  discountAmount        Decimal  @db.Decimal(12, 2)
+  couponVersion         Int
+  coupon                Coupon   @relation(fields: [couponId], references: [id], onDelete: Restrict)
+  order                 Order    @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  customer              User     @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  redeemedAt            DateTime @default(now())
+
+  @@index([couponId, customerId, redeemedAt])
+  @@index([couponId, redeemedAt])
+}
+
+model ShipForMeRequest {
+  id                     String                 @id @default(uuid())
+  reference              String                 @unique
+  idempotencyKey         String                 @unique
+  customerId             String
+  orderId                String                 @unique
+  originWarehouseId      String
+  shippingLaneId         String
+  status                 ShipForMeRequestStatus @default(ADDRESS_ISSUED)
+  itemDescription        String
+  expectedPackageCount   Int                    @default(1)
+  declaredValue          Decimal?               @db.Decimal(12, 2)
+  declaredCurrency       String?
+  customerNote           String?
+  warehouseAddress       Json
+  inboundCarrier         String?
+  inboundTracking        String?
+  trackingIdempotencyKey String?                @unique
+  policyVersion          String                 @default("1.1")
+  trackingSubmittedAt    DateTime?
+  warehouseReceivedAt    DateTime?
+  customer               User                   @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  order                  Order                  @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  originWarehouse        Warehouse              @relation(fields: [originWarehouseId], references: [id], onDelete: Restrict)
+  shippingLane           ShippingLane           @relation(fields: [shippingLaneId], references: [id], onDelete: Restrict)
+  createdAt              DateTime               @default(now())
+  updatedAt              DateTime               @updatedAt
+
+  @@index([customerId, status, createdAt])
+  @@index([originWarehouseId, status])
+  @@index([shippingLaneId, status])
+}
+
+model OrderItem {
+  id               String         @id @default(uuid())
+  orderId          String
+  productId        String
+  productVariantId String
+  sellerOrderId    String?
+  productTitle     String
+  variantSnapshot  Json?
+  quantity         Int
+  unitPrice        Decimal        @db.Decimal(12, 2)
+  total            Decimal        @db.Decimal(12, 2)
+  order            Order          @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  product          Product        @relation(fields: [productId], references: [id], onDelete: Restrict)
+  productVariant   ProductVariant @relation(fields: [productVariantId], references: [id], onDelete: Restrict)
+  sellerOrder      SellerOrder?   @relation(fields: [sellerOrderId], references: [id], onDelete: Restrict)
+  rmaItems         RmaItem[]
+  review           ProductReview?
+  supplierOrderRecords SupplierOrderRecord[]
+  createdAt        DateTime       @default(now())
+
+  @@index([orderId])
+  @@index([productId])
+  @@index([productVariantId])
+  @@index([sellerOrderId])
+}
+
+model ProductReview {
+  id                 String                    @id @default(uuid())
+  productId          String
+  orderItemId        String                    @unique
+  customerId         String
+  rating             Int
+  title              String?
+  body               String
+  status             ProductReviewStatus       @default(PENDING_MODERATION)
+  verifiedPurchase   Boolean                   @default(true)
+  idempotencyKey     String                    @unique
+  requestFingerprint String
+  version            Int                       @default(1)
+  publishedAt        DateTime?
+  moderatedAt        DateTime?
+  moderatedById      String?
+  product            Product                   @relation(fields: [productId], references: [id], onDelete: Restrict)
+  orderItem          OrderItem                 @relation(fields: [orderItemId], references: [id], onDelete: Restrict)
+  customer           User                      @relation("ProductReviewCustomer", fields: [customerId], references: [id], onDelete: Restrict)
+  moderatedBy        User?                     @relation("ProductReviewModerator", fields: [moderatedById], references: [id], onDelete: SetNull)
+  moderationHistory  ProductReviewModeration[]
+  createdAt          DateTime                  @default(now())
+  updatedAt          DateTime                  @updatedAt
+
+  @@unique([id, version])
+  @@index([productId, status, publishedAt])
+  @@index([customerId, createdAt])
+  @@index([status, createdAt])
+  @@index([moderatedById])
+}
+
+model ProductReviewModeration {
+  id            String                @id @default(uuid())
+  reviewId      String
+  decision      ProductReviewDecision
+  reason        String?
+  moderatorId   String
+  reviewVersion Int
+  review        ProductReview         @relation(fields: [reviewId], references: [id], onDelete: Restrict)
+  moderator     User                  @relation("ProductReviewDecisionModerator", fields: [moderatorId], references: [id], onDelete: Restrict)
+  createdAt     DateTime              @default(now())
+
+  @@index([reviewId, createdAt])
+  @@index([moderatorId, createdAt])
+}
+
+model RestrictedGoodsRule {
+  id                     String                    @id @default(uuid())
+  ruleCode               String                    @unique
+  name                   String
+  internalDescription    String?
+  customerMessage        String
+  action                 RestrictedGoodsAction
+  status                 RestrictedGoodsRuleStatus @default(DRAFT)
+  keywords               String[]                  @default([])
+  hsCodePrefixes         String[]                  @default([])
+  originCountryCode      String?
+  destinationCountryCode String?
+  effectiveFrom          DateTime?
+  effectiveTo            DateTime?
+  legalReference         String?
+  version                Int                       @default(1)
+  createdById            String
+  updatedById            String
+  createdAt              DateTime                  @default(now())
+  updatedAt              DateTime                  @updatedAt
+
+  @@index([status, effectiveFrom, effectiveTo])
+  @@index([originCountryCode, destinationCountryCode, status], map: "RestrictedGoodsRule_route_status_idx")
+}
+
+model ComplianceScreeningAttempt {
+  id                     String                     @id @default(uuid())
+  subject                ComplianceScreeningSubject
+  subjectReference       String?
+  customerId             String
+  originCountryCode      String?
+  destinationCountryCode String?
+  inputHash              String
+  matchedRuleCodes       String[]                   @default([])
+  outcome                ComplianceScreeningOutcome
+  version                Int                        @default(1)
+  reviewedById           String?
+  reviewNote             String?
+  reviewedAt             DateTime?
+  createdAt              DateTime                   @default(now())
+  updatedAt              DateTime                   @updatedAt
+
+  @@index([outcome, createdAt])
+  @@index([customerId, inputHash, outcome])
+  @@index([subject, subjectReference])
+}
+
+model SellerOrder {
+  id              String                     @id @default(uuid())
+  orderId         String
+  sellerProfileId String
+  status          SellerOrderStatus          @default(PENDING_PAYMENT)
+  currency        String                     @default("BDT")
+  productSubtotal Decimal                    @db.Decimal(12, 2)
+  reviewedAt      DateTime?
+  approvedAt      DateTime?
+  readyAt         DateTime?
+  order           Order                      @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  sellerProfile   SellerProfile              @relation(fields: [sellerProfileId], references: [id], onDelete: Restrict)
+  items           OrderItem[]
+  statusHistory   SellerOrderStatusHistory[]
+  createdAt       DateTime                   @default(now())
+  updatedAt       DateTime                   @updatedAt
+
+  @@unique([orderId, sellerProfileId])
+  @@index([sellerProfileId, status, createdAt])
+  @@index([orderId, status])
+}
+
+model SellerOrderStatusHistory {
+  id            String             @id @default(uuid())
+  sellerOrderId String
+  fromStatus    SellerOrderStatus?
+  toStatus      SellerOrderStatus
+  actorId       String?
+  note          String?
+  sellerOrder   SellerOrder        @relation(fields: [sellerOrderId], references: [id], onDelete: Restrict)
+  createdAt     DateTime           @default(now())
+
+  @@index([sellerOrderId, createdAt])
+}
+
+model InventoryReservation {
+  id               String                     @id @default(uuid())
+  orderId          String
+  productVariantId String
+  quantity         Int
+  status           InventoryReservationStatus @default(ACTIVE)
+  expiresAt        DateTime
+  order            Order                      @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  productVariant   ProductVariant             @relation(fields: [productVariantId], references: [id], onDelete: Restrict)
+  createdAt        DateTime                   @default(now())
+  updatedAt        DateTime                   @updatedAt
+
+  @@unique([orderId, productVariantId])
+  @@index([status, expiresAt])
+  @@index([productVariantId, status])
+}
+
+model Address {
+  id           String    @id @default(uuid())
+  userId       String
+  label        String    @default("Delivery address")
+  fullName     String
+  phone        String
+  addressLine1 String
+  addressLine2 String?
+  city         String
+  district     String
+  postalCode   String?
+  countryCode  String    @default("BD")
+  isDefault    Boolean   @default(false)
+  user         User      @relation(fields: [userId], references: [id], onDelete: Restrict)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  deletedAt    DateTime?
+
+  @@index([userId, isDefault])
+}
+
+model AuthSession {
+  id                String           @id @default(uuid())
+  userId            String
+  portal            String
+  clientName        String           @default("Unknown device")
+  clientType        String           @default("UNKNOWN")
+  userAgentHash     String?
+  ipHash            String?
+  expiresAt         DateTime
+  lastSeenAt        DateTime         @default(now())
+  revokedAt         DateTime?
+  mfaVerifiedAt     DateTime?
+  mfaFailedAttempts Int              @default(0)
+  mfaLockedUntil    DateTime?
+  user              User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  events            UserEvent[]
+  reelEngagements   ReelEngagement[]
+  createdAt         DateTime         @default(now())
+
+  @@index([userId, revokedAt, expiresAt])
+  @@index([expiresAt])
+}
+
+model MfaMethod {
+  id               String            @id @default(uuid())
+  userId           String            @unique
+  type             String            @default("TOTP")
+  secretCiphertext String
+  secretIv         String
+  secretTag        String
+  enabledAt        DateTime          @default(now())
+  lastUsedStep     BigInt?
+  user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  recoveryCodes    MfaRecoveryCode[]
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  @@index([enabledAt])
+}
+
+model MfaEnrollment {
+  id               String   @id @default(uuid())
+  userId           String   @unique
+  secretCiphertext String
+  secretIv         String
+  secretTag        String
+  expiresAt        DateTime
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt        DateTime @default(now())
+
+  @@index([expiresAt])
+}
+
+model MfaRecoveryCode {
+  id          String    @id @default(uuid())
+  mfaMethodId String
+  codeHash    String    @unique
+  usedAt      DateTime?
+  mfaMethod   MfaMethod @relation(fields: [mfaMethodId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
+
+  @@index([mfaMethodId, usedAt])
+}
+
+model UserEvent {
+  id             String            @id @default(uuid())
+  idempotencyKey String?           @unique
+  userId         String?
+  authSessionId  String?
+  category       UserEventCategory
+  eventType      String
+  objectType     String?
+  objectId       String?
+  source         UserEventSource   @default(SERVER)
+  path           String?
+  metadata       Json?
+  occurredAt     DateTime          @default(now())
+  user           User?             @relation(fields: [userId], references: [id], onDelete: SetNull)
+  authSession    AuthSession?      @relation(fields: [authSessionId], references: [id], onDelete: SetNull)
+
+  @@index([userId, occurredAt])
+  @@index([eventType, occurredAt])
+  @@index([objectType, objectId, occurredAt])
+  @@index([authSessionId, occurredAt])
+}
+
+model Warehouse {
+  id                   String                     @id @default(uuid())
+  warehouseCode        String                     @unique @default(dbgenerated())
+  name                 String
+  country              String
+  type                 String
+  address              String?
+  locations            WarehouseLocation[]
+  packages             Package[]
+  shipForMeRequests    ShipForMeRequest[]
+  staffAssignments     WarehouseStaffAssignment[]
+  originShipments      Shipment[]                 @relation("ShipmentOriginWarehouse")
+  destinationShipments Shipment[]                 @relation("ShipmentDestinationWarehouse")
+  packageExceptions    PackageException[]
+  supplierOrderRecords SupplierOrderRecord[]
+  createdAt            DateTime                   @default(now())
+  updatedAt            DateTime                   @updatedAt
+}
+
+// Private, append-only operational evidence. No payable, cost posting or tracking event.
+model SupplierOrderRecord {
+  id                       String    @id @default(uuid())
+  orderId                  String
+  orderItemId              String?
+  allocationKey            String
+  supplierName             String
+  supplierOrderReference   String
+  supplierReferenceKey     String
+  variantDescription       String
+  quantity                 Int
+  originWarehouseId        String
+  originCountryCode        String
+  recordedById             String
+  internalNote             String
+  idempotencyKey           String    @unique
+  requestFingerprint       String
+  createdAt                DateTime  @default(now())
+  order                    Order     @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  orderItem                OrderItem? @relation(fields: [orderItemId], references: [id], onDelete: Restrict)
+  originWarehouse          Warehouse @relation(fields: [originWarehouseId], references: [id], onDelete: Restrict)
+  recordedBy               User      @relation(fields: [recordedById], references: [id], onDelete: Restrict)
+
+  correction               SupplierRecordCorrection? @relation("OriginalSupplierRecord")
+  replaces                 SupplierRecordCorrection? @relation("ReplacementSupplierRecord")
+  inboundDispatch          SupplierInboundDispatch?
+
+  @@index([orderId, allocationKey, supplierReferenceKey], map: "SupplierOrderRecord_reference_idx")
+  @@index([orderId, createdAt])
+  @@index([orderItemId])
+  @@index([originWarehouseId])
+  @@index([recordedById])
+}
+
+model SupplierInboundDispatch {
+  id                String @id @default(uuid())
+  supplierRecordId  String @unique
+  packageId         String @unique
+  carrierName       String
+  trackingNumber    String
+  createdById       String
+  idempotencyKey    String @unique
+  requestFingerprint String
+  createdAt         DateTime @default(now())
+  supplierRecord    SupplierOrderRecord @relation(fields: [supplierRecordId], references: [id], onDelete: Restrict)
+  package           Package @relation(fields: [packageId], references: [id], onDelete: Restrict)
+  createdBy         User @relation(fields: [createdById], references: [id], onDelete: Restrict)
+
+  @@index([createdById])
+}
+
+model SupplierRecordCorrection {
+  originalRecordId    String @id
+  replacementRecordId String @unique
+  holdHistoryId       String @unique
+  approvedById        String
+  reason              String
+  createdAt           DateTime @default(now())
+  originalRecord      SupplierOrderRecord @relation("OriginalSupplierRecord", fields: [originalRecordId], references: [id], onDelete: Restrict)
+  replacementRecord   SupplierOrderRecord @relation("ReplacementSupplierRecord", fields: [replacementRecordId], references: [id], onDelete: Restrict)
+  holdHistory         OrderStatusHistory @relation(fields: [holdHistoryId], references: [id], onDelete: Restrict)
+  approvedBy          User @relation(fields: [approvedById], references: [id], onDelete: Restrict)
+
+  @@index([approvedById])
+}
+
+model WarehouseLocation {
+  id          String    @id @default(uuid())
+  warehouseId String
+  code        String
+  type        String
+  warehouse   Warehouse @relation(fields: [warehouseId], references: [id], onDelete: Restrict)
+  packages    Package[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([warehouseId, code])
+}
+
+model WarehouseStaffAssignment {
+  id            String    @id @default(uuid())
+  userId        String
+  warehouseId   String
+  assignedById  String?
+  isActive      Boolean   @default(true)
+  assignedAt    DateTime  @default(now())
+  deactivatedAt DateTime?
+  user          User      @relation("WarehouseStaff", fields: [userId], references: [id], onDelete: Restrict)
+  warehouse     Warehouse @relation(fields: [warehouseId], references: [id], onDelete: Restrict)
+  assignedBy    User?     @relation("WarehouseStaffAssigner", fields: [assignedById], references: [id], onDelete: SetNull)
+
+  @@unique([userId, warehouseId])
+  @@index([warehouseId, isActive])
+  @@index([userId, isActive])
+}
+
+model Package {
+  supplierDispatch      SupplierInboundDispatch?
+  id                    String                  @id @default(uuid())
+  orderId               String
+  warehouseId           String?
+  warehouseLocationId   String?
+  packageCode           String                  @unique
+  inboundCarrier        String?
+  // Case-insensitive uniqueness is additionally enforced by a SQL expression
+  // index (migration 20261020120000); Prisma cannot model that expression.
+  inboundTracking       String?                 @unique
+  receiveIdempotencyKey String?                 @unique
+  status                PackageStatus           @default(EXPECTED)
+  isOutboundActive      Boolean                 @default(true)
+  actualWeightGrams     Int?
+  volumetricWeightGrams Int?
+  chargeableWeightGrams Int?
+  lengthMm              Int?
+  widthMm               Int?
+  heightMm              Int?
+  qcStatus              String?
+  order                 Order                   @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  warehouse             Warehouse?              @relation(fields: [warehouseId], references: [id], onDelete: Restrict)
+  warehouseLocation     WarehouseLocation?      @relation(fields: [warehouseLocationId], references: [id], onDelete: SetNull)
+  inspections           Inspection[]
+  inspectionEvidence    InspectionEvidence[]
+  shipmentPackages      ShipmentPackage[]
+  events                PackageEvent[]
+  rmaItems              RmaItem[]
+  exceptions            PackageException[]
+  serviceLinks          PackageServicePackage[]
+  createdAt             DateTime                @default(now())
+  updatedAt             DateTime                @updatedAt
+
+  @@index([orderId, status])
+}
+
+model PackageException {
+  id             String                 @id @default(uuid())
+  reference      String                 @unique
+  idempotencyKey String                 @unique
+  type           PackageExceptionType
+  status         PackageExceptionStatus @default(OPEN)
+  orderId        String
+  packageId      String?
+  warehouseId    String
+  reportedById   String
+  resolvedById   String?
+  description    String
+  resolutionNote String?
+  customerNote   String?
+  resolvedAt     DateTime?
+  createdAt      DateTime               @default(now())
+  updatedAt      DateTime               @updatedAt
+  order          Order                  @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  package        Package?               @relation(fields: [packageId], references: [id], onDelete: Restrict)
+  warehouse      Warehouse              @relation(fields: [warehouseId], references: [id], onDelete: Restrict)
+  reportedBy     User                   @relation("PackageExceptionReporter", fields: [reportedById], references: [id], onDelete: Restrict)
+  resolvedBy     User?                  @relation("PackageExceptionResolver", fields: [resolvedById], references: [id], onDelete: Restrict)
+
+  @@index([status, createdAt])
+  @@index([orderId, status])
+  @@index([warehouseId, status])
+  @@index([packageId, status])
+}
+
+model PackageServiceRequest {
+  id                      String                  @id @default(uuid())
+  reference               String                  @unique
+  idempotencyKey          String                  @unique
+  executionIdempotencyKey String?                 @unique
+  orderId                 String
+  customerId              String
+  type                    PackageServiceType
+  status                  PackageServiceStatus    @default(REQUESTED)
+  requestedOutputCount    Int                     @default(1)
+  customerNote            String?
+  adminNote               String?
+  reviewCustomerNote      String?
+  warehouseNote           String?
+  reviewedById            String?
+  completedById           String?
+  reviewedAt              DateTime?
+  completedAt             DateTime?
+  createdAt               DateTime                @default(now())
+  updatedAt               DateTime                @updatedAt
+  order                   Order                   @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  customer                User                    @relation("PackageServiceCustomer", fields: [customerId], references: [id], onDelete: Restrict)
+  reviewedBy              User?                   @relation("PackageServiceReviewer", fields: [reviewedById], references: [id], onDelete: Restrict)
+  completedBy             User?                   @relation("PackageServiceWorker", fields: [completedById], references: [id], onDelete: Restrict)
+  packages                PackageServicePackage[]
+
+  @@index([customerId, status, createdAt])
+  @@index([orderId, status])
+  @@index([status, createdAt])
+}
+
+model PackageServicePackage {
+  requestId String
+  packageId String
+  role      PackageServicePackageRole
+  request   PackageServiceRequest     @relation(fields: [requestId], references: [id], onDelete: Restrict)
+  package   Package                   @relation(fields: [packageId], references: [id], onDelete: Restrict)
+
+  @@id([requestId, packageId])
+  @@index([packageId, role])
+}
+
+model PackageEvent {
+  id           String           @id @default(uuid())
+  packageId    String
+  eventType    PackageEventType
+  status       PackageStatus
+  actorId      String?
+  locationCode String?
+  note         String?
+  metadata     Json?
+  occurredAt   DateTime         @default(now())
+  package      Package          @relation(fields: [packageId], references: [id], onDelete: Restrict)
+  actor        User?            @relation("PackageEventActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([packageId, occurredAt])
+  @@index([eventType, occurredAt])
+}
+
+model Inspection {
+  id          String   @id @default(uuid())
+  idempotencyKey String? @unique
+  requestFingerprint String?
+  packageId   String
+  inspectorId String
+  type        String
+  result      String
+  notes       String?
+  mediaRefs   Json?
+  package     Package  @relation(fields: [packageId], references: [id], onDelete: Restrict)
+  inspector   User     @relation("InspectionInspector", fields: [inspectorId], references: [id], onDelete: Restrict)
+  createdAt   DateTime @default(now())
+
+  @@index([inspectorId, createdAt])
+}
+
+// Private warehouse/inspection evidence. The ciphertext is never exposed by a
+// public asset route; authorised staff and the owning customer receive it only
+// through the access-controlled evidence endpoint.
+model InspectionEvidence {
+  id             String   @id @default(uuid())
+  packageId      String
+  uploadedById   String
+  mediaKind      String
+  mimeType       String   @db.VarChar(64)
+  sizeBytes      Int
+  sha256         String   @db.VarChar(64)
+  ciphertext     String
+  iv             String   @db.VarChar(32)
+  authTag        String   @db.VarChar(32)
+  originalName   String?  @db.VarChar(180)
+  createdAt      DateTime @default(now())
+  package        Package  @relation(fields: [packageId], references: [id], onDelete: Restrict)
+  uploadedBy     User     @relation("InspectionEvidenceUploader", fields: [uploadedById], references: [id], onDelete: Restrict)
+
+  @@index([packageId, createdAt])
+  @@index([uploadedById, createdAt])
+}
+
+model Shipment {
+  id                     String            @id @default(uuid())
+  shipmentCode           String            @unique @default(dbgenerated())
+  trackingNumber         String            @unique
+  status                 ShipmentStatus    @default(CREATED)
+  originWarehouseId      String?
+  destinationWarehouseId String?
+  carrierName            String?
+  shippedAt              DateTime?
+  deliveredAt            DateTime?
+  claimDeadline          DateTime?
+  originWarehouse        Warehouse?        @relation("ShipmentOriginWarehouse", fields: [originWarehouseId], references: [id], onDelete: Restrict)
+  destinationWarehouse   Warehouse?        @relation("ShipmentDestinationWarehouse", fields: [destinationWarehouseId], references: [id], onDelete: Restrict)
+  packages               ShipmentPackage[]
+  events                 ShipmentEvent[]
+  rmas                   Rma[]
+  createdAt              DateTime          @default(now())
+  updatedAt              DateTime          @updatedAt
+
+  @@index([originWarehouseId, status])
+  @@index([destinationWarehouseId, status])
+}
+
+model ShipmentPackage {
+  shipmentId String
+  packageId  String
+  shipment   Shipment @relation(fields: [shipmentId], references: [id], onDelete: Restrict)
+  package    Package  @relation(fields: [packageId], references: [id], onDelete: Restrict)
+
+  @@id([shipmentId, packageId])
+  @@unique([packageId])
+}
+
+model ShipmentEvent {
+  id             String         @id @default(uuid())
+  shipmentId     String
+  status         ShipmentStatus
+  location       String?
+  description    String?
+  actorId        String?
+  mediaRefs      Json?
+  metadata       Json?
+  idempotencyKey String?        @unique
+  occurredAt     DateTime       @default(now())
+  shipment       Shipment       @relation(fields: [shipmentId], references: [id], onDelete: Restrict)
+  actor          User?          @relation("ShipmentEventActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([shipmentId, occurredAt])
+}
+
+model OrderStatusHistory {
+  supplierRecordCorrection SupplierRecordCorrection?
+  id         String       @id @default(uuid())
+  orderId    String
+  fromStatus OrderStatus?
+  toStatus   OrderStatus
+  actorId    String?
+  note       String?
+  createdAt  DateTime     @default(now())
+  order      Order        @relation(fields: [orderId], references: [id], onDelete: Restrict)
+
+  @@index([orderId, createdAt])
+}
+
+model SourcingRequest {
+  id                 String                @id @default(uuid())
+  reference          String                @unique
+  customerId         String
+  sourceCountryCode  String                @default("CN")
+  sourcePlatformCode SourcePlatformType?
+  productUrl         String
+  productTitle       String?
+  selectedVariant    String?
+  quantity           Int                   @default(1)
+  sourcePrice        Decimal?              @db.Decimal(12, 2)
+  sourceCurrency     String?
+  customerNote       String?
+  status             SourcingRequestStatus @default(SUBMITTED)
+  customer           User                  @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  quotes             SourcingQuote[]
+  order              Order?
+  accountActivities  AccountActivity[]
+  opportunity        SalesOpportunity?
+  createdAt          DateTime              @default(now())
+  updatedAt          DateTime              @updatedAt
+
+  @@index([customerId, status])
+}
+
+enum BusinessAccountStatus {
+  ACTIVE
+  ON_HOLD
+  CLOSED
+}
+
+enum KamAssignmentRole {
+  PRIMARY
+  SUPPORT
+}
+
+enum AccountActivityType {
+  CALL
+  MEETING
+  EMAIL
+  NOTE
+  FOLLOW_UP
+}
+
+enum SalesOpportunityStage {
+  DISCOVERY
+  QUALIFIED
+  QUOTED
+  NEGOTIATION
+  WON
+  LOST
+}
+
+model BusinessAccount {
+  id               String                @id @default(uuid())
+  accountCode      String                @unique @default(dbgenerated())
+  ownerId          String                @unique
+  organizationName String
+  status           BusinessAccountStatus @default(ACTIVE)
+  version          Int                   @default(1)
+  owner            User                  @relation("BusinessAccountOwner", fields: [ownerId], references: [id], onDelete: Restrict)
+  assignments      KamAssignment[]
+  activities       AccountActivity[]
+  opportunities    SalesOpportunity[]
+  createdAt        DateTime              @default(now())
+  updatedAt        DateTime              @updatedAt
+
+  @@index([status, createdAt])
+}
+
+model KamAssignment {
+  id            String            @id @default(uuid())
+  accountId     String
+  userId        String
+  role          KamAssignmentRole @default(PRIMARY)
+  isActive      Boolean           @default(true)
+  assignedById  String
+  assignedAt    DateTime          @default(now())
+  deactivatedAt DateTime?
+  account       BusinessAccount   @relation(fields: [accountId], references: [id], onDelete: Restrict)
+  user          User              @relation("KamAssignee", fields: [userId], references: [id], onDelete: Restrict)
+  assignedBy    User              @relation("KamAssigner", fields: [assignedById], references: [id], onDelete: Restrict)
+
+  @@unique([accountId, userId])
+  @@index([userId, isActive])
+  @@index([accountId, isActive])
+}
+
+model AccountActivity {
+  id                String              @id @default(uuid())
+  activityCode      String              @unique @default(dbgenerated())
+  accountId         String
+  authorId          String
+  type              AccountActivityType
+  subject           String
+  note              String
+  occurredAt        DateTime
+  followUpAt        DateTime?
+  sourcingRequestId String?
+  idempotencyKey    String              @unique
+  account           BusinessAccount     @relation(fields: [accountId], references: [id], onDelete: Restrict)
+  author            User                @relation("AccountActivityAuthor", fields: [authorId], references: [id], onDelete: Restrict)
+  sourcingRequest   SourcingRequest?    @relation(fields: [sourcingRequestId], references: [id], onDelete: Restrict)
+  createdAt         DateTime            @default(now())
+
+  @@index([accountId, occurredAt])
+  @@index([authorId, createdAt])
+  @@index([followUpAt])
+}
+
+model SalesOpportunity {
+  id                 String                   @id @default(uuid())
+  opportunityCode    String                   @unique @default(dbgenerated())
+  accountId          String
+  ownerId            String
+  sourcingRequestId  String?                  @unique
+  title              String
+  stage              SalesOpportunityStage    @default(DISCOVERY)
+  idempotencyKey     String                   @unique
+  requestFingerprint String
+  estimatedValue     Decimal?                 @db.Decimal(14, 2)
+  currency           String?
+  expectedCloseAt    DateTime?
+  note               String?
+  version            Int                      @default(1)
+  account            BusinessAccount          @relation(fields: [accountId], references: [id], onDelete: Restrict)
+  owner              User                     @relation("SalesOpportunityOwner", fields: [ownerId], references: [id], onDelete: Restrict)
+  sourcingRequest    SourcingRequest?         @relation(fields: [sourcingRequestId], references: [id], onDelete: Restrict)
+  stageChanges       OpportunityStageChange[]
+  createdAt          DateTime                 @default(now())
+  updatedAt          DateTime                 @updatedAt
+
+  @@index([accountId, stage, updatedAt])
+  @@index([ownerId, stage, updatedAt])
+  @@index([expectedCloseAt])
+}
+
+model OpportunityStageChange {
+  id                 String                 @id @default(uuid())
+  opportunityId      String
+  fromStage          SalesOpportunityStage?
+  toStage            SalesOpportunityStage
+  actorId            String
+  note               String?
+  idempotencyKey     String                 @unique
+  requestFingerprint String
+  opportunity        SalesOpportunity       @relation(fields: [opportunityId], references: [id], onDelete: Restrict)
+  actor              User                   @relation("OpportunityStageActor", fields: [actorId], references: [id], onDelete: Restrict)
+  createdAt          DateTime               @default(now())
+
+  @@index([opportunityId, createdAt])
+  @@index([actorId, createdAt])
+}
+
+model SourcingQuote {
+  id                   String          @id @default(uuid())
+  sourcingRequestId    String
+  version              Int
+  productCostBdt       Decimal         @db.Decimal(12, 2)
+  serviceFeeBdt        Decimal         @db.Decimal(12, 2)
+  originDeliveryBdt    Decimal         @default(0) @db.Decimal(12, 2)
+  estimatedShippingBdt Decimal         @db.Decimal(12, 2)
+  totalBdt             Decimal         @db.Decimal(12, 2)
+  fxRate               Decimal?        @db.Decimal(16, 6)
+  declaredWeightGrams  Int?
+  note                 String?
+  status               QuoteStatus     @default(DRAFT)
+  expiresAt            DateTime
+  createdById          String
+  reviewedById         String?
+  reviewedAt           DateTime?
+  reviewNote           String?
+  createdAt            DateTime        @default(now())
+  updatedAt            DateTime        @updatedAt
+  sourcingRequest      SourcingRequest @relation(fields: [sourcingRequestId], references: [id], onDelete: Restrict)
+  reviewedBy           User?           @relation("SourcingQuoteReviewer", fields: [reviewedById], references: [id], onDelete: Restrict)
+  paymentIntent        PaymentIntent?
+
+  @@unique([sourcingRequestId, version])
+  @@index([sourcingRequestId, status])
+  @@index([status, reviewedAt])
+}
+
+model Role {
+  id          String     @id @default(uuid())
+  code        String     @unique
+  description String
+  users       UserRole[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
+model UserRole {
+  userId    String
+  roleId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role      Role     @relation(fields: [roleId], references: [id], onDelete: Restrict)
+  createdAt DateTime @default(now())
+
+  @@id([userId, roleId])
+}
+
+model SellerProfile {
+  id                   String                    @id @default(uuid())
+  storeCode            String                    @unique @default(dbgenerated())
+  userId               String                    @unique
+  businessName         String
+  storeSlug            String?                   @unique
+  storeDescription     String?
+  tradeLicenseNo       String?
+  nidOrTin             String?
+  businessAddress      String?
+  originCountryCode    String                    @default("BD")
+  shipsInternationally Boolean                   @default(true)
+  processingDays       Int                       @default(3)
+  version              Int                       @default(1)
+  status               SellerStatus              @default(DRAFT)
+  reviewNote           String?
+  reviewedAt           DateTime?
+  user                 User                      @relation(fields: [userId], references: [id], onDelete: Restrict)
+  products             Product[]
+  productRevisions     ProductRevision[]
+  storeRevisions       SellerStoreRevision[]
+  sellerOrders         SellerOrder[]
+  catalogImports       SellerCatalogImport[]
+  catalogConnections   SellerCatalogConnection[]
+  reels                Reel[]
+  createdAt            DateTime                  @default(now())
+  updatedAt            DateTime                  @updatedAt
+
+  @@index([status, originCountryCode])
+}
+
+model SellerCatalogConnection {
+  id                            String                        @id @default(uuid())
+  sellerProfileId               String
+  systemName                    String
+  systemKey                     String
+  apiBaseUrl                    String
+  apiDocumentationUrl           String?
+  authMethod                    SellerCatalogAuthMethod
+  requestedCapabilities         String[]                      @default([])
+  expectedProductCount          Int?
+  requestedSyncFrequencyMinutes Int?
+  sellerNote                    String?
+  consentVersion                String
+  consentGrantedAt              DateTime
+  consentRevokedAt              DateTime?
+  status                        SellerCatalogConnectionStatus @default(PENDING_REVIEW)
+  adapterKey                    String?
+  secretReference               String?
+  dataUseApproved               Boolean                       @default(false)
+  mediaRightsApproved           Boolean                       @default(false)
+  securityApproved              Boolean                       @default(false)
+  reviewNote                    String?
+  reviewedById                  String?
+  reviewedAt                    DateTime?
+  version                       Int                           @default(1)
+  sellerProfile                 SellerProfile                 @relation(fields: [sellerProfileId], references: [id], onDelete: Restrict)
+  reviewedBy                    User?                         @relation("SellerCatalogConnectionReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
+  createdAt                     DateTime                      @default(now())
+  updatedAt                     DateTime                      @updatedAt
+
+  @@unique([sellerProfileId, systemKey])
+  @@index([status, createdAt])
+  @@index([sellerProfileId, status, createdAt])
+}
+
+model SellerCatalogImport {
+  id               String                    @id @default(uuid())
+  sellerProfileId  String
+  status           SellerCatalogImportStatus @default(PREVIEW_READY)
+  originalFilename String?
+  fingerprint      String
+  mapping          Json
+  totalRows        Int
+  validRows        Int
+  invalidRows      Int
+  version          Int                       @default(1)
+  expiresAt        DateTime
+  confirmedAt      DateTime?
+  sellerProfile    SellerProfile             @relation(fields: [sellerProfileId], references: [id], onDelete: Restrict)
+  rows             SellerCatalogImportRow[]
+  createdAt        DateTime                  @default(now())
+  updatedAt        DateTime                  @updatedAt
+
+  @@index([sellerProfileId, status, createdAt])
+  @@index([sellerProfileId, fingerprint])
+}
+
+model SellerCatalogImportRow {
+  id               String                       @id @default(uuid())
+  catalogImportId  String
+  rowNumber        Int
+  status           SellerCatalogImportRowStatus
+  sourceData       Json
+  normalizedData   Json?
+  validationErrors Json
+  fingerprint      String
+  productId        String?                      @unique
+  catalogImport    SellerCatalogImport          @relation(fields: [catalogImportId], references: [id], onDelete: Cascade)
+  product          Product?                     @relation(fields: [productId], references: [id], onDelete: SetNull)
+  createdAt        DateTime                     @default(now())
+  updatedAt        DateTime                     @updatedAt
+
+  @@unique([catalogImportId, rowNumber])
+  @@index([catalogImportId, status, rowNumber])
+}
+
+model SellerStoreRevision {
+  id                String                    @id @default(uuid())
+  sellerProfileId   String
+  status            SellerStoreRevisionStatus @default(PENDING_REVIEW)
+  baseSellerVersion Int
+  businessName      String
+  storeDescription  String
+  processingDays    Int
+  submittedAt       DateTime                  @default(now())
+  reviewedAt        DateTime?
+  reviewerId        String?
+  reviewNote        String?
+  version           Int                       @default(1)
+  sellerProfile     SellerProfile             @relation(fields: [sellerProfileId], references: [id], onDelete: Restrict)
+  reviewer          User?                     @relation("SellerStoreRevisionReviewer", fields: [reviewerId], references: [id], onDelete: SetNull)
+  createdAt         DateTime                  @default(now())
+  updatedAt         DateTime                  @updatedAt
+
+  @@index([sellerProfileId, status, submittedAt])
+}
+
+model Country {
+  id               String                 @id @default(uuid())
+  isoCode          String                 @unique
+  name             String
+  defaultCurrency  String
+  defaultLocale    String                 @default("en")
+  isActive         Boolean                @default(false)
+  originLanes      ShippingLane[]         @relation("LaneOrigin")
+  destinationLanes ShippingLane[]         @relation("LaneDestination")
+  paymentMethods   CountryPaymentMethod[]
+  createdAt        DateTime               @default(now())
+  updatedAt        DateTime               @updatedAt
+}
+
+model PaymentMethod {
+  id                  String                 @id @default(uuid())
+  code                String                 @unique
+  displayName         String
+  kind                PaymentMethodKind
+  adapterCode         String
+  settlementCurrency  String
+  secretReference     String?
+  isActive            Boolean                @default(false)
+  countryAvailability CountryPaymentMethod[]
+  paymentIntents      PaymentIntent[]
+  createdAt           DateTime               @default(now())
+  updatedAt           DateTime               @updatedAt
+
+  @@index([isActive, code])
+}
+
+model CountryPaymentMethod {
+  id                     String        @id @default(uuid())
+  countryId              String
+  paymentMethodId        String
+  customerCurrency       String
+  minimumAmount          Decimal?      @db.Decimal(12, 2)
+  maximumAmount          Decimal?      @db.Decimal(12, 2)
+  financeApproved        Boolean       @default(false)
+  complianceApproved     Boolean       @default(false)
+  refundsApproved        Boolean       @default(false)
+  reconciliationApproved Boolean       @default(false)
+  checkoutEnabled        Boolean       @default(false)
+  country                Country       @relation(fields: [countryId], references: [id], onDelete: Restrict)
+  paymentMethod          PaymentMethod @relation(fields: [paymentMethodId], references: [id], onDelete: Restrict)
+  createdAt              DateTime      @default(now())
+  updatedAt              DateTime      @updatedAt
+
+  @@unique([countryId, paymentMethodId, customerCurrency])
+  @@index([countryId, customerCurrency, checkoutEnabled])
+}
+
+model ExchangeRate {
+  id                 String              @id @default(uuid())
+  baseCurrency       String
+  quoteCurrency      String
+  customerSegment    CustomerAccountType
+  marketRate         Decimal             @db.Decimal(18, 8)
+  spreadPercent      Decimal             @default(0) @db.Decimal(10, 6)
+  source             ExchangeRateSource
+  sourceReference    String?
+  status             ExchangeRateStatus  @default(DRAFT)
+  financeApproved    Boolean             @default(false)
+  complianceApproved Boolean             @default(false)
+  validFrom          DateTime
+  validTo            DateTime?
+  activatedAt        DateTime?
+  revokedAt          DateTime?
+  createdById        String
+  snapshots          FxSnapshot[]
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+
+  @@index([baseCurrency, quoteCurrency, customerSegment, status, validFrom, validTo])
+  @@index([status, validFrom, validTo])
+}
+
+model ShippingLane {
+  id                                String             @id @default(uuid())
+  originCountryId                   String
+  destinationCountryId              String
+  name                              String
+  dimensionalWeightDivisor          Int
+  weightDiscrepancyThresholdPercent Decimal            @default(10.00) @db.Decimal(6, 2)
+  // Customer-facing planning figures only. A ShippingQuote remains the sole
+  // payable amount and is created after the warehouse measures the parcel.
+  estimatedRatePerKgBdt             Decimal?           @db.Decimal(12, 2)
+  estimatedLastMileRatePerKgBdt     Decimal?           @db.Decimal(12, 2)
+  estimatedHandlingFeeBdt           Decimal?           @db.Decimal(12, 2)
+  estimatedMinimumChargeBdt         Decimal?           @db.Decimal(12, 2)
+  transitDaysMin                    Int?
+  transitDaysMax                    Int?
+  isActive                          Boolean            @default(false)
+  financeApproved                   Boolean            @default(false)
+  complianceApproved                Boolean            @default(false)
+  operationsApproved                Boolean            @default(false)
+  checkoutEnabled                   Boolean            @default(false)
+  originCountry                     Country            @relation("LaneOrigin", fields: [originCountryId], references: [id], onDelete: Restrict)
+  destinationCountry                Country            @relation("LaneDestination", fields: [destinationCountryId], references: [id], onDelete: Restrict)
+  shippingQuotes                    ShippingQuote[]
+  orders                            Order[]
+  shipForMeRequests                 ShipForMeRequest[]
+  createdAt                         DateTime           @default(now())
+  updatedAt                         DateTime           @updatedAt
+
+  @@unique([originCountryId, destinationCountryId, name])
+  @@index([originCountryId, destinationCountryId, isActive, checkoutEnabled])
+}
+
+model ShippingQuote {
+  id                          String              @id @default(uuid())
+  orderId                     String
+  version                     Int
+  shippingLaneId              String
+  chargeableWeightGrams       Int
+  declaredWeightGrams         Int?
+  discrepancyPercent          Decimal?            @db.Decimal(8, 2)
+  discrepancyThresholdPercent Decimal             @db.Decimal(6, 2)
+  ratePerKgBdt                Decimal             @db.Decimal(12, 2)
+  shippingAmountBdt           Decimal             @db.Decimal(12, 2)
+  lastMileRatePerKgBdt        Decimal             @default(0) @db.Decimal(12, 2)
+  lastMileDeliveryBdt         Decimal             @default(0) @db.Decimal(12, 2)
+  handlingFeeBdt              Decimal             @default(0) @db.Decimal(12, 2)
+  insuranceFeeBdt             Decimal             @default(0) @db.Decimal(12, 2)
+  totalBdt                    Decimal             @db.Decimal(12, 2)
+  status                      ShippingQuoteStatus @default(SENT)
+  note                        String?
+  expiresAt                   DateTime
+  createdById                 String
+  decisionIdempotencyKey      String?             @unique
+  acceptedAt                  DateTime?
+  rejectedAt                  DateTime?
+  createdAt                   DateTime            @default(now())
+  updatedAt                   DateTime            @updatedAt
+  order                       Order               @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  shippingLane                ShippingLane        @relation(fields: [shippingLaneId], references: [id], onDelete: Restrict)
+  shippingPayment             ShippingPayment?
+
+  @@unique([orderId, version])
+  @@index([orderId, status])
+}
+
+model SourcePlatform {
+  id                   String               @id @default(uuid())
+  code                 String               @unique
+  displayName          String
+  adapterKey           String?
+  supportedCountries   String[]             @default([])
+  supportsSearch       Boolean              @default(false)
+  supportsOrders       Boolean              @default(false)
+  supportsTracking     Boolean              @default(false)
+  supportsCancellation Boolean              @default(false)
+  isActive             Boolean              @default(false)
+  integrationAccounts  IntegrationAccount[]
+  productSources       ProductSource[]
+  createdAt            DateTime             @default(now())
+  updatedAt            DateTime             @updatedAt
+}
+
+model IntegrationAccount {
+  id                  String         @id @default(uuid())
+  sourcePlatformId    String
+  accountKey          String         @default("primary")
+  displayName         String?
+  countryCode         String
+  secretReference     String
+  rateLimitPerMinute  Int?
+  dailyQuota          Int?
+  dailyQuotaUsed      Int            @default(0)
+  credentialExpiresAt DateTime?
+  isHealthy           Boolean        @default(false)
+  isActive            Boolean        @default(false)
+  lastHealthCheckAt   DateTime?
+  lastHealthStatus    String?
+  sourcePlatform      SourcePlatform @relation(fields: [sourcePlatformId], references: [id], onDelete: Restrict)
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
+
+  @@unique([sourcePlatformId, countryCode, accountKey])
+  @@index([sourcePlatformId, isActive, isHealthy])
+}
+
+model Category {
+  id             String     @id @default(uuid())
+  slug           String     @unique
+  nameEn         String
+  nameBn         String?
+  description    String?
+  icon           String?
+  sortOrder      Int        @default(0)
+  isActive       Boolean    @default(false)
+  showOnHomepage Boolean    @default(false)
+  parentId       String?
+  parent         Category?  @relation("CategoryTree", fields: [parentId], references: [id], onDelete: Restrict)
+  children       Category[] @relation("CategoryTree")
+  products       Product[]
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  @@index([isActive, showOnHomepage, sortOrder])
+  @@index([parentId])
+}
+
+model Product {
+  id                         String                  @id @default(uuid())
+  productCode                String                  @unique @default(dbgenerated())
+  titleEn                    String
+  titleBn                    String?
+  shortDescription           String?
+  description                String?
+  highlights                 String[]                @default([])
+  brand                      String?
+  modelNumber                String?
+  status                     ProductStatus           @default(DRAFT)
+  reviewNote                 String?
+  reviewedAt                 DateTime?
+  categoryId                 String?
+  sellerProfileId            String?
+  originCountryCode          String                  @default("CN")
+  isInternationallyAvailable Boolean                 @default(false)
+  hsCode                     String?
+  minimumOrderQuantity       Int                     @default(1)
+  sampleAvailable            Boolean                 @default(false)
+  customizationAvailable     Boolean                 @default(false)
+  productionLeadDaysMin      Int?
+  productionLeadDaysMax      Int?
+  sellingUnit                String?
+  packageContents            String?
+  returnPolicy               String?
+  warrantyInfo               String?
+  completenessScore          Int                     @default(0)
+  version                    Int                     @default(1)
+  complianceStatus           ProductComplianceStatus @default(CLEAR)
+  complianceRuleCodes        String[]                @default([])
+  complianceScreenedAt       DateTime?
+  category                   Category?               @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  sellerProfile              SellerProfile?          @relation(fields: [sellerProfileId], references: [id], onDelete: SetNull)
+  sources                    ProductSource[]
+  media                      ProductMedia[]
+  variants                   ProductVariant[]
+  revisions                  ProductRevision[]
+  catalogImportRow           SellerCatalogImportRow?
+  orderItems                 OrderItem[]
+  reviews                    ProductReview[]
+  wishlistItems              WishlistItem[]
+  reels                      Reel[]
+  createdAt                  DateTime                @default(now())
+  updatedAt                  DateTime                @updatedAt
+  deletedAt                  DateTime?
+
+  @@index([categoryId, status, complianceStatus])
+  @@index([sellerProfileId, status])
+  @@index([originCountryCode, isInternationallyAvailable, status])
+}
+
+model WishlistItem {
+  id        String   @id @default(uuid())
+  userId    String
+  productId String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, productId])
+  @@index([userId, createdAt])
+  @@index([productId])
+}
+
+model ProductRevision {
+  id                 String                @id @default(uuid())
+  productId          String
+  sellerProfileId    String
+  status             ProductRevisionStatus @default(PENDING_REVIEW)
+  baseProductVersion Int
+  productPayload     Json
+  variantPayload     Json
+  submittedAt        DateTime              @default(now())
+  reviewedAt         DateTime?
+  reviewerId         String?
+  reviewNote         String?
+  version            Int                   @default(1)
+  product            Product               @relation(fields: [productId], references: [id], onDelete: Restrict)
+  sellerProfile      SellerProfile         @relation(fields: [sellerProfileId], references: [id], onDelete: Restrict)
+  reviewer           User?                 @relation("ProductRevisionReviewer", fields: [reviewerId], references: [id], onDelete: SetNull)
+  createdAt          DateTime              @default(now())
+  updatedAt          DateTime              @updatedAt
+
+  @@index([productId, status, submittedAt])
+  @@index([sellerProfileId, status, submittedAt])
+}
+
+model ProductMedia {
+  id               String             @id @default(uuid())
+  productId        String
+  kind             ProductMediaKind
+  status           ProductMediaStatus @default(PENDING_SCAN)
+  storageKey       String             @unique
+  originalFilename String?
+  mimeType         String
+  sizeBytes        Int
+  checksumSha256   String
+  altText          String?
+  caption          String?
+  sortOrder        Int                @default(0)
+  isPrimary        Boolean            @default(false)
+  product          Product            @relation(fields: [productId], references: [id], onDelete: Cascade)
+  reel             Reel?
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+
+  @@index([productId, status, sortOrder])
+}
+
+model Reel {
+  id                 String           @id @default(uuid())
+  reelCode           String           @unique @default(dbgenerated())
+  sellerProfileId    String
+  productId          String
+  mediaId            String           @unique
+  caption            String?
+  status             ReelStatus       @default(PENDING_REVIEW)
+  reviewNote         String?
+  moderatedById      String?
+  moderatedAt        DateTime?
+  publishedAt        DateTime?
+  viewCount          Int              @default(0)
+  completedViewCount Int              @default(0)
+  totalWatchTimeMs   BigInt           @default(0)
+  likeCount          Int              @default(0)
+  saveCount          Int              @default(0)
+  commentCount       Int              @default(0)
+  shareCount         Int              @default(0)
+  productClickCount  Int              @default(0)
+  version            Int              @default(1)
+  sellerProfile      SellerProfile    @relation(fields: [sellerProfileId], references: [id], onDelete: Restrict)
+  product            Product          @relation(fields: [productId], references: [id], onDelete: Restrict)
+  media              ProductMedia     @relation(fields: [mediaId], references: [id], onDelete: Restrict)
+  moderatedBy        User?            @relation("ReelModerator", fields: [moderatedById], references: [id], onDelete: SetNull)
+  engagements        ReelEngagement[]
+  reactions          ReelReaction[]
+  comments           ReelComment[]
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+
+  @@index([status, publishedAt, createdAt])
+  @@index([sellerProfileId, status, createdAt])
+  @@index([productId, status])
+}
+
+model ReelEngagement {
+  id                String             @id @default(uuid())
+  idempotencyKey    String             @unique
+  reelId            String
+  userId            String?
+  authSessionId     String?
+  type              ReelEngagementType
+  watchTimeMs       Int?
+  durationMs        Int?
+  completionPercent Int?
+  reel              Reel               @relation(fields: [reelId], references: [id], onDelete: Cascade)
+  user              User?              @relation(fields: [userId], references: [id], onDelete: SetNull)
+  authSession       AuthSession?       @relation(fields: [authSessionId], references: [id], onDelete: SetNull)
+  createdAt         DateTime           @default(now())
+
+  @@index([reelId, type, createdAt])
+  @@index([userId, type, createdAt])
+  @@index([authSessionId, createdAt])
+}
+
+model ReelReaction {
+  id        String           @id @default(uuid())
+  reelId    String
+  userId    String
+  type      ReelReactionType
+  reel      Reel             @relation(fields: [reelId], references: [id], onDelete: Cascade)
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime         @default(now())
+
+  @@unique([reelId, userId, type])
+  @@index([userId, type, createdAt])
+}
+
+model ReelComment {
+  id            String            @id @default(uuid())
+  reelId        String
+  authorId      String
+  body          String
+  status        ReelCommentStatus @default(PENDING_MODERATION)
+  reviewNote    String?
+  moderatedById String?
+  moderatedAt   DateTime?
+  publishedAt   DateTime?
+  version       Int               @default(1)
+  reel          Reel              @relation(fields: [reelId], references: [id], onDelete: Cascade)
+  author        User              @relation("ReelCommentAuthor", fields: [authorId], references: [id], onDelete: Restrict)
+  moderatedBy   User?             @relation("ReelCommentModerator", fields: [moderatedById], references: [id], onDelete: SetNull)
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  @@index([reelId, status, publishedAt, createdAt])
+  @@index([authorId, createdAt])
+  @@index([status, createdAt])
+}
+
+model ProductSource {
+  id                String         @id @default(uuid())
+  productId         String
+  sourcePlatformId  String
+  externalProductId String?
+  sourceUrl         String?
+  rawSnapshot       Json?
+  lastSyncedAt      DateTime?
+  product           Product        @relation(fields: [productId], references: [id], onDelete: Cascade)
+  sourcePlatform    SourcePlatform @relation(fields: [sourcePlatformId], references: [id], onDelete: Restrict)
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+
+  @@unique([sourcePlatformId, externalProductId])
+}
+
+model ProductVariant {
+  id                    String                 @id @default(uuid())
+  productId             String
+  sku                   String?                @unique
+  attributes            Json?
+  priceBdt              Decimal?               @db.Decimal(12, 2)
+  priceCurrency         String                 @default("BDT")
+  inventoryQuantity     Int?
+  stockStatus           String?
+  weightGrams           Int?
+  lengthMm              Int?
+  widthMm               Int?
+  heightMm              Int?
+  product               Product                @relation(fields: [productId], references: [id], onDelete: Cascade)
+  cartItems             CartItem[]
+  orderItems            OrderItem[]
+  inventoryReservations InventoryReservation[]
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+}
+
+model Cart {
+  id        String     @id @default(uuid())
+  userId    String
+  currency  String     @default("BDT")
+  user      User       @relation(fields: [userId], references: [id], onDelete: Restrict)
+  items     CartItem[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  @@unique([userId, currency])
+  @@index([userId, updatedAt])
+}
+
+model CartItem {
+  id               String         @id @default(uuid())
+  cartId           String
+  productVariantId String
+  quantity         Int
+  cart             Cart           @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  productVariant   ProductVariant @relation(fields: [productVariantId], references: [id], onDelete: Restrict)
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  @@unique([cartId, productVariantId])
+  @@index([cartId, updatedAt])
+}
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  actorId    String?
+  action     String
+  entityType String
+  entityId   String?
+  metadata   Json?
+  createdAt  DateTime @default(now())
+  actor      User?    @relation("AuditActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([entityType, entityId])
+  @@index([actorId, createdAt])
+  @@index([createdAt])
+  @@index([action, createdAt])
+  @@index([entityType, createdAt])
+}
+
+model Wallet {
+  id               String              @id @default(uuid())
+  userId           String
+  currency         String              @default("BDT")
+  availableBalance Decimal             @default(0) @db.Decimal(18, 2)
+  heldBalance      Decimal             @default(0) @db.Decimal(18, 2)
+  user             User                @relation(fields: [userId], references: [id], onDelete: Restrict)
+  transactions     WalletTransaction[]
+  refunds          Refund[]
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+
+  @@unique([userId, currency])
+  @@index([userId])
+}
+
+model WalletTransaction {
+  id             String                  @id @default(uuid())
+  walletId       String
+  reference      String                  @unique
+  type           WalletTransactionType
+  status         WalletTransactionStatus @default(POSTED)
+  amount         Decimal                 @db.Decimal(18, 2)
+  currency       String
+  balanceBefore  Decimal                 @db.Decimal(18, 2)
+  balanceAfter   Decimal                 @db.Decimal(18, 2)
+  description    String
+  sourceType     String
+  sourceId       String?
+  idempotencyKey String                  @unique
+  journalId      String                  @unique
+  wallet         Wallet                  @relation(fields: [walletId], references: [id], onDelete: Restrict)
+  journal        FinancialJournal        @relation(fields: [journalId], references: [id], onDelete: Restrict)
+  createdAt      DateTime                @default(now())
+
+  @@index([walletId, createdAt])
+  @@index([sourceType, sourceId])
+}
+
+model FinancialJournal {
+  id                String                  @id @default(uuid())
+  reference         String                  @unique
+  eventType         String
+  eventId           String
+  currency          String
+  description       String
+  postedAt          DateTime                @default(now())
+  reversalOfId      String?
+  entries           FinancialJournalEntry[]
+  walletTransaction WalletTransaction?
+
+  @@unique([eventType, eventId])
+  @@index([postedAt])
+}
+
+model FinancialJournalEntry {
+  id          String                @id @default(uuid())
+  journalId   String
+  accountCode String
+  direction   JournalEntryDirection
+  amount      Decimal               @db.Decimal(18, 2)
+  currency    String
+  memo        String?
+  journal     FinancialJournal      @relation(fields: [journalId], references: [id], onDelete: Restrict)
+  createdAt   DateTime              @default(now())
+
+  @@index([journalId])
+  @@index([accountCode, createdAt])
+}
+
+model FxSnapshot {
+  id               String              @id @default(uuid())
+  exchangeRateId   String?
+  pair             String
+  baseCurrency     String              @default("BDT")
+  quoteCurrency    String              @default("BDT")
+  baseAmount       Decimal?            @db.Decimal(18, 2)
+  convertedAmount  Decimal?            @db.Decimal(18, 2)
+  customerSegment  CustomerAccountType @default(PERSONAL)
+  rateUsed         Decimal             @db.Decimal(18, 8)
+  spreadApplied    Decimal             @default(0) @db.Decimal(10, 6)
+  source           String
+  contextType      String
+  contextId        String?
+  lockedAt         DateTime            @default(now())
+  exchangeRate     ExchangeRate?       @relation(fields: [exchangeRateId], references: [id], onDelete: Restrict)
+  payments         PaymentIntent[]
+  shippingPayments ShippingPayment[]
+  refunds          Refund[]
+
+  @@index([contextType, contextId])
+  @@index([exchangeRateId])
+}
+
+model AiConfiguration {
+  id                String                @id @default(uuid())
+  capability        AiCapability          @unique
+  displayName       String
+  mode              AiConfigurationMode
+  status            AiConfigurationStatus @default(DISABLED)
+  adapterKey        String
+  apiBaseUrl        String?
+  modelName         String?
+  secretReference   String?
+  anonymousLimit    Int                   @default(20)
+  maxInputBytes     Int?
+  retentionMinutes  Int                   @default(0)
+  updatedById       String?
+  lastHealthCheckAt DateTime?
+  lastHealthStatus  String?
+  createdAt         DateTime              @default(now())
+  updatedAt         DateTime              @updatedAt
+}
+
+model Refund {
+  id                          String                   @id @default(uuid())
+  reference                   String                   @unique
+  orderId                     String
+  paymentIntentId             String
+  rmaId                       String?
+  walletId                    String?
+  amount                      Decimal                  @db.Decimal(18, 2)
+  currency                    String
+  requestedBaseAmount         Decimal?                 @db.Decimal(18, 2)
+  promotionNettingBaseAmount  Decimal?                 @db.Decimal(18, 2)
+  netBaseAmount               Decimal?                 @db.Decimal(18, 2)
+  baseCurrency                String?
+  calculationVersion          String?
+  requestFingerprint          String?                  @unique
+  reason                      String
+  destination                 RefundDestination
+  status                      RefundStatus             @default(PENDING_APPROVAL)
+  fxSnapshotId                String
+  idempotencyKey              String                   @unique
+  approvedById                String?
+  providerRefundReference     String?                  @unique
+  providerRefundTransactionId String?                  @unique
+  providerStatus              String?
+  providerStatusCheckedAt     DateTime?
+  processedAt                 DateTime?
+  order                       Order                    @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  paymentIntent               PaymentIntent            @relation(fields: [paymentIntentId], references: [id], onDelete: Restrict)
+  wallet                      Wallet?                  @relation(fields: [walletId], references: [id], onDelete: Restrict)
+  fxSnapshot                  FxSnapshot               @relation(fields: [fxSnapshotId], references: [id], onDelete: Restrict)
+  rma                         Rma?                     @relation(fields: [rmaId], references: [id], onDelete: Restrict)
+  gatewayOperations           RefundGatewayOperation[]
+  createdAt                   DateTime                 @default(now())
+  updatedAt                   DateTime                 @updatedAt
+
+  @@index([orderId, status])
+  @@index([paymentIntentId])
+  @@index([rmaId, status])
+}
+
+model RefundGatewayOperation {
+  id                      String                     @id @default(uuid())
+  refundId                String
+  operation               RefundGatewayOperationType
+  provider                String
+  outcome                 String
+  providerStatus          String?
+  providerRefundReference String?
+  providerTransactionId   String?
+  bankTransactionId       String?
+  responseEvidence        Json?
+  idempotencyKey          String                     @unique
+  requestFingerprint      String
+  actorId                 String
+  occurredAt              DateTime                   @default(now())
+  refund                  Refund                     @relation(fields: [refundId], references: [id], onDelete: Restrict)
+  actor                   User                       @relation("RefundGatewayOperationActor", fields: [actorId], references: [id], onDelete: Restrict)
+
+  @@index([refundId, occurredAt])
+  @@index([provider, providerStatus, occurredAt])
+  @@index([actorId, occurredAt])
+}
+
+model Rma {
+  id                      String         @id @default(uuid())
+  reference               String         @unique
+  idempotencyKey          String         @unique
+  orderId                 String
+  shipmentId              String
+  customerId              String
+  status                  RmaStatus      @default(RETURN_REQUESTED)
+  reason                  RmaReason
+  description             String
+  evidenceRefs            Json
+  claimDeadlineAtCreation DateTime
+  createdAfterDeadline    Boolean        @default(false)
+  overrideReason          String?
+  overriddenById          String?
+  overriddenAt            DateTime?
+  slaDueAt                DateTime
+  firstResponseAt         DateTime?
+  resolvedAt              DateTime?
+  decision                RmaDecision    @default(PENDING)
+  liabilityParty          LiabilityParty @default(PENDING)
+  approvedRefundAmount    Decimal?       @db.Decimal(18, 2)
+  refundDecisionById      String?
+  refundDecisionAt        DateTime?
+  returnRequired          Boolean        @default(false)
+  returnInstructions      String?
+  returnTrackingNumber    String?
+  inspectionResult        String?
+  inspectionNotes         String?
+  inspectedById           String?
+  inspectedAt             DateTime?
+  adminNotes              String?
+  version                 Int            @default(1)
+  order                   Order          @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  shipment                Shipment       @relation(fields: [shipmentId], references: [id], onDelete: Restrict)
+  customer                User           @relation("RmaCustomer", fields: [customerId], references: [id], onDelete: Restrict)
+  overriddenBy            User?          @relation("RmaDeadlineOverrider", fields: [overriddenById], references: [id], onDelete: Restrict)
+  inspectedBy             User?          @relation("RmaInspector", fields: [inspectedById], references: [id], onDelete: Restrict)
+  refundDecisionBy        User?          @relation("RmaRefundDecisionMaker", fields: [refundDecisionById], references: [id], onDelete: Restrict)
+  items                   RmaItem[]
+  events                  RmaEvent[]
+  messages                RmaMessage[]
+  refunds                 Refund[]
+  tickets                 Ticket[]
+  createdAt               DateTime       @default(now())
+  updatedAt               DateTime       @updatedAt
+
+  @@index([customerId, createdAt])
+  @@index([orderId, status])
+  @@index([shipmentId, status])
+  @@index([claimDeadlineAtCreation])
+  @@index([status, slaDueAt])
+  @@index([refundDecisionById, refundDecisionAt])
+}
+
+model RmaItem {
+  id           String      @id @default(uuid())
+  rmaId        String
+  packageId    String
+  orderItemId  String?
+  quantity     Int         @default(1)
+  decision     RmaDecision @default(PENDING)
+  refundAmount Decimal?    @db.Decimal(18, 2)
+  rma          Rma         @relation(fields: [rmaId], references: [id], onDelete: Restrict)
+  package      Package     @relation(fields: [packageId], references: [id], onDelete: Restrict)
+  orderItem    OrderItem?  @relation(fields: [orderItemId], references: [id], onDelete: Restrict)
+  createdAt    DateTime    @default(now())
+
+  @@unique([rmaId, packageId])
+  @@index([packageId])
+  @@index([orderItemId])
+}
+
+model RmaEvent {
+  id             String     @id @default(uuid())
+  rmaId          String
+  fromStatus     RmaStatus?
+  toStatus       RmaStatus
+  actorId        String?
+  note           String?
+  metadata       Json?
+  idempotencyKey String?    @unique
+  occurredAt     DateTime   @default(now())
+  rma            Rma        @relation(fields: [rmaId], references: [id], onDelete: Restrict)
+  actor          User?      @relation("RmaEventActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([rmaId, occurredAt])
+  @@index([toStatus, occurredAt])
+}
+
+model RmaMessage {
+  id           String   @id @default(uuid())
+  rmaId        String
+  senderId     String
+  body         String
+  evidenceRefs Json?
+  createdAt    DateTime @default(now())
+  rma          Rma      @relation(fields: [rmaId], references: [id], onDelete: Restrict)
+  sender       User     @relation("RmaMessageSender", fields: [senderId], references: [id], onDelete: Restrict)
+
+  @@index([rmaId, createdAt])
+  @@index([senderId, createdAt])
+}
+
+model Ticket {
+  id                    String                     @id @default(uuid())
+  reference             String                     @unique
+  idempotencyKey        String                     @unique
+  customerId            String
+  assignedAgentId       String?
+  orderId               String?
+  rmaId                 String?
+  category              TicketCategory
+  subject               String
+  status                TicketStatus               @default(OPEN)
+  priority              TicketPriority             @default(NORMAL)
+  slaDueAt              DateTime
+  slaApproachingAt      DateTime?
+  firstResponseAt       DateTime?
+  resolvedAt            DateTime?
+  slaBreached           Boolean                    @default(false)
+  escalatedAt           DateTime?
+  version               Int                        @default(1)
+  customer              User                       @relation("TicketCustomer", fields: [customerId], references: [id], onDelete: Restrict)
+  assignedAgent         User?                      @relation("TicketAssignedAgent", fields: [assignedAgentId], references: [id], onDelete: Restrict)
+  order                 Order?                     @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  rma                   Rma?                       @relation(fields: [rmaId], references: [id], onDelete: Restrict)
+  conversation          Conversation?
+  aiHandoffConversation AiConversation?
+  events                TicketEvent[]
+  qualityReview         SupportQualityReview?
+  satisfactionRating    SupportSatisfactionRating?
+  createdAt             DateTime                   @default(now())
+  updatedAt             DateTime                   @updatedAt
+
+  @@index([customerId, createdAt])
+  @@index([assignedAgentId, status, slaDueAt])
+  @@index([status, slaDueAt])
+  @@index([orderId])
+  @@index([rmaId])
+}
+
+model SupportAgentProfile {
+  userId              String                   @id
+  availability        SupportAgentAvailability @default(AVAILABLE)
+  acceptingNewTickets Boolean                  @default(true)
+  maxActiveTickets    Int                      @default(20)
+  languages           String[]                 @default(["bn", "en"])
+  statusNote          String?
+  version             Int                      @default(1)
+  updatedById         String?
+  user                User                     @relation("SupportAgentProfileUser", fields: [userId], references: [id], onDelete: Cascade)
+  updatedBy           User?                    @relation("SupportAgentProfileUpdater", fields: [updatedById], references: [id], onDelete: SetNull)
+  createdAt           DateTime                 @default(now())
+  updatedAt           DateTime                 @updatedAt
+
+  @@index([availability, acceptingNewTickets])
+  @@index([updatedById, updatedAt])
+}
+
+model SupportQualityReview {
+  id             String                @id @default(uuid())
+  ticketId       String                @unique
+  agentId        String
+  reviewerId     String
+  score          Int
+  outcome        SupportQualityOutcome
+  summary        String
+  coachingAction String?
+  version        Int                   @default(1)
+  ticket         Ticket                @relation(fields: [ticketId], references: [id], onDelete: Restrict)
+  agent          User                  @relation("SupportQualityAgent", fields: [agentId], references: [id], onDelete: Restrict)
+  reviewer       User                  @relation("SupportQualityReviewer", fields: [reviewerId], references: [id], onDelete: Restrict)
+  reviewedAt     DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
+
+  @@index([agentId, reviewedAt])
+  @@index([reviewerId, reviewedAt])
+  @@index([outcome, reviewedAt])
+}
+
+model SupportOperatingPolicy {
+  id                        String   @id @default("default")
+  timeZone                  String   @default("Asia/Dhaka")
+  firstResponseBusinessDays Int      @default(5)
+  approachingHours          Int      @default(24)
+  businessWeekdays          Int[]    @default([1, 2, 3, 4, 5])
+  openingMinute             Int      @default(540)
+  closingMinute             Int      @default(1080)
+  requireScheduledShift     Boolean  @default(false)
+  version                   Int      @default(1)
+  updatedById               String?
+  updatedBy                 User?    @relation("SupportPolicyUpdater", fields: [updatedById], references: [id], onDelete: SetNull)
+  createdAt                 DateTime @default(now())
+  updatedAt                 DateTime @updatedAt
+
+  @@index([updatedById, updatedAt])
+}
+
+model SupportHoliday {
+  id        String   @id @default(uuid())
+  date      DateTime @unique @db.Date
+  name      String
+  createdAt DateTime @default(now())
+}
+
+model SupportShift {
+  id          String             @id @default(uuid())
+  agentId     String
+  startsAt    DateTime
+  endsAt      DateTime
+  status      SupportShiftStatus @default(SCHEDULED)
+  note        String?
+  createdById String
+  agent       User               @relation("SupportShiftAgent", fields: [agentId], references: [id], onDelete: Restrict)
+  createdBy   User               @relation("SupportShiftCreator", fields: [createdById], references: [id], onDelete: Restrict)
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  @@index([agentId, status, startsAt, endsAt])
+  @@index([startsAt, endsAt])
+}
+
+model SupportSatisfactionRating {
+  id                 String   @id @default(uuid())
+  ticketId           String   @unique
+  customerId         String
+  agentId            String
+  idempotencyKey     String   @unique
+  requestFingerprint String
+  score              Int
+  issueResolved      Boolean
+  comment            String?
+  ticketVersion      Int
+  ticket             Ticket   @relation(fields: [ticketId], references: [id], onDelete: Restrict)
+  customer           User     @relation("SupportSatisfactionCustomer", fields: [customerId], references: [id], onDelete: Restrict)
+  agent              User     @relation("SupportSatisfactionAgent", fields: [agentId], references: [id], onDelete: Restrict)
+  submittedAt        DateTime @default(now())
+
+  @@index([agentId, submittedAt])
+  @@index([customerId, submittedAt])
+  @@index([score, submittedAt])
+}
+
+model HelpCategory {
+  id            String        @id @default(uuid())
+  slug          String        @unique
+  nameEn        String
+  nameBn        String?
+  descriptionEn String?
+  descriptionBn String?
+  sortOrder     Int           @default(0)
+  isActive      Boolean       @default(false)
+  version       Int           @default(1)
+  createdById   String
+  updatedById   String
+  createdBy     User          @relation("HelpCategoryCreator", fields: [createdById], references: [id], onDelete: Restrict)
+  updatedBy     User          @relation("HelpCategoryUpdater", fields: [updatedById], references: [id], onDelete: Restrict)
+  articles      HelpArticle[]
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@index([isActive, sortOrder])
+}
+
+model HelpArticle {
+  id          String            @id @default(uuid())
+  slug        String            @unique
+  categoryId  String
+  titleEn     String
+  titleBn     String?
+  summaryEn   String
+  summaryBn   String?
+  bodyEn      String
+  bodyBn      String?
+  keywords    String[]          @default([])
+  status      HelpArticleStatus @default(DRAFT)
+  isFeatured  Boolean           @default(false)
+  sortOrder   Int               @default(0)
+  version     Int               @default(1)
+  publishedAt DateTime?
+  createdById String
+  updatedById String
+  category    HelpCategory      @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  createdBy   User              @relation("HelpArticleCreator", fields: [createdById], references: [id], onDelete: Restrict)
+  updatedBy   User              @relation("HelpArticleUpdater", fields: [updatedById], references: [id], onDelete: Restrict)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  @@index([status, categoryId, sortOrder])
+  @@index([status, isFeatured, sortOrder])
+  @@index([publishedAt])
+}
+
+model AiConversation {
+  id              String                  @id @default(uuid())
+  tokenHash       String                  @unique
+  customerId      String?
+  handoffTicketId String?                 @unique
+  status          AiConversationStatus    @default(ACTIVE)
+  expiresAt       DateTime
+  lastMessageAt   DateTime                @default(now())
+  customer        User?                   @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  handoffTicket   Ticket?                 @relation(fields: [handoffTicketId], references: [id], onDelete: SetNull)
+  messages        AiConversationMessage[]
+  createdAt       DateTime                @default(now())
+  updatedAt       DateTime                @updatedAt
+
+  @@index([status, expiresAt])
+  @@index([customerId, lastMessageAt])
+}
+
+model AiConversationMessage {
+  id               String                    @id @default(uuid())
+  conversationId   String
+  turnKey          String
+  role             AiConversationMessageRole
+  body             String
+  safetyCode       String?
+  handoffSuggested Boolean                   @default(false)
+  conversation     AiConversation            @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  createdAt        DateTime                  @default(now())
+
+  @@unique([conversationId, turnKey, role])
+  @@index([conversationId, createdAt])
+}
+
+model Conversation {
+  id            String                @id @default(uuid())
+  ticketId      String                @unique
+  status        ConversationStatus    @default(OPEN)
+  lastMessageAt DateTime              @default(now())
+  ticket        Ticket                @relation(fields: [ticketId], references: [id], onDelete: Restrict)
+  messages      ConversationMessage[]
+  createdAt     DateTime              @default(now())
+  updatedAt     DateTime              @updatedAt
+
+  @@index([status, lastMessageAt])
+}
+
+model ConversationMessage {
+  id                 String       @id @default(uuid())
+  idempotencyKey     String       @unique
+  requestFingerprint String?
+  conversationId     String
+  senderId           String
+  body               String
+  attachmentRefs     Json?
+  internalNote       Boolean      @default(false)
+  readAt             DateTime?
+  conversation       Conversation @relation(fields: [conversationId], references: [id], onDelete: Restrict)
+  sender             User         @relation("ConversationMessageSender", fields: [senderId], references: [id], onDelete: Restrict)
+  createdAt          DateTime     @default(now())
+
+  @@index([conversationId, createdAt])
+  @@index([senderId, createdAt])
+}
+
+model TicketEvent {
+  id             String        @id @default(uuid())
+  ticketId       String
+  fromStatus     TicketStatus?
+  toStatus       TicketStatus
+  actorId        String?
+  note           String?
+  metadata       Json?
+  idempotencyKey String?       @unique
+  occurredAt     DateTime      @default(now())
+  ticket         Ticket        @relation(fields: [ticketId], references: [id], onDelete: Restrict)
+  actor          User?         @relation("TicketEventActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([ticketId, occurredAt])
+  @@index([toStatus, occurredAt])
+}
+
+model PaymentIntent {
+  id                    String                   @id @default(uuid())
+  reference             String                   @unique
+  idempotencyKey        String                   @unique
+  provider              String
+  paymentMethodId       String?
+  sourcingQuoteId       String?                  @unique
+  orderId               String?                  @unique
+  fxSnapshotId          String?
+  providerTransactionId String?                  @unique
+  amount                Decimal                  @db.Decimal(12, 2)
+  currency              String
+  status                PaymentStatus            @default(CREATED)
+  gatewayPayload        Json?
+  createdAt             DateTime                 @default(now())
+  updatedAt             DateTime                 @updatedAt
+  sourcingQuote         SourcingQuote?           @relation(fields: [sourcingQuoteId], references: [id], onDelete: Restrict)
+  order                 Order?                   @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  fxSnapshot            FxSnapshot?              @relation(fields: [fxSnapshotId], references: [id], onDelete: Restrict)
+  paymentMethod         PaymentMethod?           @relation(fields: [paymentMethodId], references: [id], onDelete: Restrict)
+  refunds               Refund[]
+  riskDecision          PaymentRiskDecision?
+  settlementEntries     PaymentSettlementEntry[]
+}
+
+model ShippingPayment {
+  id              String        @id @default(uuid())
+  reference       String        @unique
+  idempotencyKey  String        @unique
+  provider        String
+  orderId         String        @unique
+  shippingQuoteId String        @unique
+  fxSnapshotId    String
+  amount          Decimal       @db.Decimal(12, 2)
+  currency        String
+  status          PaymentStatus @default(CREATED)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  order           Order         @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  shippingQuote   ShippingQuote @relation(fields: [shippingQuoteId], references: [id], onDelete: Restrict)
+  fxSnapshot      FxSnapshot    @relation(fields: [fxSnapshotId], references: [id], onDelete: Restrict)
+
+  @@index([status, createdAt])
+}
+
+model PaymentWebhookEvent {
+  id              String    @id @default(uuid())
+  provider        String
+  providerEventId String
+  signatureValid  Boolean
+  payload         Json
+  receivedAt      DateTime  @default(now())
+  processedAt     DateTime?
+
+  @@unique([provider, providerEventId])
+}
+
+model PaymentRiskDecision {
+  id                 String                  @id @default(uuid())
+  paymentIntentId    String                  @unique
+  decision           PaymentRiskDecisionType
+  reason             String
+  evidenceSnapshot   Json
+  amountSnapshot     Decimal                 @db.Decimal(12, 2)
+  currencySnapshot   String
+  reviewedById       String
+  idempotencyKey     String                  @unique
+  requestFingerprint String
+  reviewedAt         DateTime                @default(now())
+  paymentIntent      PaymentIntent           @relation(fields: [paymentIntentId], references: [id], onDelete: Restrict)
+  reviewedBy         User                    @relation("PaymentRiskReviewer", fields: [reviewedById], references: [id], onDelete: Restrict)
+
+  @@index([decision, reviewedAt])
+  @@index([reviewedById, reviewedAt])
+}
+
+model PaymentSettlementBatch {
+  id                     String                       @id @default(uuid())
+  reference              String                       @unique
+  provider               String
+  externalBatchReference String
+  settlementDate         DateTime
+  currency               String
+  status                 PaymentSettlementBatchStatus
+  sourceFingerprint      String                       @unique
+  idempotencyKey         String                       @unique
+  importedById           String
+  rowCount               Int
+  matchedCount           Int
+  exceptionCount         Int
+  importedAt             DateTime                     @default(now())
+  importedBy             User                         @relation("PaymentSettlementImporter", fields: [importedById], references: [id], onDelete: Restrict)
+  entries                PaymentSettlementEntry[]
+
+  @@unique([provider, externalBatchReference])
+  @@index([status, settlementDate])
+  @@index([importedById, importedAt])
+}
+
+model PaymentSettlementEntry {
+  id                    String                                @id @default(uuid())
+  batchId               String
+  rowNumber             Int
+  externalTransactionId String
+  bankTransactionId     String?
+  grossAmount           Decimal                               @db.Decimal(12, 2)
+  gatewayFee            Decimal                               @default(0) @db.Decimal(12, 2)
+  netAmount             Decimal                               @db.Decimal(12, 2)
+  currency              String
+  settledAt             DateTime
+  matchStatus           PaymentSettlementMatchStatus
+  exceptionReason       String?
+  paymentIntentId       String?
+  evidenceFingerprint   String
+  createdAt             DateTime                              @default(now())
+  batch                 PaymentSettlementBatch                @relation(fields: [batchId], references: [id], onDelete: Restrict)
+  paymentIntent         PaymentIntent?                        @relation(fields: [paymentIntentId], references: [id], onDelete: Restrict)
+  resolutionProposals   PaymentSettlementResolutionProposal[]
+  resolutionDecisions   PaymentSettlementResolutionDecision[]
+
+  @@unique([batchId, rowNumber])
+  @@index([matchStatus, createdAt])
+  @@index([externalTransactionId])
+  @@index([paymentIntentId])
+}
+
+model PaymentSettlementResolutionProposal {
+  id                        String                               @id @default(uuid())
+  settlementEntryId         String
+  resolutionType            PaymentSettlementResolutionType
+  reason                    String
+  evidenceReference         String
+  correctedPaymentReference String?
+  proposedById              String
+  idempotencyKey            String                               @unique
+  requestFingerprint        String
+  proposedAt                DateTime                             @default(now())
+  settlementEntry           PaymentSettlementEntry               @relation(fields: [settlementEntryId], references: [id], onDelete: Restrict)
+  proposedBy                User                                 @relation("PaymentSettlementProposer", fields: [proposedById], references: [id], onDelete: Restrict)
+  decision                  PaymentSettlementResolutionDecision?
+
+  @@index([settlementEntryId, proposedAt], map: "PaymentSettlementResolutionProposal_settlementEntryId_proposedA")
+  @@index([proposedById, proposedAt])
+}
+
+model PaymentSettlementResolutionDecision {
+  id                 String                                  @id @default(uuid())
+  proposalId         String                                  @unique
+  settlementEntryId  String
+  decision           PaymentSettlementResolutionDecisionType
+  reason             String
+  reviewedById       String
+  idempotencyKey     String                                  @unique
+  requestFingerprint String
+  reviewedAt         DateTime                                @default(now())
+  proposal           PaymentSettlementResolutionProposal     @relation(fields: [proposalId], references: [id], onDelete: Restrict)
+  settlementEntry    PaymentSettlementEntry                  @relation(fields: [settlementEntryId], references: [id], onDelete: Restrict)
+  reviewedBy         User                                    @relation("PaymentSettlementDecisionReviewer", fields: [reviewedById], references: [id], onDelete: Restrict)
+
+  @@index([settlementEntryId, decision, reviewedAt], map: "PaymentSettlementResolutionDecision_settlementEntryId_decision_")
+  @@index([reviewedById, reviewedAt])
+}
+
+model LaunchReadinessItem {
+  id                String                  @id @default(uuid())
+  key               String                  @unique
+  category          LaunchReadinessCategory
+  title             String
+  requirement       String
+  status            LaunchReadinessStatus   @default(NOT_STARTED)
+  isRequired        Boolean                 @default(true)
+  isBaseline        Boolean                 @default(false)
+  ownerName         String?
+  dueAt             DateTime?
+  evidenceReference String?
+  evidenceNote      String?
+  blockerReason     String?
+  version           Int                     @default(1)
+  createdById       String?
+  updatedById       String?
+  verifiedById      String?
+  verifiedAt        DateTime?
+  createdBy         User?                   @relation("LaunchReadinessCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  updatedBy         User?                   @relation("LaunchReadinessUpdater", fields: [updatedById], references: [id], onDelete: SetNull)
+  verifiedBy        User?                   @relation("LaunchReadinessVerifier", fields: [verifiedById], references: [id], onDelete: SetNull)
+  events            LaunchReadinessEvent[]
+  createdAt         DateTime                @default(now())
+  updatedAt         DateTime                @updatedAt
+
+  @@index([status, category])
+  @@index([isRequired, status])
+  @@index([dueAt])
+}
+
+model LaunchReadinessEvent {
+  id                        String                 @id @default(uuid())
+  itemId                    String
+  actorId                   String?
+  fromStatus                LaunchReadinessStatus?
+  toStatus                  LaunchReadinessStatus
+  itemVersion               Int
+  ownerNameSnapshot         String?
+  dueAtSnapshot             DateTime?
+  evidenceReferenceSnapshot String?
+  evidenceNoteSnapshot      String?
+  blockerReasonSnapshot     String?
+  item                      LaunchReadinessItem    @relation(fields: [itemId], references: [id], onDelete: Restrict)
+  actor                     User?                  @relation("LaunchReadinessEventActor", fields: [actorId], references: [id], onDelete: SetNull)
+  occurredAt                DateTime               @default(now())
+
+  @@unique([itemId, itemVersion])
+  @@index([itemId, occurredAt])
+  @@index([toStatus, occurredAt])
+}

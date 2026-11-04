@@ -1,0 +1,99 @@
+name: DeshDak quality gate
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: crossly-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: crossly_ci
+          POSTGRES_USER: crossly
+          POSTGRES_PASSWORD: crossly_ci_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U crossly -d crossly_ci"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgresql://crossly:crossly_ci_password@localhost:5432/crossly_ci?schema=public
+      AUTH_SECRET: ci-only-auth-secret-with-more-than-thirty-two-characters
+      AUTH_ISSUER: http://localhost:3000
+      APP_BASE_URL: http://localhost:3000
+      TEST_BASE_URL: http://localhost:3000
+      AUTH_OUTBOX_ENCRYPTION_KEY: MTIzNDU2Nzg5MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTI=
+      MAINTENANCE_JOB_SECRET: ci-only-maintenance-secret-with-more-than-32-characters
+      CI: true
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Use Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install locked dependencies
+        run: |
+          npm install --global npm@11.6.2
+          npm ci
+
+      - name: Validate and prepare database
+        run: |
+          npx prisma validate
+          npm run db:migration:verify
+          npm run db:deploy
+          npm run db:seed
+          npm run test:identifier-database
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Type check
+        run: npm run typecheck
+
+      - name: Verify production and recovery safeguards
+        run: |
+          npm run test:production-config
+          npm run test:operations-safety
+          npm run test:performance-policy
+          npm run test:security-regressions
+          npm run test:container-security
+          npm run test:website-media-safety
+
+      - name: Verify API contract
+        run: npm run api:contract
+
+      - name: Verify financial and order rules
+        run: |
+          npm run test:financial-rules
+          npm run test:csrf-rules
+          npm run test:identifier-rules
+          npm run test:identifier-assets
+
+      - name: Reject high-severity dependency vulnerabilities
+        run: npm run test:dependency-audit
+
+      - name: Build production application
+        run: npm run build
+
+      - name: Run complete isolated launch verification
+        run: npm run verify:launch:isolated

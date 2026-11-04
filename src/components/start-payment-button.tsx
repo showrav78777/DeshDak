@@ -1,0 +1,13 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { usePaymentMethods } from "@/components/use-payment-methods";
+
+export function StartPaymentButton({ quoteId, walletBalance, quoteTotal }: { quoteId: string; walletBalance: string; quoteTotal: string }) {
+  const router = useRouter(); const [provider, setProvider] = useState("WALLET"); const [message, setMessage] = useState(""); const [loading, setLoading] = useState(false); const available = usePaymentMethods("BD", "BDT", quoteTotal);
+  async function startPayment() { setMessage(""); setLoading(true); const wallet = provider === "WALLET"; const response = await fetch(wallet ? "/api/v1/payments/wallet" : "/api/v1/payments/checkout", { method: "POST", headers: { "Content-Type": "application/json", "Idempotency-Key": crypto.randomUUID() }, body: JSON.stringify(wallet ? { quoteId } : { quoteId, provider }) }); const result = await response.json(); setLoading(false); if (!response.ok) return setMessage(result.error?.message ?? "Unable to begin payment."); if (wallet) { setMessage(`Wallet payment ${result.data.paymentIntent.reference} completed. Your order was created.`); router.push("/orders"); router.refresh(); } else if (result.data.nextAction === "REDIRECT" && typeof result.data.redirectUrl === "string") window.location.assign(result.data.redirectUrl); else setMessage("The payment page was not returned. No payment was taken; please retry."); }
+  const canUseWallet = Number(walletBalance) >= Number(quoteTotal);
+  const noUsableMethod = !canUseWallet && !available.loading && available.methods.length === 0;
+  return <div className="payment-start"><select aria-label="Payment method" value={provider} onChange={(event) => setProvider(event.target.value)}><option disabled={!canUseWallet} value="WALLET">Wallet — ৳{walletBalance}{canUseWallet ? "" : " (insufficient)"}</option>{available.methods.map((method) => <option key={`${method.code}:${method.currency}`} value={method.code}>{method.displayName} — {method.currency} {method.payableAmount}</option>)}</select><button className="button dark" disabled={loading || available.loading || noUsableMethod || (provider === "WALLET" && !canUseWallet)} onClick={startPayment} type="button">{loading ? "Preparing…" : available.loading ? "Checking methods…" : provider === "WALLET" ? "Pay securely from wallet" : "Continue to secure payment"}</button>{available.error ? <p className="form-error">{available.error}</p> : null}{noUsableMethod ? <p className="form-help">No approved payment method is available for this quotation yet.</p> : null}{message ? <p className="form-help">{message}</p> : null}</div>;
+}

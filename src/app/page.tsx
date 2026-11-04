@@ -1,0 +1,52 @@
+import { readWebsiteAppearance } from "@/modules/advertisements/appearance-store";
+import { PromotionalVideo } from "@/components/promotional-video";
+import Link from "next/link";
+import { HomeBannerCarousel } from "@/components/home-banner-carousel";
+import { AddToCartButton } from "@/components/add-to-cart-button";
+import { HomepageReels } from "@/components/homepage-reels";
+import { MarketRecommendations } from "@/components/market-recommendations";
+import { StoreHeader } from "@/components/store-header";
+import { serverMarketCountry } from "@/lib/customer-market";
+import { formatMarketMoney, getMarketMoneyContext } from "@/lib/market-money";
+import { prisma } from "@/lib/prisma";
+import { getServerSession } from "@/lib/server-session";
+
+const serviceJourneys = [["↗", "Buy & Ship", "Paste a product link and approve your sourcing quote.", "/buy-ship"], ["▣", "Ship for Me", "Send an existing supplier parcel to our warehouse.", "/ship-for-me"], ["◎", "Track every stage", "Follow warehouse, freight, customs, and delivery updates.", "/orders"], ["?", "Need support?", "Start with the assistant or speak to the support team.", "/support"]];
+const searches = ["Smart watch", "Laptop", "Sneakers", "Kitchen tools", "Phone case", "Makeup", "Baby products", "Car accessories"];
+
+export const dynamic = "force-dynamic";
+
+export default async function Home() {
+  const [categories, session, featuredProducts] = await Promise.all([
+    prisma.category.findMany({ where: { isActive: true, showOnHomepage: true }, select: { id: true, slug: true, nameEn: true, nameBn: true, description: true, icon: true }, orderBy: [{ sortOrder: "asc" }, { nameEn: "asc" }], take: 12 }),
+    getServerSession(),
+    prisma.product.findMany({ where: { status: "ACTIVE", complianceStatus: "CLEAR", deletedAt: null, category: { is: { isActive: true } }, OR: [{ sellerProfileId: null }, { sellerProfile: { is: { status: "APPROVED" } } }] }, select: { id: true, titleEn: true, shortDescription: true, originCountryCode: true, minimumOrderQuantity: true, category: { select: { nameEn: true } }, sellerProfile: { select: { businessName: true } }, variants: { select: { id: true, priceBdt: true, inventoryQuantity: true, stockStatus: true }, orderBy: { createdAt: "asc" }, take: 1 } }, orderBy: [{ updatedAt: "desc" }], take: 1 }),
+  ]);
+  const featuredProduct = featuredProducts[0];
+  const featuredVariant = featuredProduct?.variants[0];
+  const marketCountry = await serverMarketCountry(session);
+  const isBangladeshMarket = marketCountry === "BD";
+  const money = await getMarketMoneyContext(marketCountry, session?.roles.includes("customer_business") ? "BUSINESS" : "PERSONAL");
+  const featuredUnavailable = !featuredVariant || featuredVariant.inventoryQuantity === 0 || ["OUT_OF_STOCK", "UNAVAILABLE", "SOLD_OUT"].includes(featuredVariant.stockStatus ?? "");
+  const appearance = await readWebsiteAppearance();
+  const homepageSections = {
+    promotionVideo: appearance.content.video?.enabled ? <PromotionalVideo url={appearance.content.video.url} title={appearance.content.video.title}/> : null,
+    searches: (<section className="popular-strip"><span>Popular searches</span>{searches.map((search) => <Link href={`/products?q=${encodeURIComponent(search)}`} key={search}>{search}</Link>)}</section>),
+    discovery: (<section className="home-discovery-callout" aria-label="AI-powered product discovery"><div><p className="eyebrow">ONE SMART SEARCH</p><h2>Search, upload a product photo, or ask the shopping assistant.</h2><p>Use the search bar above. Product search and the assistant are public; personal orders and payments stay protected behind sign-in.</p></div><div className="home-discovery-callout-actions"><Link className="button primary" href="/products">Browse product search</Link><Link className="button secondary" href="/reels">Watch & shop Reels</Link></div></section>),
+    recommendations: (<MarketRecommendations businessCustomer={session?.roles.includes("customer_business") ?? false} marketCountry={marketCountry} />),
+    reels: (<HomepageReels businessCustomer={session?.roles.includes("customer_business") ?? false} marketCountry={marketCountry} />),
+    featured: (featuredProduct && featuredVariant ? <section className="featured-product-banner" aria-labelledby="featured-product-title"><div className="featured-product-art" aria-hidden="true"><span>✦</span><b>{featuredProduct.originCountryCode}</b></div><div className="featured-product-copy"><p className="eyebrow">FEATURED MARKETPLACE PRODUCT</p><small>{featuredProduct.sellerProfile?.businessName ?? featuredProduct.category?.nameEn ?? "Approved DeshDak catalog"}</small><h2 id="featured-product-title">{featuredProduct.titleEn}</h2><p>{featuredProduct.shortDescription ?? "Open the approved listing for product options, specifications, shipping information, images, and videos."}</p><div className="featured-product-price"><b>{featuredVariant.priceBdt ? formatMarketMoney(featuredVariant.priceBdt, money) : "Request price"}</b><span>Minimum order: {featuredProduct.minimumOrderQuantity}</span></div><div className="featured-product-actions"><AddToCartButton compact disabled={featuredUnavailable} productVariantId={featuredVariant.id} quantity={Math.min(featuredProduct.minimumOrderQuantity, 99)} /><Link className="featured-product-details" href={`/products/${featuredProduct.id}`}>View full details →</Link></div></div></section> : null),
+    stores: (<section className="export-marketplace-band"><div><p className="eyebrow">BANGLADESH → WORLDWIDE</p><h2>Buy from verified Bangladesh stores.</h2><p>International customers can discover approved Bangladesh products and stores. DeshDak will coordinate export delivery through enabled countries and shipping lanes.</p></div><div><Link className="button primary" href="/stores">Explore Bangladesh stores</Link><Link className="button secondary" href="/seller/apply">Open a seller store</Link></div></section>),
+    services: (<section className="discovery-section"><div className="section-heading"><div><p className="eyebrow">ONE CONNECTED SERVICE</p><h2>Shopping and delivery, in one place.</h2></div><Link href="/help">How DeshDak works →</Link></div><div className="discovery-grid">{serviceJourneys.map(([icon, title, label, href]) => <article className="discovery-card" key={title}><div className="discovery-art">{icon}</div><p>{title}</p><h3>{label}</h3><Link href={href}>Open {title} →</Link></article>)}</div></section>),
+    categories: (<section className="category-section" id="categories"><div className="section-heading"><div><p className="eyebrow">SHOP BY CATEGORY</p><h2>{isBangladeshMarket ? "Explore global shopping categories." : "Explore Bangladesh shopping categories."}</h2></div><p className="section-note">Browse freely. You only need an account when you are ready to order.</p></div>{categories.length ? <div className="category-grid">{categories.map((category) => <Link className="category-card" href={`/products?category=${encodeURIComponent(category.slug)}`} key={category.id}><span className="category-icon">{category.icon ?? "◇"}</span><strong>{category.nameEn}</strong><small>{category.description ?? category.nameBn ?? "Browse approved products in this category."}</small><i>Explore →</i></Link>)}</div> : <div className="catalog-empty"><span>▦</span><h2>Categories are being prepared</h2><p>Approved storefront categories will appear here after they are enabled by the administrator.</p></div>}</section>),
+    steps: (<section className="how-band" id="how-it-works"><div><p className="eyebrow">SIMPLE, CLEAR, TRACKABLE</p><h2>Buy & Ship in four steps.</h2></div><ol><li><span>01</span><b>Share the product</b><p>Paste a link from your preferred China source.</p></li><li><span>02</span><b>Approve your quote</b><p>See product, service, and estimated shipping costs.</p></li><li><span>03</span><b>We source & check</b><p>We receive, inspect, and measure it in China.</p></li><li><span>04</span><b>Track to your door</b><p>Follow every shipment update to Bangladesh.</p></li></ol></section>),
+    trust: (<section className="trust-section"><div className="trust-copy"><p className="eyebrow">SHOP WITH CONFIDENCE</p><h2>Clear steps. Real updates. No guessing.</h2><p>Every Buy & Ship request has a reference, quote history, payment record, and order timeline.</p><Link className="button dark" href="/register">Create your account</Link></div><div className="trust-grid"><div><b>Transparent quote</b><span>Product, service, and estimated shipping shown before you approve.</span></div><div><b>Warehouse process</b><span>Receive, inspect, measure, and prepare for shipment.</span></div><div><b>Secure account</b><span>Human verification, protected sessions, and audit-ready actions.</span></div><div><b>Bangla & English support</b><span>Designed for Bangladesh customers and sellers.</span></div></div></section>),
+  };
+  return <main className="storefront">
+    <StoreHeader session={session} />
+    <section className="market-source-strip" aria-label="Available product markets"><span>DeshDak marketplace</span>{isBangladeshMarket ? <><b>🌍 Global products first</b><b>🇧🇩 Bangladesh stores</b></> : <><b>🇧🇩 Bangladesh products first</b><b>🌍 Global marketplace</b></>}<span className="coming-soon">More countries are activated by admin</span></section>
+    <section className="commerce-hero"><aside className="category-menu"><strong>Browse categories</strong>{categories.slice(0, 7).map((category) => <Link href={`/products?category=${encodeURIComponent(category.slug)}`} key={category.id}><span>{category.icon ?? "◇"}</span>{category.nameEn}<i>›</i></Link>)}<Link className="view-all" href="/products">View all products →</Link></aside><HomeBannerCarousel bangladesh={isBangladeshMarket} /><div className="hero-shortcuts">{isBangladeshMarket ? <Link href="/buy-ship"><span>🔗</span><b>Paste a product link</b><small>Sign in to request an item</small></Link> : <Link href="/stores"><span>🏪</span><b>Bangladesh stores</b><small>Verified local businesses</small></Link>}<Link href="/products"><span>▦</span><b>Browse products</b><small>No login required</small></Link><Link href="/seller/apply"><span>🏪</span><b>Bangladesh seller</b><small>Sell local products worldwide</small></Link></div></section>
+    {appearance.content.sections.filter(section=>section.enabled).map(section=><div className="homepage-managed-section" key={section.id} data-homepage-section={section.id}>{homepageSections[section.id]}</div>)}
+
+  </main>;
+}

@@ -1,0 +1,334 @@
+.support-admin-stats {
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+}
+
+.support-agent-actions,
+.support-agent-revoke {
+  align-items: end;
+  display: grid !important;
+  gap: 5px !important;
+  justify-items: end;
+}
+
+.support-agent-revoke button {
+  background: #fff;
+  border: 1px solid #d8aaa5;
+  border-radius: 7px;
+  color: #9c3b32;
+  cursor: pointer;
+  font: inherit;
+  font-size: 8px;
+  font-weight: 900;
+  padding: 5px 8px;
+}
+
+.support-agent-revoke button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.support-agent-revoke small {
+  color: #a33d34 !important;
+  max-width: 150px;
+  text-align: right;
+}
+
+.support-oversight-notice {
+  background: #edf4f7;
+  border-left: 3px solid #3e718a;
+  border-radius: 8px;
+  color: #496575;
+  font-size: 10px;
+  line-height: 1.6;
+  margin: 12px 0 0;
+  padding: 13px;
+}
+
+.support-agent-row {
+  flex-wrap: wrap;
+}
+
+.support-agent-profile {
+  border-top: 1px dashed #dce6eb;
+  flex-basis: 100%;
+  padding-top: 8px;
+}
+
+.support-agent-profile summary {
+  color: #416777;
+  cursor: pointer;
+  font-size: 9px;
+  font-weight: 900;
+}
+
+.support-agent-profile form,
+.support-quality-form {
+  display: grid;
+  gap: 9px;
+  margin-top: 10px;
+}
+
+.support-agent-profile label,
+.support-quality-form label {
+  display: grid;
+  font-size: 9px;
+  font-weight: 800;
+  gap: 5px;
+}
+
+.support-agent-profile input,
+.support-agent-profile select,
+.support-quality-form select,
+.support-quality-form textarea {
+  background: #fff;
+  border: 1px solid #c8d6de;
+  border-radius: 8px;
+  font: inherit;
+  padding: 8px;
+  width: 100%;
+}
+
+.support-admin-settings form > fieldset {
+  border: 0;
+  display: grid;
+  gap: 16px;
+  grid-column: 1 / -1;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 0;
+  min-width: 0;
+  padding: 0;
+}
+.support-admin-settings fieldset > :is(p,button,.support-check,.support-day-grid) { grid-column: 1 / -1; }
+.support-admin-settings :is(label,.form-help,.support-empty-copy,.support-schedule-list small,.support-day-grid > span) { font-size: 14px; line-height: 1.6; }
+.support-admin-settings :is(.support-policy-form,.support-holiday-form,.support-shift-form) :is(input,select) { box-sizing: border-box; font-size: 16px; min-height: 44px; min-width: 0; width: 100%; }
+.support-admin-settings input[type=checkbox] { height: 20px; min-height: 20px; width: 20px; }
+.support-admin-settings :is(.support-check,.support-day-grid label) { align-items: center; display: flex; gap: 8px; min-height: 44px; }
+.support-admin-settings .support-day-grid { gap: 8px 16px; }
+.support-admin-settings button { font-size: 14px; min-height: 48px; padding: 10px 14px; }
+.support-admin-settings .support-schedule-list b { font-size: 16px; overflow-wrap: anywhere; }
+.support-admin-settings .support-schedule-list > div { align-items: start; gap: 16px; }
+.support-admin-settings .support-schedule-list > div > span { min-width: 0; overflow-wrap: anywhere; }
+.support-admin-settings .support-policy-remove { justify-items: end; max-width: 50%; }
+.support-admin-settings :is(button,input,select,a):focus-visible { outline: 3px solid #167e95; outline-offset: 3px; }
+@media (max-width: 1100px) {
+  .support-admin-settings .support-settings-grid { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 680px) {
+  .support-admin-settings form > fieldset { grid-template-columns: minmax(0, 1fr); }
+  .support-admin-settings .support-schedule-list > div { flex-direction: column; }
+  .support-admin-settings .support-policy-remove { justify-items: start; max-width: none; }
+}
+
+.support-settings-link {
+  display: inline-flex;
+  margin-top: 12px;
+}
+
+.support-settings-grid {
+  align-items: start;
+  display: grid;
+  gap: 20px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: 28px;
+}
+
+.support-shift-panel {
+  grid-column: 1 / -1;
+}
+
+.support-policy-form,
+.support-holiday-form,
+.support-shift-form {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.support-policy-form label,
+.support-holiday-form label,
+.support-shift-form label {
+  display: grid;
+  font-size: 9px;
+  font-weight: 800;
+  gap: 5px;
+}
+
+.support-policy-form input,
+.support-holiday-form input,
+.support-shift-form input,
+.support-shift-form select {
+  border: 1px solid #c8d6de;
+  border-radius: 8px;
+  font: inherit;
+  padding: 9px;
+  width: 100%;
+}
+
+.support-policy-form .support-check,
+.support-policy-form .form-help,
+.support-policy-form .form-error,
+.support-policy-form .form-success,
+.support-policy-form .button,
+.support-day-grid,
+.support-holiday-form .form-error,
+.support-holiday-form .button,
+.support-shift-form .form-error,
+.support-shift-form .button {
+  grid-column: 1 / -1;
+}
+
+.support-day-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.support-day-grid > span {
+  flex-basis: 100%;
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.support-day-grid label {
+  align-items: center;
+  display: flex;
+  gap: 4px;
+}
+
+.support-schedule-list {
+  border-top: 1px solid #e2eaee;
+  display: grid;
+  margin-top: 16px;
+}
+
+.support-schedule-list > div {
+  align-items: center;
+  border-bottom: 1px solid #e8eef1;
+  display: flex;
+  gap: 14px;
+  justify-content: space-between;
+  padding: 11px 0;
+}
+
+.support-schedule-list span {
+  display: grid;
+  gap: 3px;
+}
+
+.support-schedule-list b {
+  font-size: 10px;
+}
+
+.support-schedule-list small {
+  color: #6e8290;
+  font-size: 8px;
+}
+
+.support-policy-remove button {
+  background: #fff;
+  border: 1px solid #d8aaa5;
+  border-radius: 7px;
+  color: #9c3b32;
+  cursor: pointer;
+  font: inherit;
+  font-size: 8px;
+  font-weight: 900;
+  padding: 6px 9px;
+}
+
+@media (max-width: 780px) {
+  .support-settings-grid,
+  .support-policy-form,
+  .support-holiday-form,
+  .support-shift-form {
+    grid-template-columns: 1fr;
+  }
+
+  .support-shift-panel,
+  .support-policy-form .support-check,
+  .support-policy-form .form-help,
+  .support-policy-form .form-error,
+  .support-policy-form .form-success,
+  .support-policy-form .button,
+  .support-day-grid,
+  .support-holiday-form .form-error,
+  .support-holiday-form .button,
+  .support-shift-form .form-error,
+  .support-shift-form .button {
+    grid-column: auto;
+  }
+}
+
+.support-agent-profile .support-check {
+  align-items: center;
+  display: flex;
+  gap: 7px;
+}
+
+.support-agent-profile .support-check input {
+  width: auto;
+}
+
+.support-agent-profile .button,
+.support-quality-form .button {
+  border: 0;
+  justify-self: start;
+}
+
+.support-quality-form textarea {
+  min-height: 85px;
+  resize: vertical;
+}
+
+/* Keep supervisor work readable without changing the customer support portal. */
+.support-admin-overview .support-admin-grid { grid-template-columns: minmax(0, 1fr); }
+.support-admin-guide { background: #edf6f8; border: 1px solid #c9dfe7; border-radius: 16px; margin-top: 24px; padding: 20px 24px; }
+.support-admin-guide h2 { font-size: 18px; margin: 0 0 12px; }
+.support-admin-guide ol { display: grid; gap: 10px; grid-template-columns: repeat(3, minmax(0, 1fr)); padding-left: 20px; }
+.support-admin-guide li, .support-admin-guide p { font-size: 14px; line-height: 1.6; }
+.support-admin-overview .support-admin-stats { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.support-admin-overview .support-admin-stats span { font-size: 14px; }
+.support-workforce-intro { align-items: start; display: grid; gap: 24px; grid-template-columns: 1fr 1fr; }
+.support-admin-overview .support-agent-list { align-items: start; border: 0; gap: 20px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.support-admin-overview .support-agent-row { align-items: start; background: #f8fbfc; border: 1px solid #dce6eb; border-radius: 12px; display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr) auto; min-width: 0; padding: 16px; }
+.support-admin-overview .support-agent-row > span { min-width: 0; overflow-wrap: anywhere; }
+.support-admin-overview .support-agent-row b { font-size: 16px; }
+.support-admin-overview .support-agent-row small,
+.support-admin-overview .support-agent-row em,
+.support-admin-overview .support-oversight-notice { font-size: 14px; line-height: 1.5; }
+.support-admin-overview .support-agent-profile { grid-column: 1 / -1; min-width: 0; }
+.support-admin-overview .support-agent-profile form,
+.support-admin-ticket .support-quality-form { gap: 16px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.support-admin-overview .support-agent-profile form > :is(p,button,.support-check,label:last-of-type),
+.support-admin-ticket .support-quality-form > :is(p,button,label:has(textarea)) { grid-column: 1 / -1; }
+.support-admin-overview :is(.support-agent-profile,.support-agent-form) label,
+.support-admin-ticket .support-quality-form label { font-size: 14px; gap: 8px; min-width: 0; }
+.support-admin-overview :is(.support-agent-profile,.support-agent-form) :is(input,select),
+.support-admin-ticket .support-quality-form :is(select,textarea) { box-sizing: border-box; font-size: 16px; min-height: 44px; min-width: 0; padding: 10px 12px; width: 100%; }
+.support-admin-overview .support-agent-profile .support-check input { min-height: 20px; width: 20px; }
+.support-admin-overview :is(button,summary),
+.support-admin-ticket .support-quality-form button { align-content: center; box-sizing: border-box; font-size: 14px; min-height: 44px; padding: 10px 14px; }
+.support-admin-overview .support-agent-profile .button,
+.support-admin-ticket .support-quality-form .button { background: #1b4f72; border-radius: 8px; color: #fff; font-weight: 700; }
+.support-admin-overview :is(button,input,select,summary):focus-visible,
+.support-admin-ticket :is(button,select,textarea):focus-visible { outline: 3px solid #167e95; outline-offset: 3px; }
+.support-admin-ticket .support-workspace { max-width: none; }
+.admin-workspace-main .support-admin-ticket > .support-portal-nav { display: none; }
+.support-admin-ticket .support-admin-review { margin-top: 20px; }
+.support-admin-ticket .support-customer-context :is(dt,dd,span,small) { font-size: 14px; overflow-wrap: anywhere; }
+.support-admin-overview .admin-ticket-list > article { gap: 20px; overflow-wrap: anywhere; }
+@media (max-width: 1100px) {
+  .support-workforce-intro, .support-admin-overview .support-agent-list { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 680px) {
+  .support-admin-guide { padding: 16px; }
+  .support-admin-guide ol,
+  .support-admin-overview .support-agent-profile form,
+  .support-admin-ticket .support-quality-form { grid-template-columns: minmax(0, 1fr); }
+  .support-admin-overview .support-admin-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .support-admin-overview .support-agent-row { grid-template-columns: minmax(0, 1fr); }
+  .support-admin-overview .support-agent-actions { justify-items: start; }
+  .support-admin-overview .support-agent-revoke small { max-width: none; text-align: left; }
+  .support-admin-overview .admin-ticket-list > article { align-items: stretch; flex-direction: column; }
+  .support-admin-overview .admin-ticket-list > article > div:last-child { max-width: none; }
+}

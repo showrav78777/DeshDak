@@ -1,0 +1,44 @@
+/* Mobile customer navigation: one calm header for discovery and one thumb-friendly bottom bar. */
+@media(max-width:850px){
+  .marketplace-header{background:#fff;box-shadow:0 6px 18px #17384a0a;position:sticky;top:0;z-index:880}
+  .marketplace-header-main{gap:9px;grid-template-columns:auto minmax(0,1fr) auto;padding:10px 14px 12px}
+  .marketplace-header .brand{align-items:center}.marketplace-header .brand-mark{box-shadow:0 5px 12px #0b4d772b;height:34px;width:34px}
+  /* Reels remains one tap away in the highlighted center bottom action. */
+  .marketplace-header .header-reels-button{display:none}
+  .marketplace-header .header-actions{gap:7px}
+  .marketplace-header .header-actions .market-country-selector{align-items:center;background:#f2f7f9;border:1px solid #dce9ed;border-radius:12px;display:flex!important;height:38px;justify-content:center;min-width:42px;padding:0;position:relative}
+  .marketplace-header .market-country-selector>span{display:none}.marketplace-header .market-country-selector>strong{color:#0c6687;display:block;font-size:10px;font-weight:900;letter-spacing:.04em}.marketplace-header .market-country-selector>select{cursor:pointer;inset:0;max-width:none;opacity:0;position:absolute;width:100%}
+  /* Transaction actions stay in the top bar; discovery stays in the bottom bar. */
+  .marketplace-header .header-actions .header-orders-link{display:flex!important}
+  .marketplace-header .header-icon-link,.marketplace-header .notification-bell{background:#f2f7f9;border-color:#dce9ed;border-radius:12px;height:38px;width:38px}
+  .marketplace-header .customer-menu summary{background:#f2f7f9;border:1px solid #dce9ed;border-radius:12px;height:38px;width:38px}
+  .marketplace-header .customer-menu summary i{box-shadow:0 3px 8px #0d6d9133;height:30px;width:30px}
+  .marketplace-header-search .unified-search-bar{background:#f7fafb;border-color:#0f7196;border-radius:14px;box-shadow:inset 0 1px 0 #fff;height:48px}
+  .marketplace-header-search .unified-search-bar:focus-within{background:#fff;box-shadow:0 0 0 4px #1174991a}
+  .marketplace-header-search .unified-submit{border-radius:10px;margin:4px;min-width:64px}
+  .marketplace-header-secondary{display:none!important}
+
+  .mobile-marketplace-nav-spacer{height:calc(82px + env(safe-area-inset-bottom))}
+  .mobile-marketplace-nav{background:#fffffff2;border-top:1px solid #d8e4e9;box-shadow:0 -10px 28px #123b5518;height:calc(73px + env(safe-area-inset-bottom));padding:7px 8px env(safe-area-inset-bottom);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
+  .mobile-marketplace-nav>a{border-radius:14px;color:#718694;gap:4px;min-height:59px;padding:4px 1px;transition:background .18s ease,color .18s ease,transform .18s ease}
+  .mobile-marketplace-nav>a.is-active{background:#eaf5f8;color:#0c6687}
+  .mobile-nav-icon{height:27px;width:31px}.mobile-nav-icon svg{height:22px;stroke-width:2;width:22px}
+  .mobile-marketplace-nav small{font-size:10px;font-weight:900;letter-spacing:.01em}
+  .mobile-nav-icon>b{border-color:#fff;box-shadow:0 2px 6px #9a2a252b;right:-5px;top:-5px}
+  .mobile-marketplace-nav .mobile-nav-reels{background:transparent!important;color:#fff;transform:translateY(-17px)}
+  .mobile-marketplace-nav .mobile-nav-reels .mobile-nav-icon{background:linear-gradient(145deg,#ff7646,#cb3e42);border:4px solid #f8fafb;box-shadow:0 10px 22px #c8463b45;height:56px;width:56px}
+  .mobile-marketplace-nav .mobile-nav-reels .mobile-nav-icon:after{border:1px solid #fff8;border-radius:50%;content:"";inset:4px;position:absolute}
+  .mobile-marketplace-nav .mobile-nav-reels .mobile-nav-icon svg{height:27px;position:relative;width:27px;z-index:1}
+  .mobile-marketplace-nav .mobile-nav-reels small{box-shadow:0 3px 10px #17384a1a;font-size:9px;margin-top:1px;padding:3px 7px}
+  .mobile-marketplace-nav .mobile-nav-reels.is-active small{background:#fff3ef;color:#c63e35}
+}
+@media(max-width:400px){
+  .marketplace-header-main{padding-inline:10px}
+  .marketplace-header .brand span:last-child{display:inline;font-size:14px}
+  .marketplace-header .notification-bell{display:none}
+  /* Image search remains available on narrow phones; Ask AI is available from the floating action. */
+  .marketplace-header-search .unified-image-button{display:flex}
+  .mobile-marketplace-nav{padding-inline:5px}
+  .mobile-marketplace-nav>a{font-size:9px}
+}
+@media(prefers-reduced-motion:reduce){.mobile-marketplace-nav>a{transition:none!important}}

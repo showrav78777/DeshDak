@@ -1,0 +1,23 @@
+.market-source-strip{align-items:center;background:#fff;border-bottom:1px solid #e7ebef;color:#788394;display:flex;flex-wrap:wrap;font-size:12px;gap:10px 18px;justify-content:center;padding:10px 20px}
+.market-source-strip b{color:#344b5c}
+.add-cart-buttons{display:flex;flex-wrap:wrap;gap:8px}
+.add-cart-buttons .button{align-items:center;display:inline-flex;justify-content:center;margin:0}
+.add-cart-control.is-compact{align-items:flex-start;display:grid;gap:8px}
+.add-cart-control.is-compact .add-cart-buttons{display:grid;grid-template-columns:1fr 1fr;width:min(100%,320px)}
+.add-cart-control.is-compact .button{border-radius:10px;min-height:42px;padding:10px 14px}
+.featured-product-banner{align-items:stretch;background:linear-gradient(120deg,#0d3f60,#126d90);border-radius:20px;box-shadow:0 22px 50px #17384e22;color:#fff;display:grid;gap:0;grid-template-columns:minmax(240px,.72fr) minmax(0,1.28fr);margin:35px auto 10px;max-width:1320px;overflow:hidden}
+.featured-product-art{align-items:center;background:radial-gradient(circle at 40% 35%,#f5c389,#ee6d43 42%,#b63e2e);display:flex;flex-direction:column;justify-content:center;min-height:330px;position:relative}
+.featured-product-art span{font-size:96px;line-height:1}.featured-product-art b{background:#ffffffdf;border-radius:99px;color:#153b51;font-size:11px;letter-spacing:.12em;margin-top:18px;padding:8px 12px}
+.featured-product-copy{align-self:center;padding:42px clamp(28px,5vw,70px)}
+.featured-product-copy .eyebrow{color:#87ddf6;margin-bottom:10px}.featured-product-copy>small{color:#b8dce8;font-size:11px;font-weight:800;text-transform:uppercase}
+.featured-product-copy h2{font-family:Arial,Helvetica,sans-serif;font-size:clamp(30px,4vw,50px);letter-spacing:-.045em;line-height:1.05;margin:10px 0 15px;max-width:780px}
+.featured-product-copy>p{color:#d8edf4;line-height:1.65;max-width:720px}
+.featured-product-price{align-items:end;display:flex;gap:18px;margin:22px 0}.featured-product-price b{font-size:28px}.featured-product-price span{color:#b9d8e3;font-size:11px}
+.featured-product-actions{align-items:center;display:flex;flex-wrap:wrap;gap:18px}.featured-product-actions .add-cart-control>a{color:#fff}.featured-product-details{color:#fff;font-size:12px;font-weight:900;text-decoration:underline;text-underline-offset:4px}
+@media(max-width:850px){.featured-product-banner{grid-template-columns:1fr;margin:20px}.featured-product-art{min-height:190px}.featured-product-art span{font-size:64px}.featured-product-copy{padding:30px 24px}.featured-product-actions{align-items:flex-start;display:grid}.featured-product-actions .add-cart-control.is-compact .add-cart-buttons{width:100%}}
+@media(max-width:480px){.add-cart-control.is-compact .add-cart-buttons{grid-template-columns:1fr}.featured-product-banner{border-radius:15px}.featured-product-copy h2{font-size:29px}}
+@media(max-width:560px){.market-source-strip{justify-content:flex-start;overflow-x:auto;white-space:nowrap}.market-source-strip .coming-soon{display:none}}
+
+/* Direct purchase actions on catalog and public store product cards. */
+.public-product-card{display:flex;flex-direction:column}.public-product-card-main{color:inherit;display:block;flex:1}.public-product-card-copy{padding:18px}.public-product-card-copy .public-product-meta{align-items:end;display:flex;gap:10px;justify-content:space-between}.public-product-card>div.public-product-card-actions{border-top:1px solid #e7ecef;padding:12px 18px 16px}.public-product-card-actions .add-cart-control,.public-product-card-actions .add-cart-buttons{width:100%}.public-product-card-actions .add-cart-control.is-compact{display:grid}.public-product-card-actions .add-cart-control.is-compact .add-cart-buttons{display:grid;grid-template-columns:1fr 1fr;justify-content:stretch;width:100%}.public-product-card-actions .button{font-size:10px;min-height:38px;padding:8px 9px}.public-product-card-actions .button:disabled{cursor:not-allowed;opacity:.48}.public-product-card-actions .add-cart-control>a{display:block;font-size:10px;margin-top:3px;text-align:center}
+@media(max-width:480px){.public-product-card-actions .add-cart-control.is-compact .add-cart-buttons{grid-template-columns:1fr 1fr}}

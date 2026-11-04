@@ -1,0 +1,42 @@
+.support-agent-stats {
+  grid-template-columns: repeat(auto-fit, minmax(95px, 1fr));
+}
+
+.support-workforce-state {
+  border: 1px solid #bed8c8;
+  border-radius: 10px;
+  display: grid;
+  gap: 3px;
+  margin-top: 16px;
+  max-width: 480px;
+  padding: 11px 13px;
+}
+
+.support-workforce-state.available {
+  background: #edf8f1;
+  color: #176a4c;
+}
+
+.support-workforce-state.paused {
+  background: #fff4df;
+  border-color: #e7c783;
+  color: #865c08;
+}
+
+.support-workforce-state b,
+.support-workforce-state span,
+.support-workforce-state small {
+  font-size: 9px;
+}
+
+.support-quality-feedback {
+  border-color: #b9d4df !important;
+}
+
+.support-quality-feedback b,
+.support-quality-feedback span,
+.support-quality-feedback small {
+  display: block;
+  line-height: 1.55;
+  margin-top: 6px;
+}

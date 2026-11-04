@@ -1,0 +1,47 @@
+/* Shared responsive quality layer. It deliberately changes presentation only. */
+:where(a,button,input,select,textarea,summary):focus-visible{outline:3px solid color-mix(in srgb,var(--focus) 72%,#fff);outline-offset:3px}
+:where(button,input,select,textarea){font:inherit}
+:where(.dashboard-shell,.public-catalog,.orders-page,.wallet-page,.profile-page,.notification-page,.ship-for-me-page,.support-portal,.warehouse-portal,.reels-page,.trust-centre){color:var(--ink)}
+:where(.dashboard-card,.checkout-address,.checkout-summary,.country-create-card,.country-list-card,.seller-review-card,.wallet-balance-card,.wallet-transactions,.orders-filter-card,.profile-card,.notification-card,.support-panel,.warehouse-package-card,.warehouse-scan-card){box-shadow:var(--shadow-sm)}
+:where(.dashboard-card,.checkout-address,.checkout-summary,.country-create-card,.country-list-card,.seller-review-card,.wallet-balance-card,.wallet-transactions,.orders-filter-card,.profile-card,.notification-card,.support-panel,.warehouse-package-card,.warehouse-scan-card){border-color:#dbe6eb}
+:where(.form-error,.form-success,.form-notice){border-radius:12px;line-height:1.5}
+:where(.button,.nav-cta,.add-cart-buttons button){min-height:42px}
+:where(.status-active,.status-inactive,.status-pending,.status-warning,.status-danger){font-weight:800;letter-spacing:.01em}
+.admin-workspace-main .admin-content>h1,.dashboard-content>h1,.customer-dashboard-content>h1,.checkout-content>h1{color:#123b55;text-wrap:balance}
+.admin-workspace-main .admin-intro,.dashboard-lead,.checkout-intro{max-width:780px}
+.admin-workspace-main :where(.admin-hub-card,.country-list article,.seller-review-card,.operations-order-card,.platform-admin-card){transition:box-shadow .18s ease,transform .18s ease}
+.admin-workspace-main :where(.admin-hub-card,.country-list article,.seller-review-card,.operations-order-card,.platform-admin-card):hover{box-shadow:0 16px 30px #17384a16;transform:translateY(-1px)}
+.warehouse-portal :where(button,.button),.support-portal :where(button,.button),.admin-workspace :where(button,.button){min-height:40px}
+
+@media(max-width:900px){
+  .admin-workspace-main .admin-content{padding-bottom:calc(88px + env(safe-area-inset-bottom))}
+  :where(.dashboard-content,.customer-dashboard-content,.checkout-content,.orders-page,.wallet-page,.profile-page,.notification-page,.ship-for-me-page,.support-portal-content,.warehouse-portal-content){padding-bottom:calc(92px + env(safe-area-inset-bottom))}
+  :where(.customer-stat-grid,.trust-grid,.wallet-balance-grid,.dashboard-home-grid,.checkout-layout){gap:12px}
+  :where(.customer-stat-grid,.wallet-balance-grid){grid-template-columns:repeat(2,minmax(0,1fr))}
+  :where(.customer-stat-grid a,.wallet-balance-card){min-height:112px}
+  :where(.site-nav,.customer-nav){gap:12px}
+}
+
+@media(max-width:600px){
+  body{background:#f7f9fa}
+  :where(.dashboard-content,.customer-dashboard-content,.checkout-content,.admin-content,.orders-page,.wallet-page,.profile-page,.notification-page,.ship-for-me-page,.support-portal-content,.warehouse-portal-content){padding-left:16px;padding-right:16px}
+  :where(.dashboard-content,.customer-dashboard-content,.checkout-content,.admin-content){padding-top:32px}
+  .admin-workspace-main .admin-content>h1,.dashboard-content>h1,.customer-dashboard-content>h1,.checkout-content>h1{font-size:clamp(30px,9vw,42px);line-height:1.02}
+  :where(.dashboard-card,.checkout-address,.checkout-summary,.country-create-card,.country-list-card,.seller-review-card,.wallet-balance-card,.wallet-transactions,.orders-filter-card,.profile-card,.notification-card,.support-panel,.warehouse-package-card,.warehouse-scan-card){border-radius:14px;padding:17px}
+  :where(.customer-stat-grid,.wallet-balance-grid,.trust-grid){gap:10px;grid-template-columns:1fr}
+  :where(.customer-stat-grid a,.wallet-balance-card){min-height:0;padding:16px}
+  :where(.customer-stat-grid b,.wallet-balance-card b){font-size:22px}
+  :where(.wallet-table-wrap,.table-wrap,.admin-table-wrap,.orders-table-wrap,.audit-table-wrap,.finance-table-wrap){-webkit-overflow-scrolling:touch;margin-inline:-2px;overflow-x:auto}
+  :where(.wallet-table-wrap table,.table-wrap table,.admin-table-wrap table,.orders-table-wrap table,.audit-table-wrap table,.finance-table-wrap table){min-width:650px}
+  :where(.country-list article,.seller-review-card,.dashboard-order-row){align-items:flex-start;flex-direction:column}
+  :where(.country-list article>div:last-child,.dashboard-order-row>span){align-items:flex-start;justify-items:start;text-align:left}
+  :where(.review-actions>div,.featured-product-actions,.checkout-summary .button){width:100%}
+  :where(.review-actions>div){flex-direction:column}
+  :where(.button,.nav-cta,.add-cart-buttons button){align-items:center;display:inline-flex;justify-content:center;min-height:44px}
+  :where(input:not([type=checkbox]):not([type=radio]),select,textarea){font-size:16px!important;min-height:44px}
+  textarea{min-height:104px!important}
+  .customer-menu>div{border-radius:15px;box-shadow:0 22px 46px #102a4330}
+  .global-customer-actions{bottom:calc(78px + env(safe-area-inset-bottom))}
+}
+
+@media(prefers-reduced-motion:reduce){.admin-workspace-main :where(.admin-hub-card,.country-list article,.seller-review-card,.operations-order-card,.platform-admin-card){transition:none!important}}

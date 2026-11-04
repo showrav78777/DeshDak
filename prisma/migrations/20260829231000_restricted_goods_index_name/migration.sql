@@ -1,0 +1,1 @@
+ALTER INDEX "RestrictedGoodsRule_originCountryCode_destinationCountryCode_st" RENAME TO "RestrictedGoodsRule_route_status_idx";

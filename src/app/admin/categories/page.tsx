@@ -1,0 +1,14 @@
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
+import { CategoryCreateForm, CategorySettingsForm } from "@/components/category-management";
+import { prisma } from "@/lib/prisma";
+import { ROLE } from "@/lib/roles";
+import { SESSION_COOKIE, verifySession } from "@/lib/session";
+
+export const dynamic = "force-dynamic";
+
+export default async function AdminCategoriesPage() {
+  const token = (await cookies()).get(SESSION_COOKIE)?.value; const session = token ? await verifySession(token) : null; if (!session?.roles.includes(ROLE.ADMIN)) redirect("/");
+  const categories = await prisma.category.findMany({ include: { parent: { select: { id: true, nameEn: true } }, _count: { select: { products: true, children: true } } }, orderBy: [{ sortOrder: "asc" }, { nameEn: "asc" }] });
+  return <main className="dashboard-shell"><section className="admin-content"><p className="eyebrow">CATALOG CONFIGURATION</p><h1>Manage storefront categories.</h1><p className="admin-intro">Review your public categories first. Create a new category only when you are ready; new categories stay private until activated.</p><div className="category-admin-layout"><aside className="category-create-card"><details className="admin-configuration-disclosure admin-create-disclosure"><summary><span><b>＋ Add category</b><small>Create a new private category</small></span><em aria-hidden="true">⌄</em></summary><div><p>Use a stable lowercase URL slug. It cannot be changed after creation.</p><CategoryCreateForm categories={categories} /></div></details></aside><section className="category-admin-list"><div className="category-list-heading"><div><p className="eyebrow">CURRENT CATALOG</p><h2>Configured categories</h2></div><span>{categories.filter((category) => category.isActive).length} public · {categories.filter((category) => category.showOnHomepage).length} featured</span></div>{categories.length ? categories.map((category) => <article className="category-admin-card" key={category.id}><header><span>{category.icon ?? "◇"}</span><div><b>{category.nameEn}</b><small>/{category.slug}{category.parent ? ` · under ${category.parent.nameEn}` : ""}</small></div><div><em className={category.isActive ? "status-active" : "status-inactive"}>{category.isActive ? "Public" : "Inactive"}</em><small>{category._count.products} product(s) · {category._count.children} child</small></div></header><details className="admin-record-disclosure"><summary><span><b>Edit category</b><small>Change visibility, homepage placement, order, or details</small></span><em aria-hidden="true">⌄</em></summary><CategorySettingsForm category={category} categories={categories} /></details></article>) : <div className="dashboard-card"><h2>No categories yet</h2><p>Open “Add category” to create the initial storefront categories.</p></div>}</section></div></section></main>;
+}

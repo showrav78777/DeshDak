@@ -1,0 +1,16 @@
+/* Keep authentication forms usable on small phones without hiding overflow. */
+.seller-login-shell > section { min-width: 0; }
+.seller-login-shell .seller-login-card { min-width: 0; }
+.seller-login-shell .google-auth-button { flex-wrap: wrap; overflow-wrap: anywhere; }
+.seller-login-shell .google-auth-button small { flex-basis: 100%; margin-left: 0; }
+@media (max-width: 640px) {
+  .seller-login-shell .seller-login-intro { gap: 24px; min-height: auto; padding: 24px 20px; }
+  .seller-login-shell .seller-login-intro h1 { font-size: clamp(30px, 8vw, 42px); overflow-wrap: anywhere; }
+  .seller-login-shell .seller-login-card-wrap { padding: 20px 12px; }
+  .seller-login-shell .seller-login-card { max-width: 100%; padding: 24px 20px; }
+  .seller-login-shell .seller-login-card h2 { font-size: 30px; }
+  .seller-login-shell .seller-login-card input,
+  .seller-login-shell .seller-login-card select { font-size: 16px; min-height: 48px; min-width: 0; max-width: 100%; width: 100%; }
+  .seller-login-shell .seller-login-card button { min-height: 48px; }
+  .seller-login-shell .auth-links { flex-wrap: wrap; gap: 12px; }
+}

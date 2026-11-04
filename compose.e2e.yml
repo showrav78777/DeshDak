@@ -1,0 +1,46 @@
+name: duar-browser-verification
+services:
+  database:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: duar_browser_test
+      POSTGRES_USER: duar_test
+      POSTGRES_PASSWORD: disposable_browser_test_only
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U duar_test -d duar_browser_test"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+    # No host ports or persistent data volumes.
+  browser:
+    build:
+      context: .
+      dockerfile: Dockerfile.e2e
+    depends_on:
+      database:
+        condition: service_healthy
+    # Share only this disposable DB's network namespace. This preserves the
+    # isolated runner's localhost-only guard without publishing host ports.
+    network_mode: service:database
+    shm_size: 1gb
+    environment:
+      DATABASE_URL: postgresql://duar_test:disposable_browser_test_only@127.0.0.1:5432/duar_browser_test?schema=public
+      AUTH_SECRET: disposable-docker-browser-secret-not-for-production-use
+      AUTH_ISSUER: http://localhost:3117
+      APP_BASE_URL: http://localhost:3117
+      TEST_BASE_URL: http://localhost:3117
+      NEXT_TELEMETRY_DISABLED: "1"
+      E2E_VISUAL: "${E2E_VISUAL:-1}"
+      E2E_UPDATE_SNAPSHOTS: "${E2E_UPDATE_SNAPSHOTS:-0}"
+      E2E_BLOB: "${E2E_BLOB:-0}"
+      E2E_SHARD: "${E2E_SHARD:-}"
+      GITHUB_ACTIONS: "${GITHUB_ACTIONS:-false}"
+      CI: "true"
+      # Bound peak compiler/browser memory on local Docker. CI can still shard runs.
+      E2E_WORKERS: "1"
+      # Diagnostic override; normal application dev/build settings are unchanged.
+      ISOLATED_TEST_BUNDLER: "${ISOLATED_TEST_BUNDLER:-turbopack}"
+    # Separate schemas/servers keep API compilation state out of browser tests.
+    command: ["sh", "-c", "npm run verify:launch:isolated -- test:inspector-portal test:warehouse-portal test:ship-for-me && npm run verify:launch:isolated -- test:e2e:isolated"]

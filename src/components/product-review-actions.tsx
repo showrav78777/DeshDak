@@ -1,0 +1,10 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+
+export function ProductReviewActions({ productId, currentCategoryId, categories }: { productId: string; currentCategoryId: string | null; categories: { id: string; nameEn: string }[] }) {
+  const router = useRouter(); const [note, setNote] = useState(""); const [categoryId, setCategoryId] = useState(currentCategoryId ?? ""); const [error, setError] = useState(""); const [isSubmitting, setIsSubmitting] = useState(false);
+  async function review(decision: "ACTIVE" | "REJECTED") { if (note.trim().length < 3) return setError("Add a short review note first."); if (decision === "ACTIVE" && !categoryId) return setError("Choose an active category before approval."); setError(""); setIsSubmitting(true); const response = await fetch(`/api/v1/admin/products/${productId}/review`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ decision, reviewNote: note, categoryId: categoryId || undefined }) }); const result = await response.json(); setIsSubmitting(false); if (!response.ok) return setError(result.error?.message ?? "Could not save this review."); router.refresh(); }
+  return <div className="review-actions"><select aria-label="Product category" value={categoryId} onChange={(event) => setCategoryId(event.target.value)}><option value="">Choose active category</option>{categories.map((category) => <option key={category.id} value={category.id}>{category.nameEn}</option>)}</select><textarea aria-label="Product review note" placeholder="Reason or internal note" value={note} onChange={(event) => setNote(event.target.value)} /><div><button className="button approve" disabled={isSubmitting || !categories.length} type="button" onClick={() => review("ACTIVE")}>Approve</button><button className="button reject" disabled={isSubmitting} type="button" onClick={() => review("REJECTED")}>Reject</button></div>{error ? <p className="form-error" role="alert">{error}</p> : null}</div>;
+}

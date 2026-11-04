@@ -1,0 +1,24 @@
+import assert from "node:assert/strict";
+import { matchesReceiptReplay, receiptRequestHash, warehouseReceiptSchema } from "../src/modules/warehouse/receiving-policy.ts";
+import { inspectionFingerprint, packageInspectionSchema } from "../src/modules/warehouse/inspection-policy.ts";
+
+const input = warehouseReceiptSchema.parse({ orderNumber: " ORD-FIXTURE ", warehouseId: "11111111-1111-4111-8111-111111111111", inboundTracking: " " });
+const hash = receiptRequestHash("worker-a", input);
+assert.equal(hash, receiptRequestHash("worker-a", { ...input, inboundTracking: undefined }));
+const event = { actorId: "worker-a", metadata: { receiveRequestHash: hash } };
+assert.equal(matchesReceiptReplay(event, "worker-a", hash), true);
+for (const changed of [{ orderNumber: "ORD-OTHER" }, { warehouseId: "22222222-2222-4222-8222-222222222222" }, { inboundTracking: "OTHER-PARCEL" }, { packageCode: "PKG-123456ABCDEF" }]) assert.equal(matchesReceiptReplay(event, "worker-a", receiptRequestHash("worker-a", { ...input, ...changed })), false);
+assert.equal(matchesReceiptReplay(event, "worker-b", receiptRequestHash("worker-b", input)), false);
+assert.equal(matchesReceiptReplay({ actorId: "worker-a", metadata: {} }, "worker-a", hash), false);
+assert.equal(matchesReceiptReplay(null, "worker-a", hash), false);
+for (const patch of [{ orderNumber: "" }, { warehouseId: "invalid" }, { unexpected: "ignored before" }, { packageCode: "supplier-tracking-not-platform-code" }]) assert.equal(warehouseReceiptSchema.safeParse({ ...input, ...patch }).success, false);
+assert.equal(warehouseReceiptSchema.safeParse({ ...input, packageCode: "PKG-123456ABCDEF" }).success, true);
+console.log("Warehouse receipt policy checks passed: strict payloads, actor/order/warehouse/parcel binding and legacy replay rejection.");
+const inspection = packageInspectionSchema.parse({ type: "BASIC", result: "PASSED", notes: " " });
+const inspectionHash = inspectionFingerprint("inspector-a", "package-a", inspection);
+assert.equal(inspectionHash, inspectionFingerprint("inspector-a", "package-a", { type: "BASIC", result: "PASSED" }));
+for (const patch of [{ result: "FAILED", notes: "Damage" }, { notes: "Different" }, { type: "PHOTO", mediaReference: "inspection-evidence/11111111-1111-4111-8111-111111111111" }]) assert.notEqual(inspectionHash, inspectionFingerprint("inspector-a", "package-a", { ...inspection, ...patch }));
+assert.notEqual(inspectionHash, inspectionFingerprint("inspector-b", "package-a", inspection));
+assert.notEqual(inspectionHash, inspectionFingerprint("inspector-a", "package-b", inspection));
+for (const patch of [{ result: "FAILED" }, { type: "PHOTO" }, { qcStatus: "PASSED" }, { notes: "x".repeat(2001) }]) assert.equal(packageInspectionSchema.safeParse({ type: "BASIC", result: "PASSED", ...patch }).success, false);
+console.log("Inspection policy checks passed: strict decisions/evidence, actor/package/payload request identity and normalized blank notes.");

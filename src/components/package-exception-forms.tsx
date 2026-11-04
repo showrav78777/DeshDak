@@ -1,0 +1,23 @@
+"use client";
+
+import { useState, type FormEvent } from "react";
+import { useRouter } from "next/navigation";
+
+async function submitJson(url: string, body: object) {
+  const response = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json", "Idempotency-Key": `package-exception:${crypto.randomUUID()}` }, body: JSON.stringify(body) });
+  const result = await response.json().catch(() => null);
+  if (!response.ok) throw new Error(result?.error?.message ?? "The parcel exception could not be saved.");
+  return result;
+}
+
+export function PackageExceptionCreateForm({ warehouses }: { warehouses: Array<{ id: string; label: string }> }) {
+  const router = useRouter(); const [error, setError] = useState(""); const [saving, setSaving] = useState(false);
+  async function submit(event: FormEvent<HTMLFormElement>) { event.preventDefault(); setSaving(true); setError(""); const form = event.currentTarget; try { await submitJson("/api/v1/operations/package-exceptions", Object.fromEntries(new FormData(form))); form.reset(); router.refresh(); } catch (caught) { setError(caught instanceof Error ? caught.message : "Could not report the exception."); } finally { setSaving(false); } }
+  return <form className="warehouse-task-form" onSubmit={submit}><label htmlFor="exceptionOrder">Order number</label><input autoCapitalize="characters" id="exceptionOrder" name="orderNumber" placeholder="ORD-…" required /><label htmlFor="exceptionPackage">Package code <span>(optional for missing/extra parcel)</span></label><input autoCapitalize="characters" id="exceptionPackage" name="packageCode" placeholder="PKG-…" /><label htmlFor="exceptionWarehouse">Warehouse</label><select defaultValue={warehouses.length === 1 ? warehouses[0].id : ""} id="exceptionWarehouse" name="warehouseId" required><option value="">Choose assigned warehouse</option>{warehouses.map((warehouse) => <option key={warehouse.id} value={warehouse.id}>{warehouse.label}</option>)}</select><label htmlFor="exceptionType">Exception type</label><select id="exceptionType" name="type" required><option value="MISSING_EXPECTED">Expected parcel missing</option><option value="EXTRA_UNEXPECTED">Unexpected extra parcel</option><option value="TRACKING_MISMATCH">Tracking number mismatch</option><option value="DAMAGED_ON_ARRIVAL">Damaged on arrival</option><option value="MISSING_REFERENCE">Customer reference missing</option><option value="RESTRICTED_ITEM">Possible restricted item</option><option value="OTHER">Other operational exception</option></select><label htmlFor="exceptionDescription">Internal evidence and details</label><textarea id="exceptionDescription" minLength={10} maxLength={1500} name="description" placeholder="Describe exactly what was scanned, counted, or observed. Do not add unnecessary customer PII." required />{error ? <p className="form-error" role="alert">{error}</p> : null}<button className="button primary" disabled={saving} type="submit">{saving ? "Recording…" : "Open parcel exception"}</button></form>;
+}
+
+export function PackageExceptionResolveForm({ exceptionId }: { exceptionId: string }) {
+  const router = useRouter(); const [error, setError] = useState(""); const [saving, setSaving] = useState(false);
+  async function submit(event: FormEvent<HTMLFormElement>) { event.preventDefault(); setSaving(true); setError(""); const form = event.currentTarget; try { await submitJson(`/api/v1/admin/package-exceptions/${exceptionId}/resolve`, Object.fromEntries(new FormData(form))); router.refresh(); } catch (caught) { setError(caught instanceof Error ? caught.message : "Could not resolve the exception."); } finally { setSaving(false); } }
+  return <form className="warehouse-task-form" onSubmit={submit}><label htmlFor={`action-${exceptionId}`}>Decision</label><select id={`action-${exceptionId}`} name="action"><option value="RESOLVED">Resolved after investigation</option><option value="CANCELLED">Report cancelled as incorrect</option></select><label htmlFor={`internal-${exceptionId}`}>Internal resolution</label><textarea id={`internal-${exceptionId}`} minLength={10} maxLength={2000} name="resolutionNote" placeholder="Evidence checked, physical action taken, and responsible team." required /><label htmlFor={`customer-${exceptionId}`}>Customer-safe update</label><textarea id={`customer-${exceptionId}`} minLength={3} maxLength={500} name="customerNote" placeholder="Explain the confirmed outcome without internal or sensitive details." required />{error ? <p className="form-error" role="alert">{error}</p> : null}<button className="button primary" disabled={saving} type="submit">{saving ? "Resolving…" : "Publish resolution"}</button></form>;
+}

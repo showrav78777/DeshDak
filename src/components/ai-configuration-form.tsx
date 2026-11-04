@@ -1,0 +1,20 @@
+"use client";
+
+import { useState, type FormEvent } from "react";
+import { useRouter } from "next/navigation";
+
+type Configuration = { capability: string; displayName: string; mode: string; status: string; adapterKey: string; apiBaseUrl: string | null; modelName: string | null; secretReference: string | null; anonymousLimit: number; maxInputBytes: number | null; retentionMinutes: number; lastHealthStatus: string | null; updatedAt: string | null };
+
+export function AiConfigurationForm({ configuration }: { configuration: Configuration }) {
+  const router = useRouter(); const external = configuration.mode === "EXTERNAL_ADAPTER";
+  const [error, setError] = useState(""); const [success, setSuccess] = useState(""); const [saving, setSaving] = useState(false);
+  async function submit(event: FormEvent<HTMLFormElement>) { event.preventDefault(); setError(""); setSuccess(""); setSaving(true); const values = Object.fromEntries(new FormData(event.currentTarget)); const response = await fetch(`/api/v1/admin/ai-configurations/${configuration.capability}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(values) }); const result = await response.json(); setSaving(false); if (!response.ok) return setError(result.error?.message ?? "Could not save this configuration."); setSuccess(external ? "Configuration saved. Activation remains locked until its adapter and health check are implemented." : "Configuration saved."); router.refresh(); }
+  return <form className="ai-config-form" onSubmit={submit}>
+    <div className="ai-config-head"><div><p className="eyebrow">{configuration.capability.replaceAll("_", " ")}</p><h2>{configuration.displayName}</h2></div><span className={`ai-status status-${configuration.status.toLowerCase()}`}>{configuration.status.replaceAll("_", " ")}</span></div>
+    <p className="ai-adapter-note">{external ? "External adapter · activation is locked" : "Protected internal rules"} · {configuration.adapterKey}</p>
+    {external ? <><label>API base URL <input name="apiBaseUrl" type="url" placeholder="https://api.example.com/v1" defaultValue={configuration.apiBaseUrl ?? ""} /></label><label>Model or deployment name <input name="modelName" maxLength={255} placeholder="Approved model name" defaultValue={configuration.modelName ?? ""} /></label><label>Secret-manager reference <input name="secretReference" autoComplete="off" placeholder="secret://crossly/ai/image-search" defaultValue={configuration.secretReference ?? ""} /><small>Enter a reference only—never paste an API key.</small></label></> : <><input name="apiBaseUrl" type="hidden" value="" /><input name="modelName" type="hidden" value="" /><input name="secretReference" type="hidden" value="" /></>}
+    <div className="ai-config-fields"><label>Anonymous requests / window <input name="anonymousLimit" type="number" min="1" max="10000" defaultValue={configuration.anonymousLimit} required /></label><label>Maximum upload bytes <input name="maxInputBytes" type="number" min="1024" max={20 * 1024 * 1024} disabled={!external} defaultValue={configuration.maxInputBytes ?? ""} /></label><label>Input retention (minutes) <input name="retentionMinutes" type="number" min={configuration.capability === "CHATBOT" ? 15 : 0} max="1440" defaultValue={configuration.retentionMinutes} required /></label></div>
+    <label>Configuration status <select name="status" defaultValue={configuration.status}>{external ? <><option value="DISABLED">Disabled</option><option value="CONFIGURATION_SAVED">Configuration saved</option></> : <><option value="LIVE">Live</option><option value="DISABLED">Disabled</option></>}</select><small>{external ? "External services cannot be marked live until code review, secret lookup, health check, and response validation exist." : "Internal capability changes take effect without an external provider."}</small></label>
+    {error ? <p className="form-error">{error}</p> : null}{success ? <p className="form-success">{success}</p> : null}<button className="button primary" disabled={saving} type="submit">{saving ? "Saving…" : "Save safe configuration"}</button>
+  </form>;
+}

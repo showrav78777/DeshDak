@@ -1,0 +1,4 @@
+.sourcing-login-form input { box-sizing: border-box; font-size: 16px; min-height: 48px; min-width: 0; width: 100%; }
+.sourcing-login-form button { font-size: 16px; min-height: 48px; }
+.sourcing-login-form label, .sourcing-login-form .form-help { font-size: 14px; line-height: 1.6; }
+.sourcing-login-form :is(input,button):focus-visible { outline: 3px solid #167e95; outline-offset: 3px; }

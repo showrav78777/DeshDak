@@ -1,0 +1,6 @@
+CREATE TABLE "WebsiteMedia" (
+ "id" TEXT NOT NULL, "title" TEXT NOT NULL, "bytes" BYTEA NOT NULL,
+ "sizeBytes" INTEGER NOT NULL, "width" INTEGER NOT NULL, "height" INTEGER NOT NULL,
+ "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ CONSTRAINT "WebsiteMedia_pkey" PRIMARY KEY ("id")
+);

@@ -1,0 +1,13 @@
+import assert from "node:assert/strict";
+import { accountConfigurationWarnings } from "../src/modules/sourcing/account-readiness.ts";
+const now = new Date("2026-10-18T00:00:00Z");
+const complete = { secretReferenceConfigured: true, countryCode: "CN", rateLimitPerMinute: 10, dailyQuota: 100, dailyQuotaUsed: 0, credentialExpiresAt: null };
+assert.deepEqual(accountConfigurationWarnings(complete, ["CN"], now), []);
+assert.equal(accountConfigurationWarnings({ ...complete, secretReferenceConfigured: false, rateLimitPerMinute: null, dailyQuota: null }, [], now).length, 4);
+assert.match(accountConfigurationWarnings({ ...complete, dailyQuotaUsed: 100 }, ["CN"], now)[0], /exhausted/);
+assert.match(accountConfigurationWarnings({ ...complete, dailyQuotaUsed: -1 }, ["CN"], now)[0], /reconciliation/);
+assert.match(accountConfigurationWarnings({ ...complete, credentialExpiresAt: now }, ["CN"], now)[0], /expired/);
+assert.match(accountConfigurationWarnings({ ...complete, credentialExpiresAt: new Date("2026-10-25T00:00:00Z") }, ["CN"], now)[0], /seven days/);
+assert.deepEqual(accountConfigurationWarnings({ ...complete, credentialExpiresAt: new Date("2026-10-26T00:00:00Z") }, ["CN"], now), []);
+assert.match(accountConfigurationWarnings({ ...complete, credentialExpiresAt: new Date("invalid") }, ["CN"], now)[0], /Correct/);
+console.log("Source account configuration checks passed; no live readiness inferred.");

@@ -1,0 +1,27 @@
+import { type NextRequest } from "next/server";
+import { apiError, apiSuccess } from "@/lib/api";
+import { hasTrustedMutationOrigin } from "@/lib/mfa-session";
+import { prisma } from "@/lib/prisma";
+import { getRequestSession } from "@/lib/request-session";
+import { ROLE } from "@/lib/roles";
+import { kamStaffSchema } from "@/modules/sales/schemas";
+
+export async function GET(request: NextRequest) {
+  const session = await getRequestSession(request);
+  if (!session?.roles.includes(ROLE.ADMIN) || session.portal !== "admin") return apiError("ADMIN_ACCESS_REQUIRED", "Administrator access is required.", 403);
+  const staff = await prisma.user.findMany({ where: { deletedAt: null, roles: { some: { role: { code: ROLE.KAM } } } }, select: { id: true, personCode: true, fullName: true, email: true, status: true, authSessions: { where: { portal: "sales", revokedAt: null, expiresAt: { gt: new Date() } }, select: { id: true } }, _count: { select: { kamAssignments: { where: { isActive: true } } } } }, orderBy: { fullName: "asc" } });
+  return apiSuccess({ staff: staff.map(({ authSessions, ...item }) => ({ ...item, activeSessions: authSessions.length })) }, { headers: { "Cache-Control": "private, no-store, max-age=0" } });
+}
+
+export async function POST(request: NextRequest) {
+  const session = await getRequestSession(request);
+  if (!session?.roles.includes(ROLE.ADMIN) || session.portal !== "admin") return apiError("ADMIN_ACCESS_REQUIRED", "Administrator access is required.", 403);
+  if (!hasTrustedMutationOrigin(request)) return apiError("UNTRUSTED_ORIGIN", "This role assignment must originate from Admin.", 403);
+  const parsed = kamStaffSchema.safeParse(await request.json().catch(() => null));
+  if (!parsed.success) return apiError("VALIDATION_ERROR", "Enter an existing verified account email.", 422);
+  const [user, role] = await Promise.all([prisma.user.findFirst({ where: { email: parsed.data.email, status: "ACTIVE", deletedAt: null }, select: { id: true, personCode: true, fullName: true, email: true } }), prisma.role.findUnique({ where: { code: ROLE.KAM }, select: { id: true } })]);
+  if (!user) return apiError("ACTIVE_USER_NOT_FOUND", "Create and verify the staff account first.", 404);
+  if (!role) return apiError("ROLE_CONFIGURATION_MISSING", "Deploy the KAM role migration before granting access.", 503);
+  await prisma.$transaction(async (tx) => { await tx.userRole.upsert({ where: { userId_roleId: { userId: user.id, roleId: role.id } }, update: {}, create: { userId: user.id, roleId: role.id } }); await tx.auditLog.create({ data: { actorId: session.userId, action: "sales.kam_role_granted", entityType: "User", entityId: user.id, metadata: { personCode: user.personCode } } }); });
+  return apiSuccess({ staff: user }, { status: 201, headers: { "Cache-Control": "private, no-store, max-age=0" } });
+}

@@ -1,0 +1,51 @@
+import { createHmac } from "node:crypto";
+import { test, expect } from "./fixtures";
+
+function code(secret: string) {
+  const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
+  const bits = [...secret].map(c => alphabet.indexOf(c).toString(2).padStart(5, "0")).join("");
+  const bytes = []; for (let i = 0; i + 8 <= bits.length; i += 8) bytes.push(Number.parseInt(bits.slice(i, i + 8), 2));
+  const counter = Buffer.alloc(8); counter.writeBigUInt64BE(BigInt(Math.floor(Date.now() / 30_000)));
+  const digest = createHmac("sha1", Buffer.from(bytes)).update(counter).digest(); const offset = digest[digest.length - 1] & 15;
+  return String((digest.readUInt32BE(offset) & 0x7fffffff) % 1_000_000).padStart(6, "0");
+}
+test.use({ trace: "off", screenshot: "off", actionTimeout: 10_000 });
+test.describe.configure({ retries: 0 });
+test("Admin live setup guide explains remaining configuration", async ({ browser, baseURL }, info) => {
+  test.skip(!process.env.E2E_LIVE_SETUP_ADMINS, "Requires isolated Admin fixtures."); test.setTimeout(120_000);
+  const admin = JSON.parse(process.env.E2E_LIVE_SETUP_ADMINS!)[info.project.name];
+  const viewport = info.project.name === "mobile" ? { width: 375, height: 812 } : { width: 1440, height: 1000 };
+  const context = await browser.newContext({ baseURL, viewport, storageState: { cookies: [], origins: [] } });
+  try {
+    expect((await context.request.post("/api/v1/auth/login", { headers: { Origin: baseURL! }, data: { email: admin.email, password: process.env.E2E_CUSTOMER_PASSWORD, portal: "admin" } })).status()).toBe(200);
+    const setup = await context.request.post("/api/v1/auth/mfa/setup", { headers: { Origin: baseURL! } }); expect(setup.status()).toBe(200);
+    expect((await context.request.post("/api/v1/auth/mfa/confirm", { headers: { Origin: baseURL! }, data: { code: code((await setup.json()).data.secret) } })).status()).toBe(200);
+    const page = await context.newPage(); await page.goto("/admin/launch-readiness/setup");
+    const guide = page.locator(".live-setup-page");
+    await expect(guide.getByRole("heading", { name: "Set up DeshDak for live use." })).toBeVisible();
+    await expect(guide.locator(".live-setup-card")).toHaveCount(13);
+    await expect(guide.getByRole("region", { name: "Required live setup" }).locator("article")).toHaveCount(10);
+    await expect(guide.getByRole("region", { name: "Optional integrations" }).locator("article")).toHaveCount(3);
+    const documents = guide.locator("#documents");
+    await expect(documents).toContainText("Integration / certification required");
+    await expect(documents).toContainText("Development database-backed upload switches must stay disabled");
+    const media = guide.locator("#website-media");
+    await expect(media).toContainText("Direct video-file upload and high-volume object storage remain engineering work");
+    await expect(media.getByRole("link", { name: "Open Website Content Manager", exact: false })).toHaveAttribute("href", "/admin/website-content");
+    const email = guide.locator("#email");
+    await email.getByText("Deployment variable names", { exact: false }).click();
+    await expect(email.locator("code").filter({ hasText: /^RESEND_API_KEY$/ })).toBeVisible();
+    await expect(guide.locator("form")).toHaveCount(0);
+    await expect(guide.getByRole("link", { name: "Open launch evidence register", exact: true })).toHaveAttribute("href", "/admin/launch-readiness");
+    for (const link of await guide.locator('a[href^="/admin/"]').all()) expect(await link.getAttribute("href")).toMatch(/^\/admin\//);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(viewport.width);
+    expect(await guide.locator(".admin-intro").evaluate(el => parseFloat(getComputedStyle(el).fontSize))).toBeGreaterThanOrEqual(16);
+    await info.attach(`live-setup-${info.project.name}`, { body: await page.screenshot(), contentType: "image/png" });
+    const fallback = await browser.newContext({ baseURL, viewport, javaScriptEnabled: false, storageState: await context.storageState() });
+    try { const noScript = await fallback.newPage(); await noScript.goto("/admin/launch-readiness/setup"); await expect(noScript.locator(".live-setup-card:visible")).toHaveCount(13); }
+    finally { await fallback.close(); }
+  } finally {
+    expect((await context.request.post("/api/v1/auth/logout", { headers: { Origin: baseURL! } })).status()).toBe(200);
+    await context.close();
+  }
+});

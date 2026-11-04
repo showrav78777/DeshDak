@@ -1,0 +1,217 @@
+/* Shared visual language for customer, operations, and administration surfaces. */
+:root {
+  --surface: #ffffff;
+  --surface-subtle: #f6f9fb;
+  --surface-tint: #edf7f6;
+  --text-strong: #123149;
+  --text-muted: #627988;
+  --border-soft: #dbe6eb;
+  --brand: #0f5e83;
+  --brand-dark: #123e5d;
+  --positive: #16724d;
+}
+
+body { background: #f5f8fa; }
+
+:where(a, button, input, select, textarea):focus-visible {
+  outline: 3px solid #2e9ed0;
+  outline-offset: 2px;
+}
+
+:where(button, input, select, textarea) { font: inherit; }
+
+.dashboard-shell,
+.warehouse-portal,
+.support-shell,
+.reels-page,
+.public-catalog { min-height: calc(100vh - 1px); }
+
+.dashboard-shell,
+.warehouse-portal,
+.support-shell { background: linear-gradient(180deg, #f9fcfd 0, #f4f7f9 360px, #f7f9fa 100%); }
+
+.dashboard-content,
+.customer-dashboard-content,
+.checkout-content,
+.wallet-page,
+.ship-for-me-page,
+.seller-products-content,
+.support-content,
+.warehouse-portal-content { padding-bottom: 78px; }
+
+.dashboard-content > .eyebrow,
+.customer-dashboard-content > .eyebrow,
+.checkout-content > .eyebrow,
+.wallet-page > .eyebrow,
+.ship-for-me-hero > .eyebrow,
+.support-hero > .eyebrow,
+.warehouse-portal-hero > .eyebrow {
+  color: #167e6b;
+  font-size: 10px;
+  letter-spacing: .14em;
+  margin-bottom: 9px;
+}
+
+.dashboard-content > h1,
+.customer-dashboard-content > h1,
+.checkout-content > h1,
+.wallet-page > h1,
+.ship-for-me-hero > h1,
+.support-hero > h1,
+.warehouse-portal-hero > h1 {
+  color: var(--text-strong);
+  margin-bottom: 12px;
+}
+
+.dashboard-lead,
+.orders-intro,
+.checkout-intro,
+.admin-intro,
+.support-hero > p:not(.eyebrow),
+.ship-for-me-hero > p:not(.eyebrow),
+.warehouse-portal-hero > p:not(.eyebrow) {
+  color: var(--text-muted);
+  line-height: 1.65;
+  max-width: 760px;
+}
+
+.dashboard-card,
+.support-panel,
+.warehouse-detail-card,
+.wallet-transactions,
+.ship-for-me-create,
+.ship-for-me-history,
+.product-form-card,
+.product-list-card,
+.checkout-panel,
+.cart-summary,
+.order-card,
+.dashboard-order-row {
+  background: var(--surface);
+  border-color: var(--border-soft);
+  box-shadow: 0 10px 26px rgb(16 49 73 / 5%);
+}
+
+.dashboard-card,
+.support-panel,
+.warehouse-detail-card,
+.wallet-transactions,
+.ship-for-me-create,
+.ship-for-me-history,
+.product-form-card,
+.product-list-card,
+.checkout-panel { border-radius: 16px; }
+
+.dashboard-card:hover,
+.dashboard-order-row:hover,
+.order-card:hover,
+.warehouse-task-list > article:hover,
+.ship-for-me-list > article:hover {
+  border-color: #bcd4df;
+  box-shadow: 0 14px 30px rgb(16 49 73 / 9%);
+}
+
+.button { align-items: center; justify-content: center; min-height: 42px; }
+.button.primary { background: var(--brand-dark); }
+.button.primary:hover { background: #0c557a; }
+.button.secondary { background: #fff; border-color: #bdd1db; color: var(--brand-dark); }
+
+.dashboard-card h2,
+.support-panel h2,
+.warehouse-detail-card h2,
+.product-form-card h2,
+.product-list-card h2,
+.wallet-transactions h2 { color: var(--text-strong); }
+
+.status-active,
+.status-paid,
+.status-delivered,
+.status-completed { background: #e8f7ef; color: #126340; }
+
+.status-inactive,
+.status-cancelled,
+.status-failed { background: #fff0ef; color: #a33b32; }
+
+.wallet-table-wrap,
+.orders-list,
+.ticket-list,
+.warehouse-task-list,
+.ship-for-me-list { scrollbar-color: #a9bfca transparent; }
+
+.warehouse-primary-scan,
+.support-panel-head,
+.orders-page-head,
+.wallet-page-head,
+.ship-for-me-card-head { gap: 12px; }
+
+.warehouse-stat-grid > article,
+.customer-stat-grid > article,
+.wallet-balance-card {
+  border-color: var(--border-soft);
+  box-shadow: 0 8px 22px rgb(16 49 73 / 4%);
+}
+
+.form-error,
+.form-success { border: 1px solid transparent; }
+.form-error { border-color: #f0c9c4; }
+.form-success { border-color: #bce4cf; }
+
+@media (max-width: 900px) {
+  .dashboard-content,
+  .customer-dashboard-content,
+  .checkout-content,
+  .wallet-page,
+  .ship-for-me-page,
+  .seller-products-content,
+  .support-content,
+  .warehouse-portal-content { padding-bottom: 100px; }
+
+  .dashboard-card,
+  .support-panel,
+  .warehouse-detail-card,
+  .wallet-transactions,
+  .ship-for-me-create,
+  .ship-for-me-history,
+  .product-form-card,
+  .product-list-card,
+  .checkout-panel { border-radius: 14px; }
+}
+
+@media (max-width: 620px) {
+  .dashboard-content,
+  .customer-dashboard-content,
+  .checkout-content,
+  .wallet-page,
+  .ship-for-me-page,
+  .seller-products-content,
+  .support-content,
+  .warehouse-portal-content { padding-bottom: 104px; }
+
+  .dashboard-content > h1,
+  .customer-dashboard-content > h1,
+  .checkout-content > h1,
+  .wallet-page > h1,
+  .ship-for-me-hero > h1,
+  .support-hero > h1,
+  .warehouse-portal-hero > h1 { font-size: clamp(29px, 9vw, 40px); }
+
+  .dashboard-lead,
+  .orders-intro,
+  .checkout-intro,
+  .admin-intro,
+  .support-hero > p:not(.eyebrow),
+  .ship-for-me-hero > p:not(.eyebrow),
+  .warehouse-portal-hero > p:not(.eyebrow) { font-size: 14px; }
+
+  .button { min-height: 44px; }
+
+  .dashboard-card,
+  .support-panel,
+  .warehouse-detail-card,
+  .wallet-transactions,
+  .ship-for-me-create,
+  .ship-for-me-history,
+  .product-form-card,
+  .product-list-card,
+  .checkout-panel { border-radius: 13px; }
+}

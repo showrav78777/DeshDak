@@ -1,0 +1,24 @@
+{
+  "status": "TEMPLATE_NOT_CONNECTED",
+  "version": 1,
+  "proposedObjectives": {
+    "monthlyAvailabilityPercent": 99.9,
+    "publicReadP95Milliseconds": 1500,
+    "authenticatedApiP95Milliseconds": 2000,
+    "maximumFiveMinuteErrorRate": 0.01
+  },
+  "alerts": [
+    { "signal": "readiness_failure", "severity": "critical", "condition": "2 consecutive failed probes", "owner": "platform_on_call" },
+    { "signal": "api_error_rate", "severity": "warning", "condition": "> 2% for 10 minutes", "owner": "platform_on_call" },
+    { "signal": "api_error_rate", "severity": "critical", "condition": "> 5% for 5 minutes", "owner": "incident_commander" },
+    { "signal": "api_p95_latency", "severity": "warning", "condition": "> 1500 ms for 10 minutes", "owner": "platform_on_call" },
+    { "signal": "api_p95_latency", "severity": "critical", "condition": "> 3000 ms for 5 minutes", "owner": "incident_commander" },
+    { "signal": "payment_failure_or_reconciliation_gap", "severity": "critical", "condition": "provider-specific approved threshold", "owner": "finance_on_call" },
+    { "signal": "maintenance_job_overdue", "severity": "critical", "condition": "> 2 approved job intervals", "owner": "platform_on_call" },
+    { "signal": "support_or_compliance_sla_breach", "severity": "warning", "condition": "> 0 unacknowledged breach", "owner": "business_operations" },
+    { "signal": "database_connection_utilization", "severity": "warning", "condition": "> 85% for 10 minutes", "owner": "database_owner" },
+    { "signal": "backup_missing_or_failed", "severity": "critical", "condition": "no verified backup inside approved RPO", "owner": "database_owner" },
+    { "signal": "certificate_expiry", "severity": "warning", "condition": "<= 14 days", "owner": "platform_on_call" },
+    { "signal": "certificate_expiry", "severity": "critical", "condition": "<= 7 days", "owner": "incident_commander" }
+  ]
+}

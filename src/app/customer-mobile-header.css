@@ -1,0 +1,44 @@
+/* Shared customer icon language and compact marketplace header. */
+.duar-icon{display:block;fill:none;flex:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round;stroke-width:1.8}
+.unified-search-bar>span .duar-icon{height:20px;width:20px}
+.unified-image-button .duar-icon,.unified-assistant-button .duar-icon{height:19px;width:19px}
+.global-customer-actions .duar-icon{height:18px;width:18px}
+.market-country-selector>strong{display:none}
+
+@media(max-width:850px){
+  /* First row is actions; the single unified product search occupies its own full row. */
+  .marketplace-header-main{gap:8px;grid-template-columns:auto 1fr auto;padding:9px 12px 12px}
+  .marketplace-header .brand{gap:7px;min-width:auto}
+  .marketplace-header .brand-mark{height:31px;width:31px}
+  .marketplace-header .brand span:last-child{display:inline;font-size:16px;letter-spacing:-.04em}
+  .marketplace-header-search{grid-column:1/-1;grid-row:2;min-width:0}
+  .marketplace-header-search .unified-search-bar{border-radius:12px;height:46px;min-width:0}
+  .marketplace-header-search .unified-search-bar input{font-size:14px;min-width:0}
+  .marketplace-header-search .unified-submit{border-radius:9px;font-size:12px;min-width:58px;padding:0 10px}
+  .marketplace-header .header-reels-button{align-items:center;border-radius:50%;display:flex;height:36px;justify-content:center;padding:0;width:36px}
+  .marketplace-header .header-reels-button b{display:none}
+  .marketplace-header .header-reels-button span{border:0;height:auto;padding:0;width:auto}
+  .marketplace-header .header-reels-button .duar-icon{height:19px;width:19px}
+  .marketplace-header .header-actions{gap:5px;justify-self:end}
+  .marketplace-header .header-actions .market-country-selector,.marketplace-header .header-actions .header-orders-link,.marketplace-header .header-actions .header-sign-in,.marketplace-header .header-actions .nav-cta{display:none}
+  .marketplace-header .header-icon-link,.marketplace-header .notification-bell{align-items:center;border-radius:10px;display:flex;height:36px;justify-content:center;width:36px}
+  .marketplace-header .header-icon-link .duar-icon,.marketplace-header .notification-bell .duar-icon{height:20px;width:20px}
+  .marketplace-header .customer-menu summary{align-items:center;height:36px;justify-content:center;padding:0;width:36px}
+  .marketplace-header .customer-menu summary i{align-items:center;display:flex;height:32px;justify-content:center;width:32px}
+  .marketplace-header .customer-menu summary>span{display:none}
+  .marketplace-header .customer-menu>div{max-height:min(70vh,520px);max-width:calc(100vw - 24px);overflow:auto;position:fixed;right:12px;top:62px;width:300px}
+  .global-customer-actions{bottom:calc(77px + env(safe-area-inset-bottom));right:12px}
+  .global-customer-actions b{display:none}
+  .global-customer-actions a,.global-customer-actions button{align-items:center;border-radius:50%;height:44px;justify-content:center;padding:0;width:44px}
+}
+
+@media(max-width:400px){
+  .marketplace-header-main{padding-inline:9px}
+  .marketplace-header .brand span:last-child{display:none}
+  .marketplace-header .brand-mark{height:32px;width:32px}
+  .marketplace-header .notification-bell{display:none}
+}
+
+@media(prefers-reduced-motion:reduce){
+  .duar-icon,.marketplace-header .header-reels-button,.global-customer-actions a,.global-customer-actions button{transition:none!important}
+}

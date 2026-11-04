@@ -1,0 +1,26 @@
+.home-discovery-callout{align-items:center;background:linear-gradient(112deg,#e8f7fb,#fff6ee);border:1px solid #cfe7ee;border-radius:18px;display:flex;gap:34px;justify-content:space-between;margin:32px auto 0;max-width:1320px;padding:28px 32px}.home-discovery-callout .eyebrow{margin-bottom:9px}.home-discovery-callout h2{font-family:Arial,Helvetica,sans-serif;font-size:26px;letter-spacing:-.04em;margin:0}.home-discovery-callout p:not(.eyebrow){color:#607586;font-size:13px;line-height:1.55;margin:10px 0 0;max-width:760px}.home-discovery-callout-actions{display:flex;flex-shrink:0;flex-wrap:wrap;gap:9px}.home-discovery-callout .button{font-size:12px;padding:12px 15px}.market-recommendations{margin:0 auto;max-width:1320px;padding:54px 0}.market-recommendations-heading .section-note{line-height:1.55;max-width:610px}.market-recommendation-grid{display:grid;gap:15px;grid-template-columns:repeat(4,minmax(0,1fr))}.market-recommendation-card{background:#fff;border:1px solid #e0e8ed;border-radius:16px;display:flex;flex-direction:column;overflow:hidden;transition:box-shadow .2s ease,transform .2s ease}.market-recommendation-card:hover{box-shadow:0 18px 34px #18384917;transform:translateY(-3px)}.market-recommendation-main{display:block;flex:1}.market-recommendation-art{align-items:center;background:linear-gradient(145deg,#e1f4fa,#fff1e5);color:#176d96;display:flex;font-size:40px;height:144px;justify-content:center;position:relative}.market-recommendation-art span{align-items:center;background:#fff9;border-radius:50%;display:flex;height:60px;justify-content:center;width:60px}.market-recommendation-art small{background:#0f526c;border-radius:99px;color:#fff;font-size:9px;font-weight:900;padding:6px 8px;position:absolute;right:10px;top:10px}.market-recommendation-main>div:last-child{padding:16px 16px 7px}.market-recommendation-main small{color:#778a98;display:block;font-size:9px;font-weight:800;line-height:1.4;text-transform:uppercase}.market-recommendation-main h3{font-size:16px;line-height:1.35;margin:8px 0}.market-recommendation-main p{color:#667a89;font-size:12px;line-height:1.5;margin:0;min-height:54px}.market-recommendation-main strong{color:#14784c;display:block;font-size:17px;margin-top:14px}.market-recommendation-card footer{align-items:center;border-top:1px solid #edf1f3;display:flex;gap:9px;justify-content:space-between;margin:10px 16px 0;padding:11px 0 14px}.market-recommendation-card footer>span{color:#6f8290;font-size:10px;font-weight:800}.market-recommendation-card .add-cart-control .add-cart-buttons{display:block}.market-recommendation-card .add-cart-control .button{font-size:10px;padding:9px 11px}.market-recommendation-card .add-cart-control>a,.market-recommendation-card .add-cart-control>small{display:none}
+@media(max-width:850px){
+  .home-discovery-callout{align-items:flex-start;flex-direction:column;margin-left:20px;margin-right:20px}
+  .market-recommendations{margin-left:20px;margin-right:20px;padding-bottom:38px;padding-top:38px}
+  .market-recommendation-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:560px){
+  .home-discovery-callout{padding:22px}
+  .home-discovery-callout h2{font-size:23px}
+  .home-discovery-callout-actions{width:100%}
+  .home-discovery-callout-actions .button{flex:1;text-align:center}
+  .market-recommendation-grid{grid-template-columns:1fr}
+  .market-recommendation-art{height:130px}
+}
+
+/* Use the available desktop space for marketplace discovery. */
+@media (min-width:851px){
+  .home-discovery-callout,.market-recommendations{max-width:none;width:min(1800px,calc(100vw - 64px))}
+  .market-recommendations{padding-bottom:62px}
+}
+
+/* Show the two clear purchase paths on every purchasable home-feed card. */
+.market-recommendation-card footer{align-items:stretch;flex-direction:column}
+.market-recommendation-card .add-cart-control{width:100%}
+.market-recommendation-card .add-cart-control .add-cart-buttons{display:grid;gap:8px;grid-template-columns:repeat(2,minmax(0,1fr))}
+.market-recommendation-card .add-cart-control .button{align-items:center;display:flex;font-size:11px;justify-content:center;min-height:38px;padding:9px 8px;white-space:nowrap}

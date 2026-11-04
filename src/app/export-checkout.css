@@ -1,0 +1,19 @@
+.lane-readiness-form { margin-top: .8rem; padding: .85rem; border: 1px solid #d9e5df; border-radius: 12px; background: #f8fbf9; }
+.lane-readiness-form > p { display: grid; gap: .2rem; margin: 0 0 .65rem; }
+.lane-readiness-form > p span { color: #66756d; font-size: .78rem; }
+.lane-readiness-form > div { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .45rem .8rem; margin-bottom: .7rem; }
+.lane-readiness-form label { display: flex; align-items: center; gap: .45rem; font-size: .82rem; }
+.checkout-destination { display: grid; gap: .45rem; margin: 1rem 0; font-weight: 700; }
+.checkout-destination select { min-height: 46px; border: 1px solid #cfd9d3; border-radius: 10px; padding: .7rem; background: white; }
+.checkout-destination-static { display: flex; justify-content: space-between; margin: 1rem 0; padding: .8rem 1rem; border-radius: 10px; background: #f5f8f6; }
+.checkout-domestic-note { margin: -.25rem 0 1rem; padding: .8rem 1rem; border: 1px solid #b9dfcf; border-radius: 10px; background: #f0faf5; color: #285f49; font-size: .9rem; line-height: 1.45; }
+.checkout-domestic-note b { display: block; margin-bottom: .18rem; }
+.checkout-saved-address { display: grid; gap: .45rem; margin: 1rem 0; padding: 1rem; border: 1px solid #d8e5df; border-radius: 12px; background: #f7faf8; }
+.checkout-saved-address label { font-size: .78rem; font-weight: 800; }
+.checkout-saved-address select { min-height: 46px; border: 1px solid #cfd9d3; border-radius: 10px; padding: .7rem; background: white; }
+.checkout-saved-address p { color: #66756d; font-size: .72rem; line-height: 1.5; margin: 0; }
+.checkout-saved-address a { color: #0b6285; font-weight: 800; }
+
+@media (max-width: 680px) {
+  .lane-readiness-form > div { grid-template-columns: 1fr; }
+}

@@ -1,0 +1,8 @@
+# Inject through your shell or CI secret store. Never commit real credentials.
+E2E_BASE_URL=http://localhost:3000
+# Optional dedicated local customer; omit both for anonymous smoke tests.
+E2E_CUSTOMER_EMAIL=
+E2E_CUSTOMER_PASSWORD=
+# Visual baselines require review in the same pinned OS/browser as CI.
+E2E_VISUAL=0
+E2E_BLOB=0

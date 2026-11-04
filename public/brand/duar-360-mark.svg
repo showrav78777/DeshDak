@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" role="img" aria-labelledby="title">
+  <title id="title">DUAR-360 brand mark</title>
+  <defs>
+    <linearGradient id="duar360" x1="12" x2="84" y1="12" y2="84" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#103f63"/>
+      <stop offset=".55" stop-color="#147f8c"/>
+      <stop offset="1" stop-color="#f2673d"/>
+    </linearGradient>
+  </defs>
+  <rect width="96" height="96" rx="25" fill="url(#duar360)"/>
+  <path d="M68 28A28 28 0 1 0 76 48" fill="none" stroke="#fff" stroke-linecap="round" stroke-width="7"/>
+  <path d="m62 20 17 8-7 17" fill="none" stroke="#fff" stroke-linecap="round" stroke-linejoin="round" stroke-width="7"/>
+  <path d="M35 31h12.5c10 0 16.5 6.6 16.5 17S57.5 65 47.5 65H35Zm10 9v16h2.2c4.2 0 7-3 7-8s-2.8-8-7-8Z" fill="#fff"/>
+</svg>

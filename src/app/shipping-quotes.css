@@ -1,0 +1,27 @@
+.shipping-final-quote-form{background:#f4f8fa;border-radius:13px;display:grid;gap:16px;padding:18px}
+.shipping-quote-form-guide{background:#e8f6f1;border:1px solid #c4e5d7;border-radius:10px;color:#376659;display:grid;gap:5px;padding:12px}.shipping-quote-form-guide b{color:#176d56;font-size:12px}.shipping-quote-form-guide span{font-size:11px;line-height:1.4}
+.shipping-final-quote-form .quote-fields{display:grid;gap:13px;grid-template-columns:1fr}
+.shipping-final-quote-form label{color:#28485d;display:grid;font-size:12px;font-weight:850;gap:6px;line-height:1.35}
+.shipping-final-quote-form input,.shipping-final-quote-form select,.shipping-final-quote-form textarea{background:#fff;border:1px solid #bcd0da;border-radius:9px;color:#183d54;font:inherit;font-size:14px;min-height:42px;padding:10px 11px;width:100%}
+.shipping-final-quote-form select{cursor:pointer}.shipping-final-quote-form textarea{min-height:88px;resize:vertical}.shipping-final-quote-form label small{color:#637b89;font-size:10px;font-weight:600;line-height:1.45}
+.quote-fee-row{display:grid;gap:11px;grid-template-columns:1fr 1fr}.quote-note-field span{color:#718794;font-weight:600}.shipping-final-quote-form .button{border:0;cursor:pointer;width:100%}.shipping-final-quote-form .button:disabled{cursor:not-allowed;opacity:.6}.shipping-final-quote-form .form-error{margin:0}
+.shipping-quote-card{margin-top:20px;padding:28px}
+.shipping-quote-title{align-items:start;display:flex;gap:20px;justify-content:space-between}
+.shipping-quote-title h2{font-size:25px;max-width:none}
+.shipping-quote-title>b{color:#16734c;font-size:31px;white-space:nowrap}
+.shipping-quote-explain{color:var(--muted);font-size:14px;line-height:1.55;margin:19px 0}
+.shipping-charge-breakdown{background:#f5faf8;border:1px solid #d9eee4;border-radius:11px;display:grid;gap:0;margin:18px 0;padding:4px 15px}
+.shipping-charge-breakdown>div{align-items:center;border-bottom:1px solid #d9eee4;display:flex;gap:20px;justify-content:space-between;padding:11px 0}
+.shipping-charge-breakdown>div:last-child{border-bottom:0}
+.shipping-charge-breakdown dt{color:#46645a;font-size:13px}
+.shipping-charge-breakdown dd{color:#126b47;font-size:15px;font-weight:850;margin:0}
+.weight-discrepancy{background:#fff5e8;border-radius:11px;display:grid;gap:6px;padding:14px}
+.weight-discrepancy b{font-size:12px}
+.weight-discrepancy span{color:#76532d;font-size:12px;line-height:1.5}
+.shipping-quote-note{color:#425b6e;font-size:13px;line-height:1.55}
+.shipping-quote-card>small{color:var(--muted);font-size:11px}
+.shipping-decision-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:20px}
+.shipping-decision-actions button{cursor:pointer}
+.shipping-decision-actions button:disabled{cursor:not-allowed;opacity:.6}
+.shipping-quote-ready{background:#e9f9f1;border-radius:10px;color:#176342;font-size:13px;font-weight:800;margin:20px 0 0;padding:13px}
+@media(max-width:700px){.shipping-quote-title{display:block}.shipping-quote-title>b{display:inline-block;margin-top:13px}.shipping-decision-actions{display:grid}.shipping-decision-actions button{width:100%}.quote-fee-row{grid-template-columns:1fr}}

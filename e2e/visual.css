@@ -1,0 +1,5 @@
+/* Component baseline only: fixed utility chrome has separate usability coverage. */
+[aria-label="Quick marketplace actions"],
+[aria-label="Mobile marketplace navigation"],
+[aria-label="Install DeshDak application"],
+nextjs-portal { visibility: hidden !important; }

@@ -1,0 +1,63 @@
+name: DeshDak browser regression
+on:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3]
+    env:
+      E2E_BLOB: "1"
+      E2E_SHARD: ${{ matrix.shard }}/3
+      E2E_VISUAL: "1"
+      E2E_UPDATE_SNAPSHOTS: "0"
+      # Match the isolated runtime used for local role/workflow verification.
+      # Normal application dev/build bundler defaults remain unchanged.
+      ISOLATED_TEST_BUNDLER: "turbopack"
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run pinned-container shard with disposable database
+        run: docker compose -f compose.e2e.yml up --build --abort-on-container-exit --exit-code-from browser
+      - name: Export shard report
+        if: always()
+        run: docker compose -f compose.e2e.yml cp browser:/work/blob-report ./blob-report
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: browser-blob-${{ matrix.shard }}
+          path: blob-report
+          retention-days: 7
+      - name: Remove disposable test stack
+        if: always()
+        run: docker compose -f compose.e2e.yml down
+  report:
+    if: ${{ !cancelled() }}
+    needs: browser
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm install --global npm@11.6.2 && npm ci
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: browser-blob-*
+          path: all-blob-reports
+          merge-multiple: true
+      - run: npm run test:e2e:merge
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: browser-html-report
+          path: |
+            playwright-report
+            test-results/merged-junit.xml
+          retention-days: 7

@@ -1,0 +1,30 @@
+.sourcing-work-guide { background: #edf6f8; border: 1px solid #c9dfe7; border-radius: 16px; margin-top: 24px; padding: 20px 24px; }
+.sourcing-work-guide h2 { font-size: 18px; margin: 0 0 12px; }
+.sourcing-workspace .admin-logout-control { position: static; inset: auto; }
+.sourcing-work-guide ol { display: grid; gap: 16px; grid-template-columns: repeat(3,minmax(0,1fr)); padding-left: 20px; }
+.sourcing-work-guide li { font-size: 14px; line-height: 1.6; }
+.sourcing-workspace .sourcing-card { align-items: start; display: grid; gap: 24px; grid-template-columns: minmax(0,1fr) minmax(0,1.4fr); }
+.sourcing-workspace .sourcing-card > * { min-width: 0; overflow-wrap: anywhere; }
+.sourcing-draft-form fieldset { border: 0; display: grid; gap: 16px; margin: 0; min-width: 0; padding: 0; }
+.sourcing-draft-form legend { font-size: 18px; font-weight: 700; margin-bottom: 12px; }
+.sourcing-workspace .sourcing-draft-form :is(label,small,.form-help) { font-size: 14px; line-height: 1.6; }
+.sourcing-workspace .sourcing-draft-form :is(input,textarea) { box-sizing: border-box; font-size: 16px; min-height: 48px; min-width: 0; width: 100%; }
+.sourcing-draft-form textarea { min-height: 96px; resize: vertical; }
+.sourcing-draft-form button { min-height: 48px; }
+.sourcing-draft-form .quote-fields { display: grid; gap: 16px; grid-template-columns: repeat(2,minmax(0,1fr)); }
+.sourcing-draft-form label { display: flex; flex-wrap: wrap; align-content: start; gap: 8px; }
+.sourcing-draft-form label :is(input,textarea,small) { flex-basis: 100%; }
+.sourcing-draft-form :is(input,textarea) { background: white; border: 1px solid #b7ceda; border-radius: 10px; padding: 12px; color: #153c54; }
+.sourcing-workspace .sourcing-card { background: white; border: 1px solid #d9e6ed; border-radius: 16px; padding: 24px; margin-top: 24px; }
+.sourcing-workspace .sourcing-card dl { display: grid; gap: 12px; margin-top: 20px; }
+.sourcing-workspace .sourcing-card dt { color: #526d7e; font-size: 14px; }
+.sourcing-workspace .sourcing-card dd { margin: 4px 0 0; }
+.sourcing-workspace .sourcing-card > .form-success { display: grid; gap: 8px; padding: 16px; border-radius: 12px; }
+.sourcing-draft-form :is(input,textarea,button):focus-visible { outline: 3px solid #167e95; outline-offset: 3px; }
+@media (max-width: 1050px) {
+  .sourcing-workspace .sourcing-card, .sourcing-work-guide ol { grid-template-columns: minmax(0,1fr); }
+}
+@media (max-width: 680px) {
+  .sourcing-workspace .quote-fields { grid-template-columns: minmax(0,1fr); }
+  .sourcing-work-guide { padding: 16px; }
+}

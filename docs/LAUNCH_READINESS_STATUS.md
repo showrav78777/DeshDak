@@ -1,0 +1,85 @@
+# Crossly launch readiness status
+
+Status reviewed: 21 October 2026, Asia/Dhaka
+
+## Current handoff — 21 October 2026
+
+The September baseline below is historical, not a current full-system or production
+certification. Recent increment-level verification passed the focused Inspector,
+Warehouse and Ship for Me API regressions and all 33 isolated browser cases in
+115.15 seconds, with zero failures/skips/errors. Inspection lost-response recovery
+was checked against PostgreSQL: one decision, event and audit. The production
+build, relevant static/policy/security checks and 288-operation API contract passed.
+See `INSPECTION_REQUEST_INTEGRITY.md` and `E2E_TESTING.md` for scope and evidence.
+
+The owner database has not been migrated by those tests. Before enabling the recent
+supplier/inspection workflows, use `RECENT_WORKFLOW_RELEASE_CHECKLIST.md`; review
+the actual target migration status rather than assuming tests updated that database.
+No real supplier, payment, storage/scanning or other production provider was activated.
+
+Open engineering risks include development-server stalls/timing errors and the
+previously recorded five high-severity development dependency advisories. An earlier
+combined test-server run timed out; the final API/browser phases passed on separate
+fresh servers/schemas. That is not proof that the underlying stall is resolved.
+The advisory count is historical, not a new dependency scan. Real-device/staging
+acceptance, provider UAT and independent production security/load review remain due.
+
+## Historical automated baseline — 9 September 2026
+
+All 66 always-on release-candidate gates passed across the required development and optimized-production runtime checks. The protected-report cache assertion and final notification/marketing checks passed against the optimized production server, and the production application compiled and generated all 159 pages successfully. The clean database baseline contains 59 migrations and the versioned contract documents 266 API operations. The suite now also enforces Product Reels and the Sales/KAM opportunity pipeline alongside original-method refund, chargeback accounting, production-cookie test portability, and production dependency integrity; it adds security-cleanup and payment-operations-monitor gates, for 68 total, when `MAINTENANCE_JOB_SECRET` is configured. Every available `test:*` command is therefore represented by the release runner, either always or behind its required external configuration. The host sandbox prevented Turbopack's internal CSS worker from binding its local port, so the successful optimized build used Next.js's official webpack build mode. Scheduler-backed checks remain intentionally skipped because no local `MAINTENANCE_JOB_SECRET` is configured.
+
+Verified areas:
+
+- OpenAPI generation/contract, TypeScript, lint, clean migration reconstruction, zero schema drift, and observability.
+- CSRF, Admin MFA, recovery, sessions, authorization/portal isolation, and safe audit logs.
+- Customer profile/address, wishlist, cart, checkout rules, coupons, promotions, wallet/refund calculations, and financial journals.
+- Admin-enabled customer countries, secure anonymous market persistence, signed-in country authority, cache-safe market ranking, Bangladesh/international catalog priority, and one adaptive market-aware homepage.
+- Catalog, product reviews, seller stores/products, CSV imports, and fail-closed seller connector configuration.
+- Public Product Reels, quality-weighted ranking, idempotent engagement, authenticated reactions, moderated comments, seller ownership and Admin moderation.
+- Business-only Sales/KAM accounts, Admin assignment, row-level portfolio isolation, Account 360, immutable follow-ups, sourcing-request links and access revocation.
+- Restricted goods, Compliance, Finance, Sourcing, Warehouse, Inspector, Logistics, Ship for Me, RMA, Customer Service, Help Centre, and AI-to-human handoff.
+- Unique identifiers, QR/barcode assets, scan routing, labels, PWA-compatible pages, notification preferences, marketing delivery, scheduling, cancellation, and reporting.
+
+No failing local application workflow was found by that September audit. Subsequent
+defects and fixes are recorded in the increment notes; do not reuse this statement
+as current acceptance evidence.
+
+## Current release classification
+
+The repository is a strong local/staging release candidate. It is not yet approved for a paid public production launch because external infrastructure, provider, policy, and physical-operation gates remain unfinished.
+
+## P0 external launch blockers
+
+1. Production HTTPS domain, hosting, PostgreSQL, connection pooling, CDN/WAF/DDoS protection, secret manager, logs/alerts, encrypted backups, restore drill, RTO/RPO, and rollback.
+2. One real payment provider with hosted checkout, signed webhook verification, sandbox/UAT failure cases, refunds, reconciliation, settlement, chargeback handling, and approved credentials.
+3. Production CAPTCHA/human verification and verified transactional-email delivery with sender-domain controls and bounce/suppression handling.
+4. Private product/store/Reel/evidence media storage with signed uploads, MIME/signature/size checks, malware scanning, metadata removal, video transcoding/thumbnails, CDN delivery, and retention/deletion controls.
+5. Approved legal identity, terms, privacy/cookie notice, returns/refunds, seller terms, restricted-goods/customer wording, wallet legality, marketing consent, and data-retention policy.
+6. Real warehouse identity/address/hours, launch shipping lane/rates, carrier procedure, packaging rules, labels, scanner/printer/mobile-device acceptance, staff training, and escalation contacts.
+7. Named Admin, Compliance, Finance, Warehouse, Inspector, Logistics, Sourcing, and Customer Service staff with separate accounts, MFA, least privilege, shifts, approval limits, and recovery procedures.
+8. Independent penetration/dependency/infrastructure security review plus agreed load/soak tests and measured launch capacity.
+9. A secret-manager-backed `MAINTENANCE_JOB_SECRET` and managed schedules/alerts for security cleanup, compliance catalog maintenance, support SLA processing, and scheduled marketing campaigns. This local audit skipped the scheduler-secret test because the secret is not configured.
+
+Owners and Admins can record responsibility, deadlines, blockers, and reviewed non-secret evidence for these gates at `/admin/launch-readiness`. A recorded status is coordination evidence only; it does not itself activate or prove an external control.
+
+That page now also presents six machine-checked, non-secret signals: database connectivity, production configuration, approved checkout lanes, approved country payment paths, warehouse records, and operational-role staffing. Deployment-dependent checks are explicitly marked `DEVELOPMENT` during local development and cannot silently convert the manual release gates into approval.
+
+Admin can generate a current A4 evidence summary at `/admin/launch-readiness/report` and print or save it as PDF without sending operational records to a document provider. The report is protected, no-indexed, tested for environment-secret non-disclosure, and cannot claim readiness while any required gate remains unverified.
+
+## Not launch blockers for the controlled first release
+
+- Supplier and seller API synchronization.
+- Additional countries, currencies, carriers, and payment methods.
+- Flutter Android/iOS applications.
+- Email/SMS/WhatsApp/push marketing.
+- Image search, advanced recommendations, loyalty/referrals, and seller payouts.
+
+These remain fail-closed and should be delivered sequentially after production stabilization.
+
+## Next engineering action
+
+The local anonymous-browser and 390 x 844 responsive smoke pass is recorded in `LAUNCH_BROWSER_ACCEPTANCE.md` with no reproducible P0/P1 application defect. Repeat the browser/device acceptance pass in staging with realistic seeded launch data and separate role accounts, then fix only reproducible P0/P1 issues. Provider adapters should begin only after the owner supplies the selected provider's official documentation, sandbox, secret-manager references, and approved business rules.
+
+The repository now also contains a multi-stage, non-root Next.js standalone container, a fail-closed runtime configuration check, a liveness health check, a restricted build context, and a CI container-policy test. Before launch, the infrastructure owner must select the platform, private registry, scanner and signing system; pin the approved base image by digest; build, scan, sign, and deploy the exact release image by immutable digest; and enforce readiness, private networking, a read-only filesystem, dropped capabilities, resource limits, monitoring, and rollback.
+
+The local container was built end-to-end on 1 September 2026. Its clean install reported zero npm vulnerabilities, its production build passed, the final image declares the non-root `nextjs` user and liveness check, and a no-secret startup test failed closed without disclosing values. Registry scanning/signing and a production-like deployment remain external launch gates.

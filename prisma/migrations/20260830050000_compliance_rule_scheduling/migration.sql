@@ -1,0 +1,1 @@
+ALTER TYPE "RestrictedGoodsRuleStatus" ADD VALUE 'SCHEDULED' AFTER 'DRAFT';

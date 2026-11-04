@@ -1,0 +1,124 @@
+# Crossly — External Dependencies and Owner Follow-up Register
+Purpose: keep a permanent list of work that cannot be completed safely with code alone. Update this file whenever a feature reaches an external credential, commercial approval, real-world business decision, legal review, or infrastructure dependency.
+Security rule: NEVER paste API keys, passwords, tokens, private certificates, OTP secrets, card data, or production credentials into this file or source control. Store only the provider/service name, responsible owner, status, and secret-manager reference.
+Status meanings:
+- REQUIRED: owner access or decision is still needed.
+- READY_TO_CONNECT: access exists and the software adapter can be connected.
+- CONNECTED_NOT_LIVE: technically connected but production activation is not approved.
+- LIVE: production approval and verification are complete.
+## 1. Supplier product and purchasing integrations
+- Status: REQUIRED
+- Obtain official/commercial API access for the approved supplier platforms (initial internal targets include Pinduoduo, 1688, and Alibaba; never expose these provider identities publicly).
+- Required capabilities: product search, product details, variants/SKUs, pricing, availability, order placement, cancellation, supplier-order status, domestic tracking, rate limits, and webhook/callback support.
+- Decide whether access will be official platform APIs or an approved aggregation partner.
+- Provide sandbox and production accounts separately.
+- Complete commercial terms, permitted-data-use review, and account-contingency plan.
+## 2. AI text, chatbot, embedding, and image-search services
+- Status: REQUIRED
+- Select approved services/models for: LLM chatbot, multilingual embeddings, vision/image embeddings, moderation, and optional speech-to-text.
+- Obtain API credentials, approved base URLs, model identifiers, rate/cost limits, and data-retention terms.
+- Provision a vector database or PostgreSQL vector extension for catalog embeddings.
+- Approve whether uploaded images may be sent to the selected AI provider and confirm provider retention/training opt-out settings.
+- Until complete, public text search and chatbot use the internal Stage 1 rules; image matching remains disabled and never fabricates results.
+## 3. Secure media storage and scanning
+- Status: REQUIRED
+- Provision private S3-compatible object storage, signed-upload/download support, lifecycle deletion rules, encryption, and separate development/production buckets.
+- Connect a malware/virus scanning service for image, video, inspection, RMA, seller, and support uploads.
+- Approve maximum file sizes, image dimensions, video limits, and retention periods.
+## 4. Human verification and fraud protection
+- Status: REQUIRED
+- Select and configure a CAPTCHA/human-verification provider with web, Android, and iOS support.
+- Define risk thresholds for anonymous AI/search, registration, login, password reset, checkout, wallet, refund, and promotion abuse.
+- Provision production fraud/risk rules and an operations review process.
+## 5. Authentication providers
+- Status: REQUIRED
+- Create production OAuth applications for Google and Facebook with approved redirect URLs and privacy-policy links.
+- Google customer sign-in is implemented but remains disabled until the owner creates a Google OAuth Web application, registers `https://YOUR-DOMAIN/api/v1/auth/oauth/google/callback` exactly, and places `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` in the deployment secret manager. Do not paste either secret here or into source control.
+- Select an SMS/OTP provider for Bangladesh phone login and verification.
+- KYC document-photo upload is available for local development only with `ALLOW_DEV_KYC_DOCUMENT_UPLOADS=true`: it accepts signature-validated JPEG/PNG/WebP images up to 5 MB and encrypts them before database storage. Production remains blocked until a Compliance-approved private-storage, malware-scanning, metadata-removal, retention/deletion, access-logging, and evidence-review integration is complete. The form never asks for the full document number.
+- Configure transactional email delivery, sender domain verification, DKIM/SPF/DMARC, templates, bounce handling, and suppression rules.
+- Mobile phase: create secure Android/iOS OAuth clients and universal/app links.
+## 6. Payment gateways and banking
+- Status: REQUIRED
+- Complete merchant onboarding and obtain sandbox/production credentials for approved Bangladesh payment methods (planned placeholders currently include bKash, Nagad, SSLCommerz/cards, and bank transfer).
+- Provide webhook signing secrets, settlement accounts, refund API access, chargeback process, fee schedules, reconciliation files, and sandbox test cases.
+- Confirm whether wallet balance is legally/contractually permitted, whether cash-out/top-up is allowed, and any KYC/AML or stored-value restrictions before production activation.
+- Split wallet + gateway payments remain deferred until live gateway behavior is confirmed.
+## 7. FX, duty, tax, and compliance data
+- Status: REQUIRED
+- Select primary and fallback FX-rate sources and approve spread rules per currency pair/customer segment.
+- Obtain/maintain HS code, customs duty, VAT, banned-item, restricted-item, counterfeit/IP-risk, and country compliance data.
+- Legal/finance review required before enabling any new country, currency, lane, refund method, or cross-border settlement flow.
+## 8. Carrier and logistics integrations
+- Status: REQUIRED
+- Obtain approved carrier/forwarder APIs for rates, labels, manifests, pickup, tracking, delivery proof, claims, and webhooks.
+- Enter real warehouses, zones/bins, addresses, operating hours, lane pricing, dimensional divisors, transit estimates, insurance rules, and customer approval thresholds through Admin.
+- Confirm QR/thermal-printer hardware and 80 mm label calibration at each warehouse.
+## 9. Notifications and real-time communication
+- Status: REQUIRED
+- Configure SMS, email, and in-app notification providers/templates.
+- Mobile phase: create Firebase Cloud Messaging and Apple Push Notification credentials, app identifiers, and notification permissions.
+- Select/operate WebSocket infrastructure and customer-service chat/ticket routing.
+## 10. Production infrastructure and security operations
+- Status: REQUIRED
+- Provision production PostgreSQL, Redis, message queue, private object storage, vector storage, secret manager, backups, monitoring, alerting, error tracking, log retention, and disaster recovery.
+- Configure production domain, DNS, TLS certificates, HSTS, WAF/CDN, DDoS protection, network restrictions, and CI/CD environments.
+- Complete vulnerability scanning, penetration testing, access review, incident-response contacts, backup-restore test, RTO/RPO approval, and privacy/security review before launch.
+## 11. Real business content and operational approvals
+- Status: REQUIRED
+- Supply company legal name, trade-license/tax information, customer terms, privacy policy, refund/return wording, prohibited items, insurance wording, support contacts, business hours, and escalation owners.
+- Add real categories, approved products, images, seller records, country/lane configurations, public pricing, and localized Bengali/English content through Admin or approved import tools.
+- Approve customer-facing brand assets, logo, posters, banners, icons, and application-store media.
+## 12. Flutter mobile release requirements
+- Status: REQUIRED (after website milestone)
+- Create Apple Developer and Google Play Console accounts, bundle/application identifiers, signing keys/certificates, store listings, privacy declarations, test tracks, and review accounts.
+- Configure mobile OAuth, push notifications, deep links, secure token storage, forced-update policy, crash reporting, analytics consent, and production API domains.
+## Current immediate blocker
+- Image search requires an approved vision/image-embedding API plus vector index. The secure public upload/validation UI exists, but real visual matching stays disabled until these are supplied and configured.
+## Where the owner will update AI settings later
+- Open Admin > AI & discovery (`/admin/ai`) to set public request limits, upload size, retention, approved HTTPS API base URL, model/deployment name, and a secret-manager reference.
+- Do not enter the real API key in the web form. First provision the production secret manager, store the credential there, and enter only a reference such as `secret://crossly/ai/image-search`.
+- Saving external configuration does not activate it. After credentials, provider terms, and vector storage are ready, the reviewed provider adapter, secret lookup, health check, moderation, and response validation must be completed and tested before LIVE activation is unlocked.
+
+## Supplier API activation dependencies — 2026-10-18
+- Read-only OTAPI transport and offline tests are implemented; live registry activation remains locked.
+- Owner must choose licensed aggregator versus official APIs and provision approved credentials in a secret manager. Never paste credentials into this file or chat.
+- Need account-specific provider identifiers, permissions and response fixtures; official 1688/Pinduoduo/AliExpress API exports are still required. The supplied Postman link documents Shopee, not 1688.
+- Before live activation: implement secret-manager lookup, quota reservation, credential-use audit, normalized/localized product validation, compliance screening, health/circuit breaking and sandbox contract tests. Purchasing, cancellation, tracking and image search are not implemented by this transport. See docs/SUPPLIER_API_CONNECTORS.md.
+
+## Manual-sourcing completion and dependency review — 2026-10-18
+- Purchase decisions now separate internal notes from customer history and use conditional updates; this does not complete structured supplier procurement records.
+- Remaining implementation: per-item external purchase records, original-currency cost/receipt evidence, private scanned receipt uploads, inbound supplier tracking/reconciliation and supplier claim/recovery workflow. See docs/MANUAL_SOURCING_WORKFLOW.md.
+- Historical purchase notes written by older code may already be customer-visible. Authorized privacy/operations staff must review affected records and approve any remediation; do not rewrite immutable history automatically.
+- npm audit reported five high-severity findings through the development-only eslint-config-next > @next/eslint-plugin-next > fast-glob > micromatch > braces chain (GHSA-vfj7-8cjw-p6xm). Production-only npm audit reported zero findings at this check. The suggested automatic fix downgrades eslint-config-next to 14.2.35; do not apply a breaking downgrade/force fix without compatibility review. Build-tool exposure remains an unresolved dependency issue, not a clean security sign-off.
+
+## Supplier-record increment — 2026-10-19
+- 2026-10-20 inspection retry follow-up: stable browser request identity and serializable inspection decision guards require reviewed migration 20261020130000_inspection_request_identity plus client Origin/Idempotency-Key headers. Legacy evidence is preserved without invented keys. Inspection corrections and production media providers remain separate gates. See docs/INSPECTION_REQUEST_INTEGRITY.md.
+- 2026-10-20 browsing follow-up: Admin cards use 20-record navigation and private GET accepts bounded 100-record pages with additive metadata. Evidence creation/replacement remains capped at 100. Legacy larger orders retain overview warnings; full aggregate readiness and operational cap handling remain separate work. See docs/SUPPLIER_RECORD_PAGINATION.md.
+- 2026-10-20 procurement UI follow-up: Admin supplier records show stage-specific next tasks and parcel counters; incomplete 100-record lists suppress readiness/counts and disclose truncation. Browsing pagination was subsequently completed; full legacy aggregate readiness remains pending. No new business transition or migration. See docs/PROCUREMENT_TASK_GUIDANCE.md and docs/SUPPLIER_RECORD_PAGINATION.md.
+- 2026-10-20 tracking identity follow-up: SQL case-insensitive uniqueness protects all Package writers; read-only `db:tracking:check` detects legacy conflicts without exposing references or changing evidence. Requires reviewed migration 20261020120000_inbound_tracking_case_uniqueness and operational review of any conflicts. See docs/INBOUND_TRACKING_INTEGRITY.md. No owner database migration is performed by verification.
+- 2026-10-20 inbound increment: manual immutable dispatch records link active supplier records to expected origin-warehouse parcels; physical receipt and inspection remain separate. One parcel per supplier record only. Split/merged parcels, dispatch corrections, case-folded uniqueness across legacy/import writers, supplier claims and live tracking remain gated. Reviewed migration 20261020110000_supplier_inbound_dispatch is required; see docs/SUPPLIER_INBOUND_TRACKING.md.
+- 2026-10-20 warehouse follow-up: receipt retries now bind employee/order/warehouse/parcel, use transactional stage locking and preserve browser request identity. This is not structured supplier inbound tracking/reconciliation. Legacy unfingerprinted receipts require scanning/review rather than event rewriting; see docs/WAREHOUSE_RECEIPT_HARDENING.md.
+- 2026-10-20 follow-up: independent Admin text-only correction/replacement and Sourcing release are implemented with immutable original/replacement/hold links. Requires reviewed migration 20261020090000_supplier_record_corrections and a separate Admin account; no self-approval. General item/quantity/warehouse and financial corrections remain gated. See docs/SUPPLIER_RECORD_REPLACEMENTS.md for the superseding scope and test evidence.
+- Verification follow-up (reviewed 2026-10-20): 33 browser cases and production build passed for correction reporting/holds. Two development Performance.measure negative-timestamp errors on AdminHomePage remain to investigate; passing workflow assertions do not establish an error-free console or production readiness.
+- Sourcing-stage mistake reporting links the affected record to a private audit and places the whole order on hold. Reporting itself does not replace evidence or cancel the supplier purchase. A separate independent Admin text-only replacement/release step is now available; see docs/SUPPLIER_RECORD_REPLACEMENTS.md.
+- Private item/quantity/reference/origin-warehouse records and mandatory purchase coverage are implemented. This is not a verified receipt or supplier-payment ledger.
+- Remaining: original-currency cost with FX/accounting snapshots, scanned private receipt evidence, inbound reconciliation, supplier claims and general item/quantity/warehouse corrections. Unsupported mistakes require operational hold/escalation; the new replacement step only changes supplier text.
+- Apply the reviewed supplier-record migration to the target application database during controlled deployment; isolated verification does not migrate the owner's database.
+
+## Dependency advisory recheck — 2026-10-22
+- GHSA-vfj7-8cjw-p6xm still lists no patched braces release. npm registry metadata reports braces 3.0.3 as latest, micromatch 4.0.8 still depends on braces ^3.0.3, and fast-glob 3.3.3 still uses micromatch. A routine compatible update therefore does not remove this advisory chain.
+- Keep the full npm audit CI gate unchanged. Do not hide the finding, force a framework/linter downgrade, substitute an unreviewed fork, or claim production launch security approval. Resolve through an upstream compatible patch or a separately reviewed tooling replacement.
+- This is one underlying advisory reflected in five package-chain alerts, not five independently identified runtime vulnerabilities. The preceding production-only audit was zero; that does not waive the development/CI tooling risk.
+- Primary advisory: https://github.com/advisories/GHSA-vfj7-8cjw-p6xm
+
+## Dependency security follow-up — 2026-10-31
+- Gate enforcement follow-up: CI and verify:launch now share test:dependency-audit with moderate-or-higher failure threshold. Earlier CI used high and launch only checked integrity; this stricter shared gate now blocks the remaining 16 moderate findings. Verified registry plugin dependencies still require minimatch ^3.1.2; do not force minimatch 11 into legacy callable consumers. See docs/PAGE_WORKFLOW_ACCEPTANCE.md.
+- Supersedes the earlier audit snapshot: npm registry audit identified Next.js critical/high advisories and Zod resource-exhaustion exposure. Updated Next and matching ESLint configuration to 16.4.3, and Zod to 4.6.7, with a refreshed lockfile.
+- Post-update production-only audit: zero vulnerabilities. Full audit: 16 moderate package-chain alerts, all rooted in minimatch GHSA-g3hv-75wg-m249 (<11.0.1). These are tooling findings; the full audit gate remains active and is not waived. Do not use npm audit fix --force to downgrade ESLint/Next configuration or silently override a transitive major version.
+- Full tooling remediation still requires a compatible upstream dependency update or a separately tested tooling migration. Production security sign-off remains gated; passing runtime/browser checks is not a waiver.
+- Primary advisories: https://github.com/advisories/GHSA-2464-fhr4-w9xw ; https://github.com/advisories/GHSA-673q-mjm6-r5xr ; https://github.com/advisories/GHSA-p3m5-59mp-jv5r ; https://github.com/advisories/GHSA-mrhx-c7xc-m3w5 ; https://github.com/advisories/GHSA-g3hv-75wg-m249
+## Deferred: enable the real conversational AI assistant
+- Status: REQUIRED — owner action only.
+- The application already has a safe catalog/rules fallback. To enable real conversational replies, set `OPENAI_API_KEY` in the server-only environment or secret manager, optionally set `OPENAI_CHAT_MODEL` (default: `gpt-5.5`), then restart the application and test `/assistant`.
+- Never place this key in client-side variables, source code, Admin forms, screenshots, or this register. The owner must provide the billing-enabled API project, secret storage, and authority to use it; these cannot be completed safely by application code alone.

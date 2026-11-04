@@ -1,0 +1,7 @@
+.detail-search-band {
+  background: #fff;
+  border-bottom: 1px solid #e7ebef;
+  padding: 13px max(28px, calc((100vw - 1060px) / 2));
+  position: relative;
+  z-index: 10;
+}
