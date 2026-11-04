@@ -3,7 +3,7 @@ import sharp from "sharp";
 import {processWebsiteImage} from "../src/modules/advertisements/media-processing.ts";
 import {readFile} from "node:fs/promises";
 import {stripTypeScriptTypes} from "node:module";
-import {appearanceSchema,defaultAppearance,promotionalVideoEmbed,bannerIsPublished} from "../src/modules/advertisements/appearance.ts";
+import {appearanceSchema,defaultAppearance,promotionalVideoEmbed,bannerIsPublished,safeBannerDestination} from "../src/modules/advertisements/appearance.ts";
 
 // The Next compiler resolves this marker; plain Node has no server-only package.
 // Evaluate the unchanged scanner implementation without that compiler marker.
@@ -23,6 +23,10 @@ try {
   await assert.rejects(()=>processWebsiteImage(new File([new Uint8Array(8*1024*1024+1)],'large.png',{type:'image/png'})));
   for(const logo of ['javascript:alert(1)','http://example.test/image','https://user:secret@example.test/image','/brand/../private'])assert(!appearanceSchema.safeParse({...defaultAppearance,logo}).success);
   assert.equal(promotionalVideoEmbed('https://youtube.com.evil.test/watch?v=abcdefghijk'),null);
+  assert(safeBannerDestination('/products?campaign=launch'));
+  assert(safeBannerDestination('https://deshdak.invalid/offers'));
+  for(const url of ['javascript:alert(1)','//evil.invalid','/\\evil.invalid','https://user:secret@evil.invalid','http://evil.invalid','/products\n'])assert(!safeBannerDestination(url));
+  assert(!appearanceSchema.safeParse({...defaultAppearance,slides:[{...defaultAppearance.slides[0],targetUrl:'/products'}]}).success);
   const now=new Date('2026-11-02T12:00:00Z'), slide=defaultAppearance.slides[0];
   assert(bannerIsPublished(slide,now));
   assert(!bannerIsPublished({...slide,startsAt:'2026-11-03T12:00:00Z'},now));

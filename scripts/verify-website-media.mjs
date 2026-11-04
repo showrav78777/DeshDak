@@ -86,8 +86,14 @@ try {
         const firstBanner=page.getByRole('group',{name:'Banner 1',exact:true});
         await firstBanner.getByText('Edit image, text and schedule',{exact:true}).click();
         await firstBanner.getByLabel('Image description',{exact:true}).fill(`Ordering source ${viewport.width}`);
+        await firstBanner.getByLabel('Button destination (optional)',{exact:true}).fill(`/products?campaign=${viewport.width}`);
+        await firstBanner.getByLabel('Button text (optional)',{exact:true}).fill(`Shop campaign ${viewport.width}`);
         await firstBanner.getByText('Edit image, text and schedule',{exact:true}).click();
-        if(viewport.width>500)await firstBanner.getByRole('button',{name:'Drag banner 1 to reorder',exact:true}).dragTo(page.getByRole('button',{name:'Drag banner 2 to reorder',exact:true}));
+        if(viewport.width>500){
+          await firstBanner.scrollIntoViewIfNeeded();
+          await page.getByRole('group',{name:'Banner 2',exact:true}).scrollIntoViewIfNeeded();
+          await firstBanner.getByRole('button',{name:'Drag banner 1 to reorder',exact:true}).dragTo(page.getByRole('button',{name:'Drag banner 2 to reorder',exact:true}));
+        }
         else await firstBanner.getByRole('button',{name:'Move down',exact:true}).click();
         await page.getByRole('group',{name:'Banner 2',exact:true}).getByLabel('Image description',{exact:true}).waitFor({state:'attached'});
         await page.getByRole('region',{name:'Homepage section management'}).getByLabel('Popular searches',{exact:true}).uncheck();
@@ -122,6 +128,7 @@ try {
         const carousel=page.getByRole('region',{name:'DeshDak highlights'});
         await carousel.getByRole('group',{name:`1 of ${publicAppearance.slides.length}`,exact:true}).waitFor();
         await carousel.getByRole('group',{name:`2 of ${publicAppearance.slides.length}`,exact:true}).waitFor({timeout:7500});
+        assert.equal(await carousel.getByRole('link',{name:`Shop campaign ${viewport.width}`,exact:true}).getAttribute('href'),`/products?campaign=${viewport.width}`);
         assert.equal(await carousel.getByRole('button').count(),0,'Unexpected carousel controls');
         assert.equal(await page.locator('[data-homepage-section="searches"]').count(),0);
         const video=page.locator('[data-homepage-section="promotionVideo"]');

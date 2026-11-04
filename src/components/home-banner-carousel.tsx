@@ -12,8 +12,8 @@ const fallbackSlides = [
 
 export function HomeBannerCarousel({ bangladesh }: { bangladesh: boolean }) {
   const [slides, setSlides] = useState<Appearance["slides"]>(fallbackSlides.map((slide) => ({ ...slide, enabled: true })));
-  useEffect(() => { let active = true; fetch("/api/v1/website-appearance", { cache: "no-store" }).then((response) => response.ok ? response.json() : null).then((result) => { if (active && result?.data?.slides?.length) setSlides(result.data.slides); }).catch(() => {}); return () => { active = false; }; }, []);
   const [index, setIndex] = useState(0);
+  useEffect(() => { let active = true; fetch("/api/v1/website-appearance", { cache: "no-store" }).then((response) => response.ok ? response.json() : null).then((result) => { if (active && result?.data?.slides?.length) {setSlides(result.data.slides);setIndex(0);} }).catch(() => {}); return () => { active = false; }; }, []);
   useEffect(() => {
     const timer = window.setInterval(() => setIndex((value) => (value + 1) % slides.length), 5000);
     return () => window.clearInterval(timer);
@@ -25,6 +25,6 @@ export function HomeBannerCarousel({ bangladesh }: { bangladesh: boolean }) {
         {slide.title ? <div className="deshdak-carousel-copy"><span>SHOP · SHIP · TRACK</span><h1>{slide.title}</h1><p>{slide.copy}</p></div> : null}
       </div> : null)}
     </div>
-    <div className="deshdak-carousel-footer"><div className="deshdak-banner-actions"><Link className="button primary" href={bangladesh ? "/products" : "/stores"}>{bangladesh ? "Explore products" : "Explore Bangladesh stores"}</Link><Link className="button secondary" href="/buy-ship">Buy &amp; Ship ↗</Link></div></div>
+    <div className="deshdak-carousel-footer"><div className="deshdak-banner-actions"><Link className="button primary" href={slides[index]?.targetUrl ?? (bangladesh ? "/products" : "/stores")}>{slides[index]?.buttonLabel ?? (bangladesh ? "Explore products" : "Explore Bangladesh stores")}</Link><Link className="button secondary" href="/buy-ship">Buy &amp; Ship ↗</Link></div></div>
   </section>;
 }

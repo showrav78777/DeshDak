@@ -187,6 +187,18 @@
  were removed. This is image replacement in appearance, not in-place mutation of
  shared media bytes.
 
+ Banner action editing, 4 November 2026: optional button label/destination can be
+ edited and previewed per banner. The primary storefront action follows the active
+ rotating slide; existing banners retain default market actions. Server validation
+ requires both fields together and rejects unsafe protocols, scheme-relative URLs,
+ backslashes, control characters and URL credentials. Browser checks passed draft
+ saving, reordering, publishing and the correct action on slide 2 on desktop/mobile.
+ Native desktop drag checks explicitly scroll both compact target cards into view.
+ The first run without that step did not persist the drag order; its assertion
+ was retained and the corrected visible-target rerun passed. Carousel config loads
+ now reset the active index to prevent a late response leaving it out of range.
+ Safety checks, TypeScript and targeted lint passed; disposable database removed.
+
  Deployment handoff, 3 November 2026: added a separate non-root Docker migration
  target with the production configuration gate and an explicit migration-only
  Compose profile. Production Compose consumes reviewed app/migration images and
