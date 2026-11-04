@@ -65,6 +65,27 @@ unhealthy-but-running process; external monitoring/orchestration must handle it.
 Rollback uses the previous reviewed app image only when schema compatibility is
 confirmed. Never automatically reverse migrations or restore over live data.
 
+## Repeatable local image acceptance
+
+With Docker Desktop/Engine running locally and the pinned Playwright Chromium
+binary installed, run `npm run test:container-runtime` from the project directory.
+It builds the current runtime and matching migration target, creates a temporary
+private bridge network/database (database port unpublished), runs migrations through the production configuration
+gate, and checks production pages/readiness, private-page redirects, runtime-only
+public CAPTCHA configuration, UID 1001, read-only root and writable tmp/cache.
+The browser widget check mocks the provider script; it makes no real payment,
+email, SMS or CAPTCHA request. It also checks refusal of missing startup settings.
+
+The command accepts no existing database/container target and rejects remote
+Docker daemons. It uses random synthetic credentials in private temporary files
+and removes its containers/network/image tags on normal success or failure.
+Build caches remain. Forced process termination or Docker shutdown may require
+manual cleanup: inspect only resources labelled `deshdak.acceptance=true` and
+image tags beginning `deshdak-acceptance-`; never prune unrelated resources.
+This is an optional local acceptance command, not a replacement for image
+vulnerability scans, the release audit gate, staging load/device tests or live
+provider acceptance. Rebuild deployable release tags separately after acceptance.
+
 ## AWS managed deployment
 
 Use your AWS billing account and approved region. A deployment operator must:

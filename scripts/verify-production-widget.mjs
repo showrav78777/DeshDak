@@ -11,11 +11,11 @@ try {
   const {data}=await config.json();assert(data.siteKey);assert.deepEqual(Object.keys(data),['siteKey']);
   const page=await context.newPage();
   await page.route('https://challenges.cloudflare.com/turnstile/v0/api.js*',route=>route.fulfill({contentType:'application/javascript',body:`window.turnstile={render(element,options){element.dataset.rendered='true';element.dataset.action=options.action;window.__widgetSiteKey=options.sitekey;const input=document.createElement('input');input.type='hidden';input.name='cf-turnstile-response';input.value='synthetic-challenge-only';element.append(input);return 'synthetic-widget';},remove(){}};`}));
-  for(const [path,action]of [['/login','login'],['/register','registration']]){
+  for(const [path,actions]of [['/login',['login']],['/register',['registration']],['/forgot-password',['password_reset_request']],['/verify-email',['email_verification_confirm','email_verification_request']]]){
     await page.goto(new URL(path,origin).href);
-    await page.locator(`[data-human-verification="${action}"][data-rendered="true"]`).waitFor({state:'attached'});
+    for(const action of actions)await page.locator(`[data-human-verification="${action}"][data-rendered="true"]`).waitFor({state:'attached'});
     assert.equal(await page.evaluate(()=>window.__widgetSiteKey),data.siteKey);
-    assert.equal(await page.locator('input[name="cf-turnstile-response"]').count(),1);
+    assert.equal(await page.locator('input[name="cf-turnstile-response"]').count(),actions.length);
   }
   await context.close();
   console.log('Production browser passed runtime CAPTCHA configuration and widget initialization. Provider script was mocked; no real CAPTCHA was solved.');

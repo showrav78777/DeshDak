@@ -87,6 +87,25 @@
  patterns. This limited scan is not a guarantee that every possible secret or
  business-sensitive document has been reviewed. Nothing has been pushed.
 
+ Repeatable image acceptance, 4 November 2026: added the optional
+ `npm run test:container-runtime` command. It builds both current image targets,
+ generates private synthetic credential files, creates randomly named local
+ resources, migrates a disposable database through the gated migration image,
+ then checks production readiness/liveness, public pages, Admin login redirect,
+ runtime-only public CAPTCHA key, UID 1001, read-only root, writable tmp/cache and
+ Docker health. The production browser check now covers login, registration,
+ password-reset request and both email-verification widgets with a mocked script.
+ Missing configuration is rejected and a remote-daemon guard passed. Initial
+ attempts found that internal Docker networks did not publish host ports in this
+ environment; a short-lived probe reproduced it. The corrected private bridge
+ keeps the database unpublished and binds the app only to a temporary loopback
+ port. The complete final command passed, with owned containers/network/image
+ tags/credential files removed. Shared build caches remain. ESLint, TypeScript,
+ whitespace and all 23 static container controls passed. No owner database was
+ migrated. This verifies local Linux images, not AWS deployment, image CVE
+ scanning, performance, physical devices or real provider acceptance. Owner steps
+ and interruption-cleanup boundaries are documented in NIloy.
+
  Full browser regression, 4 November 2026: all 105 checks passed in one fresh
  isolated schema on Next.js 16.4.5, with zero skips/failures (5.8 minutes).
  Includes desktop/mobile visual comparisons, public catalogue/search recovery,

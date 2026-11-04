@@ -4,6 +4,7 @@
   "private": true,
   "packageManager": "npm@11.6.2",
   "scripts": {
+    "test:container-runtime": "node scripts/verify-container-runtime.mjs",
     "ops:widget-check": "node scripts/verify-production-widget.mjs",
     "test:website-media-safety": "node --conditions=react-server --experimental-strip-types scripts/verify-website-media-safety.mjs",
     "test:website-media": "node scripts/verify-website-media.mjs",
