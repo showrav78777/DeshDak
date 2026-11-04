@@ -199,6 +199,20 @@
  now reset the active index to prevent a late response leaving it out of range.
  Safety checks, TypeScript and targeted lint passed; disposable database removed.
 
+ Customer authentication recovery, 4 November 2026: sign-in/signup now catch
+ connection and malformed-response failures, release submission state, preserve
+ fields and provide conservative recovery instructions. Signup distinguishes an
+ unconfirmed creation from a confirmed account whose local verification failed,
+ avoiding instructions to blindly register again. Failed submissions reset the
+ associated Turnstile widget so a consumed challenge is not reused. Four new
+ desktop/mobile browser cases passed abort/malformed response handling, field
+ preservation, button re-enabling, challenge reset and interrupted verification.
+ Seven selected tests including setup passed in 12.2 seconds. Authentication and
+ CAPTCHA responses were mocked; no account was created by those UI fixtures.
+ The initial test selectors also matched the Next route announcer; they were
+ scoped to the form's alert. TypeScript and targeted lint passed; disposable
+ schema/database were removed. These four cases extend the prior 99-test inventory.
+
  Deployment handoff, 3 November 2026: added a separate non-root Docker migration
  target with the production configuration gate and an explicit migration-only
  Compose profile. Production Compose consumes reviewed app/migration images and
