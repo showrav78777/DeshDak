@@ -15,7 +15,7 @@ test('Customer authentication sign-in recovers from connection and malformed res
   const button=page.getByRole('button',{name:'Sign in securely',exact:true});
   await button.click();await expect(page.locator('form.customer-auth-card').getByRole('alert')).toContainText('Check your connection');await expect(button).toBeEnabled();
   await expect(page.getByLabel('Email address',{exact:true})).toHaveValue('connection-fixture@example.test');
-  expect(await page.evaluate(()=>(window as Window&{__captchaResets:number}).__captchaResets)).toBeGreaterThan(0);
+  expect(await page.evaluate(()=>((window as Window&{__captchaResets?:number}).__captchaResets??0))).toBeGreaterThan(0);
   await page.unroute('**/api/v1/auth/login');
   await page.route('**/api/v1/auth/login',route=>route.fulfill({status:502,contentType:'text/html',body:'Synthetic gateway failure'}));
   await button.click();await expect(page.locator('form.customer-auth-card').getByRole('alert')).toContainText('Check your connection');await expect(button).toBeEnabled();
@@ -32,7 +32,7 @@ test('Customer authentication signup handles lost response and verification inte
   const button=page.getByRole('button',{name:'Create account',exact:true});
   await button.click();await expect(page.locator('form.customer-auth-card').getByRole('alert')).toContainText('Account creation could not be confirmed');await expect(button).toBeEnabled();
   await expect(page.getByLabel('Full name',{exact:true})).toHaveValue('Synthetic connection customer');
-  expect(await page.evaluate(()=>(window as Window&{__captchaResets:number}).__captchaResets)).toBeGreaterThan(0);
+  expect(await page.evaluate(()=>((window as Window&{__captchaResets?:number}).__captchaResets??0))).toBeGreaterThan(0);
   await page.unroute('**/api/v1/auth/register');
   await page.route('**/api/v1/auth/register',route=>route.fulfill({status:201,json:{data:{developmentVerificationUrl:'http://localhost/verify-email#token=synthetic-verification'}}}));
   await page.route('**/api/v1/auth/email-verification/confirm',route=>route.abort('failed'));
