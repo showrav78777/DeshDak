@@ -17,5 +17,7 @@ export function HumanVerification({ action }: { action: string }) {
     return()=>{form?.removeEventListener("deshdak:verification-reset",reset);api.remove(id);};
   },[ready,siteKey,action]);
   if (!siteKey) return <p className="verification-notice">Human verification is enabled automatically in production.</p>;
-  return <><Script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" strategy="afterInteractive" onReady={()=>setReady(true)} /><div ref={container} data-human-verification={action} /></>;
+  // onLoad also initializes concurrent widgets sharing the same pending script;
+  // onReady handles widgets mounted after that script has already loaded.
+  return <><Script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" strategy="afterInteractive" onLoad={()=>setReady(true)} onReady={()=>setReady(true)} /><div ref={container} data-human-verification={action} /></>;
 }

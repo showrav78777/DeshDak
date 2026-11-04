@@ -309,6 +309,19 @@
  confirmed its absence on the storefront alongside the crop/upload/publish flow.
  Both viewports passed overflow checks. The disposable database was removed.
 
+ Authentication recovery increment, 4 November 2026: password-reset and
+ email-verification forms now renew their own CAPTCHA after submissions, so a
+ consumed challenge does not prevent retrying after a connection failure. Fixed
+ concurrent widget initialization on the email-verification page by handling both
+ shared-script load completion and later mounts. Desktop/mobile regression tests
+ confirmed connection-failure feedback, restored buttons, retained email fields
+ and challenge resets; all nine targeted checks passed (six browser cases and
+ three setup checks). TypeScript, targeted ESLint, whitespace checks and the
+ production build passed. The restricted build stalled and was stopped; the
+ retry with local process permissions completed successfully. Disposable test
+ schema and database container were removed. CAPTCHA responses were synthetic;
+ real provider configuration/hostname acceptance remains a deployment check.
+
  Cropping increment, 2 November 2026: upload-time crop controls show a selection
  rectangle with percentage coordinates. The server validates bounds, applies EXIF
  orientation before extraction, resizes and strips metadata. Processing checks

@@ -38,3 +38,21 @@ test('Customer authentication signup handles lost response and verification inte
   await page.route('**/api/v1/auth/email-verification/confirm',route=>route.abort('failed'));
   await button.click();await expect(page.locator('form.customer-auth-card').getByRole('alert')).toContainText('do not register again');await expect(button).toBeEnabled();
 });
+
+test('Customer authentication recovery links release busy state and renew challenges after connection failures',async({page})=>{
+  for(const [path,endpoint,buttonName,action]of [
+    ['/forgot-password','/api/v1/auth/password-reset/request','Email secure reset link','password_reset_request'],
+    ['/verify-email','/api/v1/auth/email-verification/request','Email new verification link','email_verification_request'],
+  ]){
+    await page.goto(path);
+    await page.locator(`[data-human-verification="${action}"][data-rendered="true"]`).waitFor({state:'attached'});
+    const form=page.locator('form.seller-login-card').filter({has:page.getByRole('button',{name:buttonName,exact:true})});
+    await form.getByLabel('Email',{exact:true}).fill('recovery-fixture@example.test');
+    await page.route(`**${endpoint}`,route=>route.abort('failed'));
+    const button=form.getByRole('button',{name:buttonName,exact:true});
+    await button.click();await expect(form.getByRole('alert')).toContainText('Check your connection');await expect(button).toBeEnabled();
+    await expect(form.getByLabel('Email',{exact:true})).toHaveValue('recovery-fixture@example.test');
+    expect(await page.evaluate(()=>((window as Window&{__captchaResets?:number}).__captchaResets??0))).toBeGreaterThan(0);
+    await page.unroute(`**${endpoint}`);
+  }
+});
