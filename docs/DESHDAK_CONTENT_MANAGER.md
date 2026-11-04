@@ -87,6 +87,19 @@
  patterns. This limited scan is not a guarantee that every possible secret or
  business-sensitive document has been reviewed. Nothing has been pushed.
 
+ Framework maintenance, 4 November 2026: upgraded Next.js and eslint-config-next
+ from 16.4.3 to exactly 16.4.5 with registry integrity hashes in the lockfile.
+ Full ESLint, TypeScript, dependency integrity (11 direct/104 locked production
+ packages), the 297-operation API contract, synthetic website-media safety and
+ the production build passed. Isolated security regressions, Admin MFA setup and
+ nine targeted desktop/mobile authentication/setup checks passed on the patched
+ runtime. The disposable schema/container were removed; owner data was not
+ migrated. Post-update production audit reported zero vulnerabilities; full audit
+ still reported 16 moderate findings through the lint toolchain. No audit gate
+ was disabled and no incompatible override or suggested package downgrade was
+ applied. This check does not certify Docker images rebuilt from the new lockfile,
+ the complete browser suite, physical devices or live provider acceptance.
+
  Dependency recheck, 2 November 2026: production-only npm audit reported zero
  vulnerabilities. The full audit still reported 16 moderate findings in the lint
  dependency chain rooted in minimatch advisory GHSA-g3hv-75wg-m249. Registry
