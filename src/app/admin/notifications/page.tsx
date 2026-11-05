@@ -11,8 +11,9 @@ export const dynamic = "force-dynamic";
 export default async function AdminNotificationsPage() {
   const session = await getServerSession();
   if (!session?.roles.includes(ROLE.ADMIN) || session.portal !== "admin") redirect("/admin/login");
-  const [queuedEmail, failed, deliveredInApp, recent, campaigns, optedInCustomers] = await Promise.all([
+  const [queuedEmail, acceptedEmail, failed, deliveredInApp, recent, campaigns, optedInCustomers] = await Promise.all([
     prisma.notificationDelivery.count({ where: { channel: "EMAIL", status: "QUEUED" } }),
+    prisma.notificationDelivery.count({ where: { channel: "EMAIL", status: "SENT", providerReference: { not: null } } }),
     prisma.notificationDelivery.count({ where: { status: "FAILED" } }),
     prisma.notificationDelivery.count({ where: { channel: "IN_APP", status: { in: ["DELIVERED", "READ"] } } }),
     prisma.notificationDelivery.findMany({ include: { notification: { select: { eventType: true, title: true, priority: true, createdAt: true, user: { select: { fullName: true, email: true } } } } }, orderBy: { createdAt: "desc" }, take: 100 }),
@@ -25,7 +26,8 @@ export default async function AdminNotificationsPage() {
     <p className="admin-intro">Monitor transactional delivery and send or schedule controlled in-app promotions only to customers who explicitly opted in. External channels remain unavailable until approved providers are connected.</p>
     <div className="admin-hub-grid">
       <article className="admin-hub-card"><span>♢</span><div><h2>In-app delivered</h2><p>Delivered or read by customers.</p></div><b>{deliveredInApp}</b></article>
-      <article className="admin-hub-card"><span>✉</span><div><h2>Email queued</h2><p>Waiting for external provider configuration.</p></div><b>{queuedEmail}</b></article>
+      <article className="admin-hub-card"><span>✉</span><div><h2>Email queued</h2><p>Waiting for provider setup, a worker run or retry time.</p></div><b>{queuedEmail}</b></article>
+      <article className="admin-hub-card"><span>↗</span><div><h2>Email accepted</h2><p>Provider accepted; recipient delivery is unconfirmed.</p></div><b>{acceptedEmail}</b></article>
       <article className="admin-hub-card"><span>!</span><div><h2>Failed delivery</h2><p>Requires provider or worker attention.</p></div><b>{failed}</b></article>
     </div>
     <AdminMarketingCampaignForm customers={optedInCustomers} />
@@ -38,7 +40,7 @@ export default async function AdminNotificationsPage() {
       </article>)}</div> : <p className="empty-note">No marketing campaign has been sent.</p>}
     </section>
     <section className="wallet-transactions"><div className="updates-head"><div><h2>Recent delivery log</h2><p>Customer content is shown; internal provider errors remain server-side.</p></div><span>{recent.length} record{recent.length === 1 ? "" : "s"}</span></div>
-      {recent.length ? <div className="wallet-table-wrap"><table><thead><tr><th>Created</th><th>Customer</th><th>Event</th><th>Channel</th><th>Status</th></tr></thead><tbody>{recent.map((delivery) => <tr key={delivery.id}><td>{delivery.createdAt.toLocaleString()}</td><td><b>{delivery.notification.user.fullName}</b><small>{delivery.notification.user.email}</small></td><td><b>{delivery.notification.title}</b><small>{delivery.notification.eventType}</small></td><td>{delivery.channel}</td><td><span className={delivery.status === "FAILED" ? "status-inactive" : "status-active"}>{delivery.status}</span></td></tr>)}</tbody></table></div> : <div className="dashboard-card"><h2>No deliveries yet</h2><p>Order and payment events will create delivery records here.</p></div>}
+      {recent.length ? <div className="wallet-table-wrap"><table><thead><tr><th>Created</th><th>Customer</th><th>Event</th><th>Channel</th><th>Status</th></tr></thead><tbody>{recent.map((delivery) => <tr key={delivery.id}><td>{delivery.createdAt.toLocaleString()}</td><td><b>{delivery.notification.user.fullName}</b><small>{delivery.notification.user.email}</small></td><td><b>{delivery.notification.title}</b><small>{delivery.notification.eventType}</small></td><td>{delivery.channel}</td><td><span className={delivery.status === "FAILED" ? "status-inactive" : "status-active"}>{delivery.channel === "EMAIL" && delivery.status === "SENT" ? delivery.providerReference ? "Accepted; delivery unconfirmed" : "Sending / awaiting acceptance" : delivery.status}</span></td></tr>)}</tbody></table></div> : <div className="dashboard-card"><h2>No deliveries yet</h2><p>Order and payment events will create delivery records here.</p></div>}
     </section>
   </section></main>;
 }

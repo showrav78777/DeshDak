@@ -1,6 +1,6 @@
 import "server-only";
 
-import { type NotificationDelivery } from "@prisma/client";
+import { type NotificationDelivery, type Prisma } from "@prisma/client";
 import { decryptOutboxPayload, publicApplicationUrl } from "@/lib/security-secrets";
 import { prisma } from "@/lib/prisma";
 
@@ -52,36 +52,45 @@ function composeEmail(delivery: { notification: { title: string; body: string; t
 }
 
 async function sendWithResend(input: { recipient: string; subject: string; text: string; html: string }, idempotencyKey: string) {
-  const response = await fetch("https://api.resend.com/emails", { method: "POST", headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, "Content-Type": "application/json", "Idempotency-Key": idempotencyKey }, body: JSON.stringify({ from: process.env.EMAIL_FROM, to: [input.recipient], subject: input.subject, text: input.text, html: input.html }), signal: AbortSignal.timeout(12_000) });
+  const response = await fetch("https://api.resend.com/emails", { method: "POST", redirect: "error", headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, "Content-Type": "application/json", "Idempotency-Key": idempotencyKey }, body: JSON.stringify({ from: process.env.EMAIL_FROM, to: [input.recipient], subject: input.subject, text: input.text, html: input.html }), signal: AbortSignal.timeout(12_000) });
   const payload = await response.json().catch(() => null) as { id?: unknown; message?: unknown } | null;
-  if (!response.ok || !payload || typeof payload.id !== "string") throw new Error(`Email provider rejected delivery (${response.status}).`);
+  if (!response.ok || !payload || typeof payload.id !== "string" || !payload.id.trim() || payload.id.length > 255) throw new Error(`Email provider rejected delivery (${response.status}).`);
   return payload.id;
 }
 
 export async function runEmailDeliveryWorker({ batchSize = 25 }: { batchSize?: number } = {}) {
-  if (!emailDeliveryEnabled()) return { configured: false, processed: 0, delivered: 0, failed: 0, retried: 0 };
+  if (!emailDeliveryEnabled()) return { configured: false, processed: 0, accepted: 0, delivered: 0, failed: 0, retried: 0 };
   const now = new Date();
   const staleAt = new Date(now.getTime() - STALE_SEND_MS);
+  const eligible = { channel: "EMAIL", providerReference: null, OR: [{ status: "QUEUED", nextAttemptAt: { lte: now } }, { status: "SENT", updatedAt: { lte: staleAt } }] } satisfies Prisma.NotificationDeliveryWhereInput;
   const candidates = await prisma.notificationDelivery.findMany({
-    where: { channel: "EMAIL", OR: [{ status: "QUEUED", nextAttemptAt: { lte: now } }, { status: "SENT", updatedAt: { lte: staleAt } }] },
+    where: eligible,
     include: { notification: { select: { title: true, body: true, titleBn: true, bodyBn: true, deepLink: true, user: { select: { email: true } } } } },
     orderBy: { createdAt: "asc" }, take: Math.min(Math.max(batchSize, 1), 100),
   });
-  const result = { configured: true, processed: 0, delivered: 0, failed: 0, retried: 0 };
+  const result = { configured: true, processed: 0, accepted: 0, delivered: 0, failed: 0, retried: 0 };
   for (const candidate of candidates) {
-    const claimed = await prisma.notificationDelivery.updateMany({ where: { id: candidate.id, OR: [{ status: "QUEUED", nextAttemptAt: { lte: now } }, { status: "SENT", updatedAt: { lte: staleAt } }] }, data: { status: "SENT", attempts: { increment: 1 }, sentAt: now, nextAttemptAt: null, lastError: null } });
+    if (candidate.attempts >= MAX_ATTEMPTS) {
+      const exhausted = await prisma.notificationDelivery.updateMany({ where: { ...eligible, id: candidate.id, attempts: candidate.attempts }, data: { status: "FAILED", failedAt: now, nextAttemptAt: null, lastError: "Email acceptance could not be confirmed after the allowed retry count." } });
+      result.processed += exhausted.count; result.failed += exhausted.count;
+      continue;
+    }
+    const claimed = await prisma.notificationDelivery.updateMany({ where: { ...eligible, id: candidate.id, attempts: candidate.attempts }, data: { status: "SENT", attempts: { increment: 1 }, sentAt: now, nextAttemptAt: null, lastError: null } });
     if (claimed.count !== 1) continue;
     result.processed += 1;
+    // Fence late completions from a stale worker after another worker reclaims
+    // the record. Provider acceptance is not proof of recipient-server delivery.
+    const lease = { id: candidate.id, status: "SENT" as const, attempts: candidate.attempts + 1, providerReference: null };
     try {
       const providerReference = await sendWithResend(composeEmail(candidate), candidate.idempotencyKey);
-      await prisma.notificationDelivery.update({ where: { id: candidate.id }, data: { status: "DELIVERED", providerReference, deliveredAt: new Date(), lastError: null } });
-      result.delivered += 1;
+      const accepted = await prisma.notificationDelivery.updateMany({ where: lease, data: { providerReference, lastError: null } });
+      result.accepted += accepted.count;
     } catch {
       const attempts = candidate.attempts + 1;
       const terminal = attempts >= MAX_ATTEMPTS;
-      await prisma.notificationDelivery.update({ where: { id: candidate.id }, data: { status: terminal ? "FAILED" : "QUEUED", failedAt: terminal ? new Date() : null, nextAttemptAt: terminal ? null : retryAt(attempts), lastError: terminal ? "Email delivery failed after the allowed retry count." : "Email provider attempt failed; retry scheduled." } });
-      if (terminal) result.failed += 1;
-      else result.retried += 1;
+      const failed = await prisma.notificationDelivery.updateMany({ where: lease, data: { status: terminal ? "FAILED" : "QUEUED", failedAt: terminal ? new Date() : null, nextAttemptAt: terminal ? null : retryAt(attempts), lastError: terminal ? "Email delivery failed after the allowed retry count." : "Email provider attempt failed; retry scheduled." } });
+      if (terminal) result.failed += failed.count;
+      else result.retried += failed.count;
     }
   }
   return result;

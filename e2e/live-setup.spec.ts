@@ -44,6 +44,8 @@ test("Admin live setup guide explains remaining configuration", async ({ browser
     await expect(media).toContainText("Direct video-file upload and high-volume object storage remain engineering work");
     await expect(media.getByRole("link", { name: "Open Website Content Manager", exact: false })).toHaveAttribute("href", "/admin/website-content");
     const email = guide.locator("#email");
+    await expect(email).toContainText("Integration / certification required");
+    await expect(email).toContainText("A successful send request means accepted, not delivered");
     await email.getByText("Deployment variable names", { exact: false }).click();
     await expect(email.locator("code").filter({ hasText: /^RESEND_API_KEY$/ })).toBeVisible();
     await expect(guide.locator("form")).toHaveCount(0);
@@ -63,6 +65,13 @@ test("Admin live setup guide explains remaining configuration", async ({ browser
       await expect(jump.getByRole("navigation", { name: "Setup areas" }).getByRole("link")).toHaveCount(13);
     }
     finally { await fallback.close(); }
+    await email.getByRole("link", { name: "Open notification controls", exact: false }).click();
+    await expect(page.getByRole("heading", { name: "Delivery and campaigns.", exact: true })).toBeVisible();
+    const notifications = page.locator(".admin-notification-operations");
+    await expect(notifications.getByRole("heading", { name: "Email accepted", exact: true })).toBeVisible();
+    await expect(notifications).toContainText("Provider accepted; recipient delivery is unconfirmed.");
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(viewport.width);
+    await info.attach(`notification-operations-${info.project.name}`, { body: await page.screenshot(), contentType: "image/png" });
   } finally {
     expect((await context.request.post("/api/v1/auth/logout", { headers: { Origin: baseURL! } })).status()).toBe(200);
     await context.close();

@@ -87,6 +87,26 @@
  patterns. This limited scan is not a guarantee that every possible secret or
  business-sensitive document has been reviewed. Nothing has been pushed.
 
+ Notification delivery integrity, 5 November 2026: email API acceptance now leaves
+ the record SENT with a provider reference and no deliveredAt timestamp. Accepted
+ messages are excluded from automatic resend; Admin and scheduler metrics label
+ acceptance separately from delivery. Claim/completion/failure writes compare
+ attempt ownership so stale workers cannot overwrite newer success/failure state.
+ An expired fifth attempt is terminal without issuing a sixth request. Redirects
+ and malformed/empty provider acceptance IDs are rejected. PostgreSQL verification
+ passed accepted-not-delivered state, no age-triggered resend, stable idempotency,
+ retry cap, simultaneous workers, stale successful/failed completions and disabled
+ transport. Provider responses were synthetic; no real email was sent. Existing
+ notification preference regression and five targeted desktop/mobile/setup checks
+ passed (17.7 seconds), including the setup-to-notification-controls link, clear
+ acceptance labels and overflow checks. Reviewed screenshots, targeted lint,
+ TypeScript, API contract (297 operations) and production build passed. Evidence
+ is under playwright-report-notification-worker-20261105 and
+ test-results-notification-worker-20261105. Disposable schema/database removed.
+ No migration or historical delivery rewrite was performed. Signed delivery/bounce
+ callbacks and suppression remain engineering/certification work, explicitly shown
+ in Admin and NIloy; live email remains an unaccepted production integration.
+
  Live setup clarity, 5 November 2026: corrected the configuration-missing count
  to include areas that also require integration review and disabled enablement
  switches. Every configured area now shows its configuration need independently

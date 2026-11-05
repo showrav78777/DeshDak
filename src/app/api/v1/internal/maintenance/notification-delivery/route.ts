@@ -13,7 +13,7 @@ export async function POST(request: Request) {
   const startedAt = performance.now();
   try {
     const result = await runEmailDeliveryWorker();
-    logServerEvent("info", "maintenance.notification_delivery_completed", { route, method: "POST", status: 200, durationMs: Math.round(performance.now() - startedAt), outcome: `processed:${result.processed};delivered:${result.delivered};failed:${result.failed}` });
+    logServerEvent("info", "maintenance.notification_delivery_completed", { route, method: "POST", status: 200, durationMs: Math.round(performance.now() - startedAt), outcome: `processed:${result.processed};accepted:${result.accepted};delivered:${result.delivered};failed:${result.failed}` });
     return apiSuccess(result);
   } catch (error) {
     logServerEvent("error", "maintenance.notification_delivery_failed", { route, method: "POST", status: 500, durationMs: Math.round(performance.now() - startedAt), errorType: error instanceof Error ? error.name : "UnknownError", outcome: "failed" });

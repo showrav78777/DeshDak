@@ -31,6 +31,9 @@ readiness status. Supply credentials through the deployment secret manager:
 - Payment provider: merchant approval, sandbox checkout/refund/webhook and
   settlement acceptance before enabling real money.
 - Email: verified sending domain and provider account; configure SPF/DKIM/DMARC.
+  Signed delivery/bounce handling and suppression still require engineering and
+  staging certification. Keep live email disabled until complete; Admin's
+  "Email accepted" count does not mean recipient delivery was confirmed.
 - Google login: OAuth application and exact production redirect URLs.
 - Phone verification: contracted SMS service, sender approval and delivery tests.
 - Private media: object storage, scanning, access controls and delivery/retention.
