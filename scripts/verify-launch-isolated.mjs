@@ -40,6 +40,10 @@ const testEnvironment = {
   // not falsely required. The optimized production bundle is verified by the
   // separate build gate before this isolated workflow suite is started.
   NODE_ENV: "development",
+  KYC_DOCUMENT_ENCRYPTION_KEY: randomBytes(32).toString("base64"),
+  INSPECTION_EVIDENCE_ENCRYPTION_KEY: randomBytes(32).toString("base64"),
+  ALLOW_DEV_KYC_DOCUMENT_UPLOADS: "true",
+  ALLOW_DEV_INSPECTION_EVIDENCE_UPLOADS: "true",
   CROSSLY_ISOLATED_ROUTE_RETENTION: "1",
   CROSSLY_ISOLATED_DIST_DIR: isolatedDistDir,
   NODE_OPTIONS: isolatedDevNodeOptions(process.env.ISOLATED_TEST_BUNDLER ?? "turbopack", process.env.NODE_OPTIONS ?? "", Math.min(totalmem(), process.constrainedMemory() || Infinity)),

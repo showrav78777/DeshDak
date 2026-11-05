@@ -2,6 +2,8 @@ import "server-only";
 
 import { createCipheriv, createDecipheriv, createHash, randomBytes } from "node:crypto";
 
+import sharp from "sharp";
+
 const MAX_DOCUMENT_BYTES = 5 * 1024 * 1024;
 const allowedMimeTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
 
@@ -42,8 +44,14 @@ export function identityDocumentUploadsEnabled() {
 export async function encryptUploadedIdentityDocument(file: File): Promise<EncryptedIdentityDocument> {
   if (!allowedMimeTypes.has(file.type)) throw new Error("Use a JPEG, PNG, or WebP document photo.");
   if (!file.size || file.size > MAX_DOCUMENT_BYTES) throw new Error("Document photo must be smaller than 5 MB.");
-  const bytes = Buffer.from(await file.arrayBuffer());
+  let bytes = Buffer.from(await file.arrayBuffer());
   if (!isValidImageSignature(bytes, file.type)) throw new Error("The uploaded file does not match its declared image type.");
+  try {
+    const image = sharp(bytes, { limitInputPixels: 24_000_000, animated: false, failOn: "warning" });
+    if (((await image.metadata()).pages ?? 1) > 1) throw new Error("Animated identity photo");
+    bytes = await image.rotate().toFormat(file.type === "image/png" ? "png" : file.type === "image/webp" ? "webp" : "jpeg").toBuffer();
+  } catch { throw new Error("Choose a valid, non-animated document photo under 24 megapixels."); }
+  if (bytes.length > MAX_DOCUMENT_BYTES) throw new Error("Processed document photo must be smaller than 5 MB.");
   const iv = randomBytes(12);
   const cipher = createCipheriv("aes-256-gcm", documentKey(), iv);
   const ciphertext = Buffer.concat([cipher.update(bytes), cipher.final()]);

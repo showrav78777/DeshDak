@@ -31,6 +31,12 @@ this count change. TypeScript ESLint still requires an affected minimatch 10.x
 range; compatible upstream fixes remain outstanding. The release audit gate has
 not been suppressed. Older September/October records are not current clearance.
 
+The 5 November private upload intake increment fixed identity response storage-field
+exposure, image decoding/metadata handling, streamed-body bounds and concurrent
+pending submissions. Synthetic isolated identity/Compliance and Inspector evidence
+workflows passed; see `PRIVATE_UPLOAD_INTAKE_SECURITY.md`. Production private
+storage/scanning remains engineering work and intake remains disabled there.
+
 The owner database has not been migrated, AWS has not been provisioned, and no
 real provider has been accepted. Private storage/scanning and outstanding provider
 adapters remain engineering work as well as owner/service setup. Staging UAT,

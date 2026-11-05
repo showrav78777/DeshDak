@@ -8,6 +8,8 @@
     "test:notification-delivery": "node scripts/verify-notification-delivery.mjs",
     "test:container-runtime": "node scripts/verify-container-runtime.mjs",
     "ops:widget-check": "node scripts/verify-production-widget.mjs",
+    "test:private-upload-safety": "node --no-warnings --experimental-strip-types scripts/verify-private-upload-safety.mjs",
+    "test:private-upload-workflow": "node scripts/verify-private-upload-workflow.mjs",
     "test:website-media-safety": "node --conditions=react-server --experimental-strip-types scripts/verify-website-media-safety.mjs",
     "test:website-media": "node scripts/verify-website-media.mjs",
     "test:isolated-route-retention": "node scripts/verify-isolated-route-retention.mjs",

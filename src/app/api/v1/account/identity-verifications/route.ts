@@ -1,3 +1,4 @@
+import { MultipartUploadError, readBoundedMultipart } from "@/lib/uploads/bounded-multipart";
 import { type NextRequest } from "next/server";
 import { z } from "zod";
 import { apiError, apiSuccess } from "@/lib/api";
@@ -38,22 +39,26 @@ export async function POST(request: NextRequest) {
     response.headers.set("Retry-After", String(Math.max(accountLimit.retryAfterSeconds, ipLimit.retryAfterSeconds)));
     return response;
   }
-  const contentLength = Number(request.headers.get("content-length") ?? 0);
-  if (Number.isFinite(contentLength) && contentLength > 5 * 1024 * 1024 + 128 * 1024) return apiError("DOCUMENT_PHOTO_TOO_LARGE", "Document photo must be smaller than 5 MB.", 413);
-  const formData = await request.formData().catch(() => null);
+  let formData: FormData;
+  try { formData = await readBoundedMultipart(request, 5 * 1024 * 1024 + 128 * 1024); }
+  catch (error) {
+    if (error instanceof MultipartUploadError) return apiError(error.status === 413 ? "DOCUMENT_PHOTO_TOO_LARGE" : "INVALID_UPLOAD_REQUEST", error.message, error.status);
+    return apiError("INVALID_UPLOAD_REQUEST", "Upload form could not be read.", 422);
+  }
   const parsed = schema.safeParse({ documentType: formData?.get("documentType"), issuingCountryCode: formData?.get("issuingCountryCode"), documentNumberLast4: formData?.get("documentNumberLast4") });
   if (!parsed.success) return apiError("VALIDATION_ERROR", "Choose a document type, issuing country, and the final four characters only.", 422, z.treeifyError(parsed.error));
   const documentPhoto = formData?.get("documentPhoto");
-  if (!(documentPhoto instanceof File)) return apiError("DOCUMENT_PHOTO_REQUIRED", "Upload one clear document photo before submitting verification.", 422);
+  if (!(documentPhoto instanceof File) || formData.getAll("documentPhoto").length !== 1) return apiError("DOCUMENT_PHOTO_REQUIRED", "Upload one clear document photo before submitting verification.", 422);
   let encryptedPhoto;
   try { encryptedPhoto = await encryptUploadedIdentityDocument(documentPhoto); }
   catch (error) { return apiError("INVALID_DOCUMENT_PHOTO", error instanceof Error ? error.message : "Unable to process this document photo.", 422); }
   const submission = await prisma.$transaction(async (tx) => {
+    await tx.$queryRaw`SELECT "id" FROM "User" WHERE "id" = ${session.userId} FOR UPDATE`;
     const current = await tx.user.findUnique({ where: { id: session.userId }, select: { kycStatus: true } });
     if (!current) return null;
     if (current.kycStatus === "VERIFIED") return "VERIFIED" as const;
     await tx.identityVerification.updateMany({ where: { userId: session.userId, status: "PENDING" }, data: { status: "REJECTED", reviewedAt: new Date(), reviewNote: "Superseded by a newer customer submission." } });
-    const created = await tx.identityVerification.create({ data: { userId: session.userId, ...parsed.data, ...encryptedPhoto, status: "PENDING" } });
+    const created = await tx.identityVerification.create({ data: { userId: session.userId, ...parsed.data, ...encryptedPhoto, status: "PENDING" }, select: { id: true, documentType: true, issuingCountryCode: true, documentNumberLast4: true, status: true, submittedAt: true, documentPhotoMimeType: true, documentPhotoSizeBytes: true } });
     await tx.user.update({ where: { id: session.userId }, data: { kycStatus: "PENDING" } });
     await tx.auditLog.create({ data: { actorId: session.userId, action: "identity_verification.submitted", entityType: "IdentityVerification", entityId: created.id, metadata: { documentType: created.documentType, issuingCountryCode: created.issuingCountryCode, documentNumberLast4: created.documentNumberLast4, photoReceived: true, photoMimeType: created.documentPhotoMimeType, photoBytes: created.documentPhotoSizeBytes } } });
     return created;

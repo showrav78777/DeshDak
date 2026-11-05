@@ -57,7 +57,14 @@ export async function encryptInspectionEvidence(file: File): Promise<EncryptedIn
   if (!hasExpectedSignature(bytes, file.type)) throw new Error("The selected file does not match its declared media type.");
   // Re-encode photos to strip location/EXIF data and reject invalid or excessive
   // decoded dimensions. Video intake remains confined to development.
-  if (isImage) bytes = await sharp(bytes, { limitInputPixels: 24_000_000 }).rotate().toFormat(file.type === "image/png" ? "png" : file.type === "image/webp" ? "webp" : "jpeg").toBuffer();
+  if (isImage) {
+    try {
+      const image = sharp(bytes, { limitInputPixels: 24_000_000, animated: false, failOn: "warning" });
+      if (((await image.metadata()).pages ?? 1) > 1) throw new Error("Animated evidence image");
+      bytes = await image.rotate().toFormat(file.type === "image/png" ? "png" : file.type === "image/webp" ? "webp" : "jpeg").toBuffer();
+    } catch { throw new Error("Choose a valid, non-animated evidence photo under 24 megapixels."); }
+    if (bytes.length > MAX_IMAGE_BYTES) throw new Error("Processed evidence photo must be smaller than 8 MB.");
+  }
   const iv = randomBytes(12);
   const cipher = createCipheriv("aes-256-gcm", evidenceKey(), iv);
   const ciphertext = Buffer.concat([cipher.update(bytes), cipher.final()]);

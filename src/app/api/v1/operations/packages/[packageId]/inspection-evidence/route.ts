@@ -1,3 +1,4 @@
+import { MultipartUploadError, readBoundedMultipart } from "@/lib/uploads/bounded-multipart";
 import { type NextRequest } from "next/server";
 import { apiError, apiSuccess } from "@/lib/api";
 import { hasTrustedMutationOrigin } from "@/lib/mfa-session";
@@ -26,8 +27,6 @@ export async function POST(request: NextRequest, context: RouteContext<"/api/v1/
   if (!session || !access) return apiError("EVIDENCE_UPLOAD_ACCESS_REQUIRED", "Assigned inspection or warehouse access is required.", 403);
   if (!hasTrustedMutationOrigin(request)) return apiError("UNTRUSTED_ORIGIN", "Evidence must be uploaded from the protected operations application.", 403);
   if (!inspectionEvidenceUploadsEnabled()) return apiError("INSPECTION_EVIDENCE_UPLOAD_UNAVAILABLE", "Secure inspection upload is unavailable until private storage and malware scanning are configured.", 503);
-  const contentLength = Number(request.headers.get("content-length") ?? 0);
-  if (Number.isFinite(contentLength) && contentLength > 31 * 1024 * 1024) return apiError("EVIDENCE_TOO_LARGE", "Evidence is larger than the permitted upload limit.", 413);
   const { packageId } = await context.params;
   const pkg = await prisma.package.findUnique({ where: { id: packageId }, select: { id: true, packageCode: true, warehouseId: true, isOutboundActive: true, status: true } });
   if (!pkg || !pkg.isOutboundActive || !canAccessWarehouse(access, pkg.warehouseId)) return apiError("PACKAGE_NOT_FOUND", "Package was not found.", 404);
@@ -41,9 +40,14 @@ export async function POST(request: NextRequest, context: RouteContext<"/api/v1/
     response.headers.set("Retry-After", String(Math.max(accountLimit.retryAfterSeconds, ipLimit.retryAfterSeconds)));
     return response;
   }
-  const formData = await request.formData().catch(() => null);
+  let formData: FormData;
+  try { formData = await readBoundedMultipart(request, 31 * 1024 * 1024); }
+  catch (error) {
+    if (error instanceof MultipartUploadError) return apiError(error.status === 413 ? "EVIDENCE_TOO_LARGE" : "INVALID_UPLOAD_REQUEST", error.message, error.status);
+    return apiError("INVALID_UPLOAD_REQUEST", "Upload form could not be read.", 422);
+  }
   const media = formData?.get("media");
-  if (!(media instanceof File)) return apiError("EVIDENCE_REQUIRED", "Choose one photo or video to upload.", 422);
+  if (!(media instanceof File) || formData.getAll("media").length !== 1) return apiError("EVIDENCE_REQUIRED", "Choose one photo or video to upload.", 422);
   let encrypted;
   try { encrypted = await encryptInspectionEvidence(media); }
   catch (error) { return apiError("INVALID_EVIDENCE", error instanceof Error ? error.message : "Unable to process this evidence.", 422); }

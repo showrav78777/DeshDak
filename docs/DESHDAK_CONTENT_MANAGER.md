@@ -452,3 +452,15 @@
  findings. Latest inspected TypeScript ESLint still requires an affected minimatch
  range. No unsupported override, framework downgrade or gate bypass was applied.
  Production infrastructure, image scanning/signing and live UAT remain due.
+
+ Private intake increment, 5 November 2026: fixed identity POST storage-field
+ exposure, fully decoded/re-encoded identity photos without EXIF, rejected animated
+ or excessive decoded images, and bounded both identity and inspection multipart
+ streams before parsing. User-row locking prevents concurrent submissions leaving
+ multiple pending reviews. Pure safety tests and isolated identity/Compliance and
+ Inspector evidence workflows passed, including actual chunked oversized uploads,
+ invalid photos, role/MFA/owner isolation, safe responses and unchanged verified
+ identity. The production build, lint, TypeScript, schema, security regressions and
+ 300-operation API contract passed. No migration was required. Synthetic data only;
+ production upload gates remain closed pending private storage/scanning engineering.
+ See PRIVATE_UPLOAD_INTAKE_SECURITY.md for scope and remaining requirements.
