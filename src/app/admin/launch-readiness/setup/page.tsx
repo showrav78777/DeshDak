@@ -12,5 +12,47 @@ export default async function LiveSetupPage() {
   const session = await getServerSession();
   if (!session?.roles.includes(ROLE.ADMIN) || session.portal !== "admin") redirect("/admin/login");
   const steps = getLiveSetupGuide(); const required = steps.filter(step => step.required);
-  return <main className="dashboard-shell"><section className="admin-content live-setup-page"><p className="eyebrow">LIVE SETUP</p><h1>Set up DeshDak for live use.</h1><p className="admin-intro">Work through the required items first. Configure the service, test it in staging, then record evidence in the launch register. Presence checks do not prove delivery or approval.</p><div className="live-setup-toolbar"><Link className="button primary" href="/admin/launch-readiness">Open launch evidence register</Link><Link className="button secondary" href="/admin/launch-readiness/report">Printable release report</Link></div><aside className="live-setup-notice"><b>{process.env.NODE_ENV === "production" ? "Production environment" : "Development / test environment"}</b><p>Keep passwords, keys and tokens in your deployment secret manager. This page displays variable names and setup status only. Save safe test references and review notes in the register.</p></aside><div className="live-setup-counts" aria-label="Setup overview"><article><b>{required.length}</b><span>required setup areas</span></article><article><b>{steps.filter(step => step.status === "CONFIGURATION_REQUIRED").length}</b><span>areas missing configuration</span></article><article><b>{steps.filter(step => step.integrationRequired).length}</b><span>areas needing integration review</span></article></div>{[true, false].map(requiredSection => <section key={String(requiredSection)} aria-label={requiredSection ? "Required live setup" : "Optional integrations"}><h2>{requiredSection ? "Before paid launch" : "Optional integrations"}</h2><div className="live-setup-grid">{steps.filter(step => step.required === requiredSection).map(step => <article className="live-setup-card" id={step.id} key={step.id}><span className={`live-setup-status status-${step.status.toLowerCase()}`}>{statusLabels[step.status]}</span><h3>{step.title}</h3><p><b>Responsible:</b> {step.owner}</p><p><b>Used for:</b> {step.affects}</p><ol>{step.steps.map(instruction => <li key={instruction}>{instruction}</li>)}</ol>{step.keys.length ? <details><summary>Deployment variable names ({step.keys.length + (step.enabledKey ? 1 : 0)})</summary><ul>{[...step.keys, ...(step.enabledKey ? [step.enabledKey] : [])].map(key => <li key={key}><code>{key}</code> <span>{step.missing.includes(key) || (key === step.enabledKey && !step.enabled) ? "— not configured / enabled" : "— present; verify live"}</span></li>)}</ul></details> : null}<Link className="button secondary" href={step.href}>{step.action} →</Link></article>)}</div></section>)}<aside className="live-setup-notice"><h2>Finish and verify</h2><p>Assign an owner and date for every required register gate. Attach sandbox/physical test evidence, obtain the required reviews, then run the release checks. Optional features stay unavailable until their own setup and acceptance are complete.</p><Link href="/admin/launch-readiness">Review remaining launch gates →</Link></aside></section></main>;
+  return <main className="dashboard-shell"><section className="admin-content live-setup-page">
+    <p className="eyebrow">LIVE SETUP</p>
+    <h1>Set up DeshDak for live use.</h1>
+    <p className="admin-intro">Work through the required items first. Configure the service, test it in staging, then record evidence in the launch register. Presence checks do not prove delivery or approval.</p>
+    <div className="live-setup-toolbar">
+      <Link className="button primary" href="/admin/launch-readiness">Open launch evidence register</Link>
+      <Link className="button secondary" href="/admin/launch-readiness/report">Printable release report</Link>
+    </div>
+    <aside className="live-setup-notice">
+      <b>{process.env.NODE_ENV === "production" ? "Production environment" : "Development / test environment"}</b>
+      <p>Keep passwords, keys and tokens in your deployment secret manager. This page displays variable names and setup status only. Save safe test references and review notes in the register.</p>
+    </aside>
+    <div className="live-setup-counts" aria-label="Setup overview">
+      <article><b>{required.length}</b><span>required setup areas</span></article>
+      <article aria-label="Areas missing configuration"><b>{steps.filter(step => step.needsConfiguration).length}</b><span>areas missing configuration or enablement</span></article>
+      <article><b>{steps.filter(step => step.integrationRequired).length}</b><span>areas needing integration review</span></article>
+    </div>
+    <p className="form-help">An area can need both configuration and integration review. These counts overlap; neither is a launch approval.</p>
+    <details className="live-setup-jump">
+      <summary>Jump to a setup area</summary>
+      <nav aria-label="Setup areas">{steps.map(step => <a key={step.id} href={`#${step.id}`}>{step.title}<span>{step.required ? "Required" : "Optional"}</span></a>)}</nav>
+    </details>
+    {[true, false].map(requiredSection => <section key={String(requiredSection)} aria-label={requiredSection ? "Required live setup" : "Optional integrations"}>
+      <h2>{requiredSection ? "Before paid launch" : "Optional integrations"}</h2>
+      <div className="live-setup-grid">{steps.filter(step => step.required === requiredSection).map(step => <article className="live-setup-card" id={step.id} key={step.id}>
+        <span className={`live-setup-status status-${step.status.toLowerCase()}`}>{statusLabels[step.status]}</span>
+        <h3>{step.title}</h3>
+        {step.keys.length ? <p className="live-setup-configuration" data-state={step.needsConfiguration ? "required" : "present"}>
+          <b>{step.needsConfiguration ? "Configuration incomplete." : "Listed configuration present."}</b>{" "}
+          {step.needsConfiguration ? "Open the variable list below to see what is missing or disabled." : "Validate the settings and complete live acceptance before enabling this service."}
+        </p> : null}
+        <p><b>Responsible:</b> {step.owner}</p>
+        <p><b>Used for:</b> {step.affects}</p>
+        <ol>{step.steps.map(instruction => <li key={instruction}>{instruction}</li>)}</ol>
+        {step.keys.length ? <details>
+          <summary>Deployment variable names ({step.keys.length + (step.enabledKey ? 1 : 0)})</summary>
+          <ul>{[...step.keys, ...(step.enabledKey ? [step.enabledKey] : [])].map(key => <li key={key}><code>{key}</code> <span>{step.missing.includes(key) || (key === step.enabledKey && !step.enabled) ? "— not configured / enabled" : "— present; verify live"}</span></li>)}</ul>
+        </details> : null}
+        <Link className="button secondary" href={step.href}>{step.action} →</Link>
+      </article>)}</div>
+    </section>)}
+    <aside className="live-setup-notice"><h2>Finish and verify</h2><p>Assign an owner and date for every required register gate. Attach sandbox/physical test evidence, obtain the required reviews, then run the release checks. Optional features stay unavailable until their own setup and acceptance are complete.</p><Link href="/admin/launch-readiness">Review remaining launch gates →</Link></aside>
+  </section></main>;
 }

@@ -10,6 +10,14 @@
 .live-setup-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); align-items: start; gap: 24px; margin: 20px 0 32px; }
 .live-setup-card { background: white; border: 1px solid #d9e6ed; border-radius: 16px; padding: 24px; min-width: 0; }
 .live-setup-card h3 { font-size: 22px; margin: 16px 0; }
+.live-setup-card { scroll-margin-top: 180px; }
+.live-setup-configuration { padding: 12px; border-radius: 8px; background: #fff3dc; color: #75450b; }
+.live-setup-configuration[data-state="present"] { background: #e6f3f5; color: #155a65; }
+.live-setup-jump { border: 1px solid #d9e6ed; border-radius: 12px; background: white; padding: 8px 16px; margin: 24px 0; }
+.live-setup-jump summary { cursor: pointer; min-height: 48px; padding: 12px 0; box-sizing: border-box; font-weight: 700; }
+.live-setup-jump nav { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(100%,260px),1fr)); gap: 8px; padding: 8px 0 16px; }
+.live-setup-jump a { display: grid; align-content: center; gap: 4px; min-height: 48px; border-radius: 8px; padding: 12px; color: #153c54; background: #edf6f8; }
+.live-setup-jump a span { font-size: 14px; color: #526879; }
 .live-setup-card ol { display: grid; gap: 12px; padding-left: 24px; list-style: decimal; }
 .live-setup-status { display: inline-block; color: #824a0d; background: #fff3dc; border-radius: 8px; padding: 8px 12px; font-size: 14px; line-height: 1.5; }
 .live-setup-status.status-configuration_present { color: #155a65; background: #e6f3f5; }

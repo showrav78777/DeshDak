@@ -23,12 +23,23 @@ test("Admin live setup guide explains remaining configuration", async ({ browser
     const page = await context.newPage(); await page.goto("/admin/launch-readiness/setup");
     const guide = page.locator(".live-setup-page");
     await expect(guide.getByRole("heading", { name: "Set up DeshDak for live use." })).toBeVisible();
+    if (info.project.name === "mobile") expect(await page.locator(".admin-menu-button").evaluate(el => getComputedStyle(el, "::after").content)).toContain("DeshDak Admin");
     await expect(guide.locator(".live-setup-card")).toHaveCount(13);
     await expect(guide.getByRole("region", { name: "Required live setup" }).locator("article")).toHaveCount(10);
     await expect(guide.getByRole("region", { name: "Optional integrations" }).locator("article")).toHaveCount(3);
+    const incomplete = await guide.locator('.live-setup-configuration[data-state="required"]').count();
+    await expect(guide.getByLabel("Areas missing configuration", { exact: true }).locator("b")).toHaveText(String(incomplete));
+    await expect(guide).toContainText("These counts overlap; neither is a launch approval");
+    await guide.getByText("Jump to a setup area", { exact: true }).click();
+    const navigation = guide.getByRole("navigation", { name: "Setup areas" });
+    await expect(navigation.getByRole("link")).toHaveCount(13);
+    await navigation.getByRole("link", { name: "Phone verification and SMS Required", exact: true }).click();
+    await expect(guide.locator("#phone h3")).toBeInViewport();
+    await guide.getByText("Jump to a setup area", { exact: true }).click();
     const documents = guide.locator("#documents");
     await expect(documents).toContainText("Integration / certification required");
     await expect(documents).toContainText("Development database-backed upload switches must stay disabled");
+    await expect(documents.locator(".live-setup-configuration")).toBeVisible();
     const media = guide.locator("#website-media");
     await expect(media).toContainText("Direct video-file upload and high-volume object storage remain engineering work");
     await expect(media.getByRole("link", { name: "Open Website Content Manager", exact: false })).toHaveAttribute("href", "/admin/website-content");
@@ -42,7 +53,15 @@ test("Admin live setup guide explains remaining configuration", async ({ browser
     expect(await guide.locator(".admin-intro").evaluate(el => parseFloat(getComputedStyle(el).fontSize))).toBeGreaterThanOrEqual(16);
     await info.attach(`live-setup-${info.project.name}`, { body: await page.screenshot(), contentType: "image/png" });
     const fallback = await browser.newContext({ baseURL, viewport, javaScriptEnabled: false, storageState: await context.storageState() });
-    try { const noScript = await fallback.newPage(); await noScript.goto("/admin/launch-readiness/setup"); await expect(noScript.locator(".live-setup-card:visible")).toHaveCount(13); }
+    try {
+      const noScript = await fallback.newPage(); await noScript.goto("/admin/launch-readiness/setup");
+      await expect(noScript.locator(".live-setup-card:visible")).toHaveCount(13);
+      // Without hydration, Suspense also retains hidden server content. Operate
+      // the visible native details element, as a keyboard/pointer user would.
+      const jump = noScript.locator(".live-setup-jump:visible");
+      await jump.locator("summary").click();
+      await expect(jump.getByRole("navigation", { name: "Setup areas" }).getByRole("link")).toHaveCount(13);
+    }
     finally { await fallback.close(); }
   } finally {
     expect((await context.request.post("/api/v1/auth/logout", { headers: { Origin: baseURL! } })).status()).toBe(200);

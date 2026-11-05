@@ -1,8 +1,34 @@
-# Crossly launch readiness status
+# DeshDak launch readiness status
 
-Status reviewed: 21 October 2026, Asia/Dhaka
+Status reviewed: 5 November 2026, Asia/Dhaka
 
-## Current handoff — 21 October 2026
+## Current handoff — 5 November 2026
+
+On 4 November, all 105 configured browser checks passed in one isolated run on
+Next.js 16.4.5, with no skips/failures, including the reviewed desktop/mobile
+visual comparisons. The current runtime and matching migration image also passed
+the repeatable disposable production-container acceptance command: migration
+gate, readiness/liveness/public pages, Admin redirect, runtime CAPTCHA public-key
+delivery, synthetic widget initialization, non-root/read-only filesystem behavior
+and rejection of missing settings. The API contract contains 297 operations.
+See `E2E_TESTING.md` and `DESHDAK_CONTENT_MANAGER.md` for evidence and limits.
+
+The 4 November production dependency audit reported zero vulnerabilities. The full
+audit still reported 16 moderate findings through development lint dependencies
+(GHSA-g3hv-75wg-m249). Compatible upstream fixes remain outstanding; the release
+audit gate has not been suppressed. No claim of current vulnerability clearance
+should be inferred from the older September/October records below.
+
+The owner database has not been migrated, AWS has not been provisioned, and no
+real provider has been accepted. Private storage/scanning and outstanding provider
+adapters remain engineering work as well as owner/service setup. Staging UAT,
+physical-device/warehouse acceptance, image scanning/signing and independent
+security/load review still block a paid production release. GitHub upload remains
+pending the user's requested completion/verification condition. Owner-only setup
+instructions are under `NIloy/`; the protected Admin live setup guide lists service
+requirements without exposing credentials.
+
+## Historical handoff — 21 October 2026
 
 The September baseline below is historical, not a current full-system or production
 certification. Recent increment-level verification passed the focused Inspector,

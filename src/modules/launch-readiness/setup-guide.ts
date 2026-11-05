@@ -28,7 +28,8 @@ export function getLiveSetupGuide(env: Record<string, string | undefined> = proc
     // Never return an environment value, token prefix, length or fingerprint.
     const missing = step.keys.filter(key => !env[key]?.trim());
     const enabled = !step.enabledKey || env[step.enabledKey] === "true";
+    const needsConfiguration = missing.length > 0 || !enabled;
     const status = step.integrationRequired ? "INTEGRATION_REVIEW_REQUIRED" : !step.keys.length ? "MANUAL_ACCEPTANCE_REQUIRED" : missing.length || !enabled ? "CONFIGURATION_REQUIRED" : "CONFIGURATION_PRESENT";
-    return { ...step, status, missing, enabled };
+    return { ...step, status, missing, enabled, needsConfiguration };
   });
 }

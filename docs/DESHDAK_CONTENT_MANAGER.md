@@ -87,6 +87,23 @@
  patterns. This limited scan is not a guarantee that every possible secret or
  business-sensitive document has been reviewed. Nothing has been pushed.
 
+ Live setup clarity, 5 November 2026: corrected the configuration-missing count
+ to include areas that also require integration review and disabled enablement
+ switches. Every configured area now shows its configuration need independently
+ from integration/operational acceptance; configured values never imply approval.
+ Added a native quick-jump menu for all 13 setup areas, usable without JavaScript,
+ and corrected the stale mobile Admin CSS branding to DeshDak. Synthetic state
+ checks covered overlapping needs, configured-but-unapproved integrations,
+ disabled email and value redaction. Launch-readiness API tests passed Admin
+ isolation, secret rejection/redaction, evidence/version/audit rules and protected
+ reports. Five targeted browser/setup checks passed (desktop/mobile, no-JavaScript
+ menu, counts, anchor navigation, branding and overflow) in 16.3 seconds. Reviewed
+ screenshots, TypeScript, targeted lint, whitespace and production build passed.
+ HTML/JUnit evidence is retained under playwright-report-setup-guide-20261105
+ and test-results-setup-guide-20261105. All disposable schemas/databases were
+ removed. The release-status document now separates current November evidence
+ from historical September/October claims; production acceptance remains gated.
+
  Repeatable image acceptance, 4 November 2026: added the optional
  `npm run test:container-runtime` command. It builds both current image targets,
  generates private synthetic credential files, creates randomly named local
