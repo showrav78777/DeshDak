@@ -19,14 +19,17 @@ passed isolated API/worker/preference tests and five targeted browser checks
 MFA-protected Admin reviews record versioned evidence before a recipient block
 is released. The current contract contains 300 operations. Provider DNS/account
 configuration and live staging certification remain due; see
-`NOTIFICATION_DELIVERY_RUNBOOK.md` and `NIloy/EMAIL_LIVE_SETUP.md`. These focused
-checks do not replace the historical full browser run or recertify the Docker image.
+`NOTIFICATION_DELIVERY_RUNBOOK.md` and `NIloy/EMAIL_LIVE_SETUP.md`. The current runtime/migration images were subsequently rebuilt and passed the
+expanded disposable container checks, including signed receipt rejection, replay,
+conflict and private-access checks with email sends disabled. These checks do not
+replace the historical full browser run, an image CVE scan or provider certification.
 
-The 4 November production dependency audit reported zero vulnerabilities. The full
-audit still reported 16 moderate findings through development lint dependencies
-(GHSA-g3hv-75wg-m249). Compatible upstream fixes remain outstanding; the release
-audit gate has not been suppressed. No claim of current vulnerability clearance
-should be inferred from the older September/October records below.
+The refreshed 5 November production dependency audit reported zero vulnerabilities.
+The full audit reported eight moderate development-tooling findings, down from
+sixteen in the previous report (GHSA-g3hv-75wg-m249). No lockfile change caused
+this count change. TypeScript ESLint still requires an affected minimatch 10.x
+range; compatible upstream fixes remain outstanding. The release audit gate has
+not been suppressed. Older September/October records are not current clearance.
 
 The owner database has not been migrated, AWS has not been provisioned, and no
 real provider has been accepted. Private storage/scanning and outstanding provider

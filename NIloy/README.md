@@ -62,11 +62,12 @@ This folder is not a completion certificate. Production storage/scanning,
 outstanding provider adapters, wider release acceptance and dependency security clearance remain engineering
 work. Do not classify these as owner-only tasks or deploy as production-ready.
 
-Dependency check on 4 November 2026: Next.js and its matching lint configuration
+Dependency check on 5 November 2026: Next.js and its matching lint configuration
 are pinned to 16.4.5. The production dependency audit is clear, but the full audit
-still reports 16 moderate findings through the development lint dependency tree
-(minimatch advisory GHSA-g3hv-75wg-m249). Compatible upstream fixes remain
-unavailable for the older minimatch versions those tools require. The moderate
+still reports 8 moderate findings through the development lint dependency tree
+(minimatch advisory GHSA-g3hv-75wg-m249). The remaining advisory affects the minimatch 10.x range required by TypeScript
+ESLint; its latest inspected 8.72.1 release still requires ^10.2.2. A compatible
+patched release remains unavailable. The moderate
 audit gate remains blocking; do not bypass it with a forced major-version
 override, downgrade or suppressed audit. This is engineering follow-up, not a
 credential you need to supply.

@@ -73,6 +73,10 @@ It builds the current runtime and matching migration target, creates a temporary
 private bridge network/database (database port unpublished), runs migrations through the production configuration
 gate, and checks production pages/readiness, private-page redirects, runtime-only
 public CAPTCHA configuration, UID 1001, read-only root and writable tmp/cache.
+Production email receipt checks reject unsigned/tampered requests, retain a
+signed duplicate exactly once as pending evidence, reject a conflicting event ID
+and deny public access to suppression records. Email sending stays disabled and
+the signing keys are synthetic. These checks do not certify provider delivery.
 The browser widget check mocks the provider script; it makes no real payment,
 email, SMS or CAPTCHA request. It also checks refusal of missing startup settings.
 

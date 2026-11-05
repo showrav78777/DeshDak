@@ -438,3 +438,17 @@
  passed. These are scoped checks, not a new full-system or provider certification.
  The owner database was not migrated and no real messages were sent. Live sender
  DNS/provider UAT and production release review remain required.
+
+ Container acceptance follow-up, 5 November 2026: rebuilt the runtime and matching
+ migration images after the email receipt schema change. Both the existing and
+ expanded production-container runs passed. Expanded checks reject unsigned or
+ tampered receipts, retain one pending event on duplicate callbacks, reject a
+ conflicting signed identity and deny anonymous suppression access. Email stayed
+ disabled; keys and callbacks were synthetic. Readiness/public/private-page,
+ runtime CAPTCHA/widget, UID/read-only filesystem and missing-config guards passed.
+ Owned containers/network/image tags/temp credential files were removed. Targeted
+ lint and the 23 static container policy controls passed. The production package
+ audit reported zero vulnerabilities; full audit now reports eight moderate tooling
+ findings. Latest inspected TypeScript ESLint still requires an affected minimatch
+ range. No unsupported override, framework downgrade or gate bypass was applied.
+ Production infrastructure, image scanning/signing and live UAT remain due.

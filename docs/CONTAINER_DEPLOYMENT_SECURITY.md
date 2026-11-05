@@ -2,7 +2,7 @@
 
 Status: local container definition implemented; registry, deployed infrastructure, and independent image scanning remain external production gates.
 
-Last local image verification: 1 September 2026, Asia/Dhaka.
+Last local image verification: 5 November 2026, Asia/Dhaka.
 
 ## What is enforced in the repository
 
@@ -14,7 +14,31 @@ Last local image verification: 1 September 2026, Asia/Dhaka.
 - `.dockerignore` excludes local dependencies, compiled output, Git metadata, backups, logs, and `.env` files from the build context. Secrets must never be supplied through `ARG`, image layers, source files, or image labels.
 - `npm run test:container-security` guards these properties in local verification and CI.
 
-## Local image evidence
+## Current local acceptance — 5 November 2026
+
+The current runtime and matching migration image rebuilt successfully after the
+email receipt/suppression migration. Disposable PostgreSQL migration reconstruction,
+production health/public pages, private-page redirect, runtime-only CAPTCHA public
+configuration, synthetic widget initialization, UID 1001/read-only filesystem and
+missing-configuration rejection passed. The acceptance runner removed its owned
+containers, network, image tags and temporary credential files. No owner database
+was touched. This does not certify a deployed release or external provider.
+
+The expanded production-runtime receipt checks also passed: unsigned/tampered
+requests were rejected, a signed duplicate retained exactly one pending receipt,
+a signed conflicting identity was rejected, no-store responses contained only
+acknowledgement, and public suppression access was denied. The fixture had no
+actual send reference; it remained pending rather than inventing a delivery.
+Email sending was disabled throughout and no external email provider was called.
+
+Dependency audits on this date found zero production package vulnerabilities and
+eight moderate development-tooling findings (minimatch GHSA-g3hv-75wg-m249 via
+TypeScript ESLint). The latest inspected TypeScript ESLint 8.72.1 still requires
+minimatch ^10.2.2, while the advisory requires >=11.0.1. No unsupported major override,
+framework downgrade or audit suppression was applied. The full audit gate blocks
+release. Registry advisory changes can change counts without a lockfile change.
+
+## Historical local image evidence — 1 September 2026
 
 - A clean `docker build` completed successfully with the real Turbopack production command, TypeScript validation, and all 147 static-generation tasks.
 - The clean image install reported zero npm vulnerabilities and generated Prisma Client with OpenSSL available.

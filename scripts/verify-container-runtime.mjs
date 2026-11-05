@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { randomBytes } from "node:crypto";
+import { createHmac, randomBytes } from "node:crypto";
 import { spawnSync } from "node:child_process";
 import { access, chmod, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -62,6 +62,7 @@ try {
 
   const password = randomBytes(32).toString("hex");
   const siteKey = randomBytes(20).toString("hex");
+  const emailSigningKey = randomBytes(32);
   const dbFile = await secretFile("database.env", { POSTGRES_PASSWORD: password, POSTGRES_DB: "acceptance" });
   const envFile = await secretFile("application.env", {
     DATABASE_URL: `postgresql://postgres:${password}@database.internal:5432/acceptance`,
@@ -72,6 +73,8 @@ try {
     TRUSTED_CLIENT_IP_HEADER: "x-forwarded-for", NEXT_PUBLIC_TURNSTILE_SITE_KEY: siteKey,
     TURNSTILE_SECRET_KEY: randomBytes(20).toString("hex"), TURNSTILE_EXPECTED_HOSTNAME: "acceptance.deshdak.invalid",
     EMAIL_DELIVERY_ENABLED: "false", PAYMENT_ADAPTERS_ENABLED: "",
+    RESEND_WEBHOOK_SECRET: `whsec_${emailSigningKey.toString("base64")}`,
+    EMAIL_SUPPRESSION_HASH_KEY: randomBytes(32).toString("base64"),
   });
   // A private bridge with no published DB port keeps the database isolated;
   // Docker internal networks do not support the host port needed by Playwright.
@@ -117,6 +120,35 @@ try {
   const config = await fetch(`${origin}/api/v1/auth/human-verification`, { signal: AbortSignal.timeout(10_000) });
   assert.match(config.headers.get("cache-control"), /no-store/);
   assert.deepEqual((await config.json()).data, { siteKey });
+
+  console.log("Checking signed email receipts in the production runtime without enabling email sends.");
+  const receiptUrl = `${origin}/api/v1/notifications/email-events`;
+  const messageId = `msg_acceptance_${id}`;
+  const emailReference = `synthetic_acceptance_${id}`;
+  const raw = JSON.stringify({ type: "email.delivered", created_at: new Date().toISOString(), data: { email_id: emailReference, to: ["never-sent@example.test"], subject: "SYNTHETIC_PRIVATE_RECEIPT" } });
+  const signature = body => {
+    const timestamp = String(Math.floor(Date.now() / 1000));
+    return { "Content-Type": "application/json", "svix-id": messageId, "svix-timestamp": timestamp,
+      "svix-signature": `v1,${createHmac("sha256", emailSigningKey).update(`${messageId}.${timestamp}.${body}`).digest("base64")}` };
+  };
+  const postReceipt = (body, headers) => fetch(receiptUrl, { method: "POST", headers, body, signal: AbortSignal.timeout(10_000) });
+  assert.equal((await postReceipt(raw, { "Content-Type": "application/json" })).status, 401, "Unsigned production receipt was accepted.");
+  const headers = signature(raw);
+  assert.equal((await postReceipt(`${raw} `, headers)).status, 401, "Tampered production receipt was accepted.");
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const receipt = await postReceipt(raw, signature(raw));
+    assert.equal(receipt.status, 200);
+    assert.match(receipt.headers.get("cache-control"), /no-store/);
+    assert.deepEqual((await receipt.json()).data, { received: true });
+  }
+  const conflict = JSON.stringify({ type: "email.failed", created_at: new Date().toISOString(), data: { email_id: emailReference } });
+  assert.equal((await postReceipt(conflict, signature(conflict))).status, 409, "Conflicting signed receipt identity was accepted.");
+  // This reference was never sent. It must stay pending, not invent a delivery.
+  const ledger = run(["exec", database, "psql", "-U", "postgres", "-d", "acceptance", "-Atc",
+    `SELECT count(*) FROM "EmailWebhookEvent" WHERE "messageId"='${messageId}' AND "processedAt" IS NULL AND "outcome"='PENDING' AND length("payloadHash")=64;`]);
+  assert.equal(ledger.output.trim(), "1", "Production receipt replay duplicated or misclassified pending evidence.");
+  assert.equal((await fetch(`${origin}/api/v1/admin/email-suppressions`, { signal: AbortSignal.timeout(10_000) })).status, 403, "Production suppression records were publicly accessible.");
+
   assert.equal(run(["exec", application, "node", "-p", "process.getuid()" ]).output.trim(), "1001");
   run(["exec", application, "node", "-e", "const fs=require('fs');for(const p of ['/tmp/acceptance-write','/app/.next/cache/acceptance-write']){fs.writeFileSync(p,'ok');fs.unlinkSync(p)}try{fs.writeFileSync('/app/acceptance-write','blocked');process.exit(1)}catch(e){if(e.code!=='EROFS')throw e}if(fs.readdirSync('/app').some(n=>n==='.env'||n.startsWith('.env.')))process.exit(1)"]);
   await until(() => run(["inspect", "--format", "{{.State.Health.Status}}", application]).output.trim() === "healthy", "Docker health check did not become healthy.");
@@ -132,7 +164,7 @@ try {
   assert.notEqual(rejected.status, 0, "Runtime accepted missing production settings.");
   assert.match(rejected.output, /DATABASE_URL is required/);
   containers.delete(missingConfig);
-  console.log("Container acceptance passed: migrations, health/pages, private-page guard, runtime-only public key, UID/filesystem restrictions, synthetic widgets and missing-configuration rejection.");
+  console.log("Container acceptance passed: migrations, health/pages, private-page guard, runtime-only public key, UID/filesystem restrictions, signed email receipt authentication/replay/privacy, synthetic widgets and missing-configuration rejection.");
   console.log("No live provider, cloud deployment, vulnerability scan, load test or physical device was certified.");
 } catch (error) {
   if (containers.has(application)) {
