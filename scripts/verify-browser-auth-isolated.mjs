@@ -114,7 +114,15 @@ try {
   process.env.E2E_SOURCING_STAFF_ADMINS = JSON.stringify(sourcingStaffAdmins);
   process.env.E2E_SOURCING_DECISION_ADMINS = JSON.stringify(sourcingDecisionAdmins);
   const liveSetupAdmins = {};
-  for (const viewport of ["desktop", "mobile"]) liveSetupAdmins[viewport] = await prisma.user.create({ data: { email: `live-setup-${randomBytes(10).toString("hex")}@example.test`, fullName: "Synthetic live setup administrator", status: "ACTIVE", passwordHash: await bcrypt.hash(password, 12), roles: { create: { roleId: adminRole.id } } }, select: { id: true, email: true } });
+  for (const viewport of ["desktop", "mobile"]) {
+    const reviewer = await prisma.user.create({ data: { email: `live-setup-${randomBytes(10).toString("hex")}@example.test`, fullName: "Synthetic live setup administrator", status: "ACTIVE", passwordHash: await bcrypt.hash(password, 12), roles: { create: { roleId: adminRole.id } } }, select: { id: true, email: true } });
+    const recipientHash = randomBytes(32).toString("hex");
+    const marker = randomBytes(12).toString("hex");
+    const notification = await prisma.notification.create({ data: { userId: user.id, eventType: "SYNTHETIC_REVIEW", title: "Synthetic review", body: "No email sent", idempotencyKey: `review:${marker}` } });
+    const delivery = await prisma.notificationDelivery.create({ data: { notificationId: notification.id, channel: "EMAIL", status: "FAILED", recipientHash, providerReference: `synthetic-review-${marker}`, idempotencyKey: `review-delivery:${marker}` } });
+    const suppression = await prisma.emailSuppression.create({ data: { recipientHash, reason: "email.bounced", sourceDeliveryId: delivery.id, lastSeenAt: new Date(Date.now() - 60_000) } });
+    liveSetupAdmins[viewport] = { ...reviewer, suppressionId: suppression.id };
+  }
   process.env.E2E_LIVE_SETUP_ADMINS = JSON.stringify(liveSetupAdmins);
   const supportRoleAdmins = {};
   for (const viewport of ["desktop", "mobile"]) {
@@ -392,6 +400,10 @@ try {
   for (const reviewer of Object.values(liveSetupAdmins)) {
     const used = await prisma.authSession.findMany({ where: { userId: reviewer.id }, select: { revokedAt: true } });
     if (used.length && (used.length !== 1 || used.some(session => !session.revokedAt))) throw new Error("Live setup review left duplicate or unrevoked Admin sessions.");
+    if (used.length) {
+      const block = await prisma.emailSuppression.findUniqueOrThrow({ where: { id: reviewer.suppressionId } });
+      if (block.active || block.version !== 2 || block.releasedById !== reviewer.id || await prisma.auditLog.count({ where: { actorId: reviewer.id, entityId: block.id, action: "notification.email_suppression_released" } }) !== 1) throw new Error("Browser suppression review did not record exactly one verified release.");
+    }
   }
   for (const [viewport, fixtures] of Object.entries(sourcingReviewFixtures)) {
     for (const [action, fixture] of Object.entries(fixtures)) {

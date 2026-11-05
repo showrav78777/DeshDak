@@ -1648,6 +1648,153 @@
         }
       }
     },
+    "/admin/email-suppressions": {
+      "get": {
+        "operationId": "get_admin_email_suppressions",
+        "tags": [
+          "admin"
+        ],
+        "summary": "List private recipient-block review records with MFA and pagination",
+        "security": [
+          {
+            "cookieSession": []
+          }
+        ],
+        "x-crossly-access": "authenticated",
+        "x-crossly-error-codes": [
+          "ADMIN_MFA_REQUIRED",
+          "VALIDATION_ERROR"
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 10000,
+              "default": 1
+            }
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "active",
+                "released"
+              ],
+              "default": "active"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Success"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "#/components/responses/Unprocessable"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/admin/email-suppressions/{suppressionId}/release": {
+      "post": {
+        "operationId": "post_admin_email_suppressions_suppressionId_release",
+        "tags": [
+          "admin"
+        ],
+        "summary": "Version-safely release a reviewed recipient block without resending failed mail",
+        "security": [
+          {
+            "cookieSession": []
+          }
+        ],
+        "x-crossly-access": "authenticated",
+        "x-crossly-error-codes": [
+          "ADMIN_MFA_REQUIRED",
+          "UNTRUSTED_ORIGIN",
+          "VALIDATION_ERROR",
+          "SUPPRESSION_NOT_FOUND",
+          "SUPPRESSION_VERSION_CONFLICT",
+          "SUPPRESSION_RETRY_REQUIRED"
+        ],
+        "parameters": [
+          {
+            "name": "suppressionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmailSuppressionReviewRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Success"
+          },
+          "201": {
+            "$ref": "#/components/responses/Created"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "#/components/responses/Unprocessable"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
     "/admin/finance-staff": {
       "get": {
         "operationId": "get_admin_finance_staff",
@@ -11599,6 +11746,91 @@
         }
       }
     },
+    "/notifications/email-events": {
+      "post": {
+        "operationId": "post_notifications_email_events",
+        "tags": [
+          "notifications"
+        ],
+        "summary": "Verify exact-byte email callback signatures, deduplicate receipts and update delivery/suppression evidence",
+        "security": [
+          {
+            "emailWebhookSignature": []
+          }
+        ],
+        "x-crossly-access": "external-provider-callback",
+        "x-crossly-error-codes": [
+          "EMAIL_WEBHOOK_UNAVAILABLE",
+          "UNSUPPORTED_PAYLOAD",
+          "PAYLOAD_TOO_LARGE",
+          "INVALID_PAYLOAD",
+          "INVALID_WEBHOOK_SIGNATURE",
+          "WEBHOOK_EVENT_CONFLICT",
+          "EMAIL_WEBHOOK_RETRY"
+        ],
+        "parameters": [
+          {
+            "name": "svix-id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 200
+            }
+          },
+          {
+            "name": "svix-timestamp",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9]{1,12}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response.",
+            "headers": {
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmailReceiptWebhookResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "#/components/responses/Unprocessable"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
     "/notifications/preferences": {
       "get": {
         "operationId": "get_notifications_preferences",
@@ -18157,6 +18389,12 @@
   },
   "components": {
     "securitySchemes": {
+      "emailWebhookSignature": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "svix-signature",
+        "description": "HMAC-SHA256 over svix-id, svix-timestamp and the exact raw body. Signing secret stays server-side; timestamp tolerance is five minutes."
+      },
       "cookieSession": {
         "type": "apiKey",
         "in": "cookie",
@@ -18224,6 +18462,91 @@
       }
     },
     "schemas": {
+      "EmailReceiptWebhookRequest": {
+        "type": "object",
+        "required": [
+          "type",
+          "created_at",
+          "data"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Supported email delivery events are processed; other signed event types are acknowledged without action."
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "data": {
+            "type": "object",
+            "required": [
+              "email_id"
+            ],
+            "properties": {
+              "email_id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 255
+              }
+            },
+            "additionalProperties": true
+          }
+        },
+        "additionalProperties": true
+      },
+      "EmailReceiptWebhookResponse": {
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "type": "object",
+            "required": [
+              "received"
+            ],
+            "properties": {
+              "received": {
+                "type": "boolean",
+                "const": true
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "EmailSuppressionReviewRequest": {
+        "type": "object",
+        "required": [
+          "version",
+          "reason",
+          "evidenceReference",
+          "verificationConfirmed"
+        ],
+        "properties": {
+          "version": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 10,
+            "maxLength": 500
+          },
+          "evidenceReference": {
+            "type": "string",
+            "minLength": 10,
+            "maxLength": 500
+          },
+          "verificationConfirmed": {
+            "type": "boolean",
+            "const": true
+          }
+        },
+        "additionalProperties": false
+      },
       "KamStaffRequest": {
         "type": "object",
         "required": [

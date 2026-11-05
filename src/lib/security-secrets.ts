@@ -34,6 +34,20 @@ export function hashRateLimitKey(scope: string, value: string) {
   return createHmac("sha256", authSecret()).update(`crossly:rate-limit:${scope}:${value}`).digest("hex");
 }
 
+/** Stable restricted lookup; independent from rotating outbox encryption. */
+export function hashEmailRecipient(recipient: string) {
+  const configured = process.env.EMAIL_SUPPRESSION_HASH_KEY?.trim();
+  let key: Buffer;
+  if (configured) {
+    key = Buffer.from(configured, "base64");
+    if (key.length !== 32 || key.toString("base64").replace(/=+$/, "") !== configured.replace(/=+$/, "")) throw new Error("EMAIL_SUPPRESSION_HASH_KEY must be a base64-encoded 32-byte key.");
+  } else {
+    if (process.env.NODE_ENV === "production") throw new Error("EMAIL_SUPPRESSION_HASH_KEY is required in production.");
+    key = createHmac("sha256", authSecret()).update("deshdak:email-recipient-key:development").digest();
+  }
+  return createHmac("sha256", key).update(recipient.trim().toLowerCase()).digest("hex");
+}
+
 export function encryptOutboxPayload(payload: Record<string, unknown>): EncryptedOutboxPayload {
   const iv = randomBytes(12);
   const cipher = createCipheriv("aes-256-gcm", outboxEncryptionKey(), iv);

@@ -112,10 +112,18 @@ export function validateProductionEnvironment(env) {
   }
   if (env.EMAIL_DELIVERY_ENABLED === "true") {
     requireSecret(env, "RESEND_API_KEY", errors, 20);
+    const recipientKey = requireBase64Key(env, "EMAIL_SUPPRESSION_HASH_KEY", errors);
+    if (recipientKey && distinctSecrets.includes(recipientKey)) errors.push("EMAIL_SUPPRESSION_HASH_KEY must be independent from authentication, encryption, maintenance and proxy secrets.");
     const sender = env.EMAIL_FROM?.trim();
     if (!sender || !/^[^<>\r\n]+<[^<>\s@]+@[^<>\s@]+>$|^[^<>\s@]+@[^<>\s@]+$/.test(sender)) errors.push("EMAIL_FROM must be a verified sender address, optionally in Name <address> format.");
   } else if (configured(env.RESEND_API_KEY) || configured(env.EMAIL_FROM)) {
     errors.push("EMAIL_DELIVERY_ENABLED must be true when email delivery credentials are configured.");
+  }
+  if (env.EMAIL_DELIVERY_ENABLED === "true" || configured(env.RESEND_WEBHOOK_SECRET)) {
+    const secret = env.RESEND_WEBHOOK_SECRET?.trim() ?? "";
+    const encoded = secret.startsWith("whsec_") ? secret.slice(6) : "";
+    const bytes = Buffer.from(encoded, "base64");
+    if (!/^whsec_[A-Za-z0-9+/]+={0,2}$/.test(secret) || bytes.length < 16 || bytes.length > 64 || bytes.toString("base64").replace(/=+$/, "") !== encoded.replace(/=+$/, "")) errors.push("RESEND_WEBHOOK_SECRET must be a valid whsec_ signing secret when email delivery or callbacks are configured.");
   }
   if (configured(env.SSLCOMMERZ_STORE_ID) || configured(env.SSLCOMMERZ_STORE_PASSWORD)) {
     if (!new Set(["sandbox", "live"]).has(env.SSLCOMMERZ_ENVIRONMENT?.trim().toLowerCase())) {

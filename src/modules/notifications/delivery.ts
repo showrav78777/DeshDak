@@ -1,13 +1,15 @@
 import "server-only";
 
 import { type NotificationDelivery, type Prisma } from "@prisma/client";
-import { decryptOutboxPayload, publicApplicationUrl } from "@/lib/security-secrets";
+import { decryptOutboxPayload, encryptOutboxPayload, hashEmailRecipient, publicApplicationUrl } from "@/lib/security-secrets";
 import { prisma } from "@/lib/prisma";
+import { applyPendingEmailEvents, lockEmailRecipient, lockEmailReference } from "@/modules/notifications/email-events";
 
 const MAX_ATTEMPTS = 5;
 const STALE_SEND_MS = 10 * 60_000;
 
 type SecurePayload = { recipient?: unknown; locale?: unknown; templateKey?: unknown; variables?: unknown };
+class EmailPayloadError extends Error {}
 
 export function emailDeliveryEnabled() {
   return process.env.EMAIL_DELIVERY_ENABLED === "true" && Boolean(process.env.RESEND_API_KEY?.trim()) && Boolean(process.env.EMAIL_FROM?.trim());
@@ -27,11 +29,12 @@ function escapeHtml(value: string) {
 }
 
 function securePayload(delivery: Pick<NotificationDelivery, "securePayloadCiphertext" | "securePayloadIv" | "securePayloadTag">): SecurePayload | null {
-  if (!delivery.securePayloadCiphertext || !delivery.securePayloadIv || !delivery.securePayloadTag) return null;
+  if (!delivery.securePayloadCiphertext && !delivery.securePayloadIv && !delivery.securePayloadTag) return null;
+  if (!delivery.securePayloadCiphertext || !delivery.securePayloadIv || !delivery.securePayloadTag) throw new EmailPayloadError("Incomplete encrypted email payload.");
   try {
     return decryptOutboxPayload({ securePayloadCiphertext: delivery.securePayloadCiphertext, securePayloadIv: delivery.securePayloadIv, securePayloadTag: delivery.securePayloadTag }) as SecurePayload;
   } catch {
-    return null;
+    throw new EmailPayloadError("Email payload could not be decrypted.");
   }
 }
 
@@ -59,7 +62,7 @@ async function sendWithResend(input: { recipient: string; subject: string; text:
 }
 
 export async function runEmailDeliveryWorker({ batchSize = 25 }: { batchSize?: number } = {}) {
-  if (!emailDeliveryEnabled()) return { configured: false, processed: 0, accepted: 0, delivered: 0, failed: 0, retried: 0 };
+  if (!emailDeliveryEnabled()) return { configured: false, processed: 0, accepted: 0, delivered: 0, suppressed: 0, failed: 0, retried: 0 };
   const now = new Date();
   const staleAt = new Date(now.getTime() - STALE_SEND_MS);
   const eligible = { channel: "EMAIL", providerReference: null, OR: [{ status: "QUEUED", nextAttemptAt: { lte: now } }, { status: "SENT", updatedAt: { lte: staleAt } }] } satisfies Prisma.NotificationDeliveryWhereInput;
@@ -68,7 +71,7 @@ export async function runEmailDeliveryWorker({ batchSize = 25 }: { batchSize?: n
     include: { notification: { select: { title: true, body: true, titleBn: true, bodyBn: true, deepLink: true, user: { select: { email: true } } } } },
     orderBy: { createdAt: "asc" }, take: Math.min(Math.max(batchSize, 1), 100),
   });
-  const result = { configured: true, processed: 0, accepted: 0, delivered: 0, failed: 0, retried: 0 };
+  const result = { configured: true, processed: 0, accepted: 0, delivered: 0, suppressed: 0, failed: 0, retried: 0 };
   for (const candidate of candidates) {
     if (candidate.attempts >= MAX_ATTEMPTS) {
       const exhausted = await prisma.notificationDelivery.updateMany({ where: { ...eligible, id: candidate.id, attempts: candidate.attempts }, data: { status: "FAILED", failedAt: now, nextAttemptAt: null, lastError: "Email acceptance could not be confirmed after the allowed retry count." } });
@@ -82,13 +85,35 @@ export async function runEmailDeliveryWorker({ batchSize = 25 }: { batchSize?: n
     // the record. Provider acceptance is not proof of recipient-server delivery.
     const lease = { id: candidate.id, status: "SENT" as const, attempts: candidate.attempts + 1, providerReference: null };
     try {
-      const providerReference = await sendWithResend(composeEmail(candidate), candidate.idempotencyKey);
-      const accepted = await prisma.notificationDelivery.updateMany({ where: lease, data: { providerReference, lastError: null } });
-      result.accepted += accepted.count;
-    } catch {
+      if (candidate.attempts > 0 && (!candidate.recipientHash || !candidate.securePayloadCiphertext)) throw new EmailPayloadError("Recipient snapshot is missing or was purged; review is required.");
+      const input = composeEmail(candidate);
+      const recipientHash = hashEmailRecipient(input.recipient);
+      if (candidate.recipientHash && candidate.recipientHash !== recipientHash) throw new EmailPayloadError("Email recipient snapshot changed.");
+      const payload = encryptOutboxPayload({ ...securePayload(candidate), recipient: input.recipient });
+      const prepared = await prisma.$transaction(async tx => {
+        await lockEmailRecipient(tx, recipientHash);
+        const suppressed = await tx.emailSuppression.findUnique({ where: { recipientHash } });
+        if (suppressed?.active) {
+          const changed = await tx.notificationDelivery.updateMany({ where: lease, data: { recipientHash, status: "FAILED", failedAt: new Date(), nextAttemptAt: null, lastError: "Email recipient is suppressed pending verified review." } });
+          return { count: changed.count, suppressed: true };
+        }
+        const changed = await tx.notificationDelivery.updateMany({ where: lease, data: { ...payload, recipientHash } });
+        return { count: changed.count, suppressed: false };
+      });
+      if (prepared.suppressed) { result.suppressed += prepared.count; result.failed += prepared.count; continue; }
+      if (!prepared.count) continue;
+      const providerReference = await sendWithResend(input, candidate.idempotencyKey);
+      const accepted = await prisma.$transaction(async tx => {
+        await lockEmailReference(tx, providerReference);
+        const changed = await tx.notificationDelivery.updateMany({ where: lease, data: { providerReference, lastError: null } });
+        if (changed.count) await applyPendingEmailEvents(tx, providerReference);
+        return changed.count;
+      });
+      result.accepted += accepted;
+    } catch (failure) {
       const attempts = candidate.attempts + 1;
-      const terminal = attempts >= MAX_ATTEMPTS;
-      const failed = await prisma.notificationDelivery.updateMany({ where: lease, data: { status: terminal ? "FAILED" : "QUEUED", failedAt: terminal ? new Date() : null, nextAttemptAt: terminal ? null : retryAt(attempts), lastError: terminal ? "Email delivery failed after the allowed retry count." : "Email provider attempt failed; retry scheduled." } });
+      const terminal = failure instanceof EmailPayloadError || attempts >= MAX_ATTEMPTS;
+      const failed = await prisma.notificationDelivery.updateMany({ where: lease, data: { status: terminal ? "FAILED" : "QUEUED", failedAt: terminal ? new Date() : null, nextAttemptAt: terminal ? null : retryAt(attempts), lastError: failure instanceof EmailPayloadError ? "Encrypted email recipient evidence requires review." : terminal ? "Email delivery failed after the allowed retry count." : "Email provider attempt failed; retry scheduled." } });
       if (terminal) result.failed += failed.count;
       else result.retried += failed.count;
     }

@@ -414,3 +414,27 @@
  browser workflow cropped a 120×40 image to 60×40, uploaded it, selected it as the
  logo, previewed/published it and verified storefront output. Both viewport tests
  and the API workflow passed; the disposable schema/container were removed.
+
+ Email receipt and suppression increment, 5 November 2026: implemented bounded
+ raw-body Svix signature verification, five-minute timestamp checks, receipt
+ deduplication/conflict detection, callback-before-send correlation and sticky
+ negative delivery outcomes. Addresses are matched using a separate stable HMAC
+ key; raw callback payloads are not retained. Workers snapshot encrypted recipients,
+ enforce suppression before sending and fail closed on purged retry snapshots.
+ Admin MFA protects versioned evidence-based releases; a release permits future
+ email and never resends existing failures. Admin setup guidance and NIloy owner
+ instructions explain the new migration, signing/hash keys and live UAT requirements.
+
+ Real PostgreSQL isolated API/worker/preference tests passed. Five targeted browser
+ checks passed in 30.1 seconds, including desktop/mobile review, preserved forms on
+ aborted/unconfirmed responses, JavaScript-disabled mutation protection, released
+ history and exactly one audit per review. An initial mobile test matched React's
+ retained hidden navigation snapshot; the corrected visible-record locator passed.
+ Both reports are retained locally as playwright-report-email-receipts[-initial]-
+ 20261105 and matching test-results folders (HTML/JUnit). Desktop/mobile screenshots
+ were inspected. Default synthetic runner keys were verified in a subsequent fresh
+ isolated schema. The 300-operation API contract, production config regressions,
+ security regressions, Prisma validation, lint, TypeScript and production build
+ passed. These are scoped checks, not a new full-system or provider certification.
+ The owner database was not migrated and no real messages were sent. Live sender
+ DNS/provider UAT and production release review remain required.

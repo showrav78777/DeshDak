@@ -10,8 +10,17 @@ visual comparisons. The current runtime and matching migration image also passed
 the repeatable disposable production-container acceptance command: migration
 gate, readiness/liveness/public pages, Admin redirect, runtime CAPTCHA public-key
 delivery, synthetic widget initialization, non-root/read-only filesystem behavior
-and rejection of missing settings. The API contract contains 297 operations.
+and rejection of missing settings. That container check covered the then-current 297-operation contract.
 See `E2E_TESTING.md` and `DESHDAK_CONTENT_MANAGER.md` for evidence and limits.
+
+On 5 November, the signed email receipt and recipient suppression increment
+passed isolated API/worker/preference tests and five targeted browser checks
+(desktop, mobile and setup). Delivery confirmation is distinct from API acceptance;
+MFA-protected Admin reviews record versioned evidence before a recipient block
+is released. The current contract contains 300 operations. Provider DNS/account
+configuration and live staging certification remain due; see
+`NOTIFICATION_DELIVERY_RUNBOOK.md` and `NIloy/EMAIL_LIVE_SETUP.md`. These focused
+checks do not replace the historical full browser run or recertify the Docker image.
 
 The 4 November production dependency audit reported zero vulnerabilities. The full
 audit still reported 16 moderate findings through development lint dependencies

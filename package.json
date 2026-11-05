@@ -4,6 +4,7 @@
   "private": true,
   "packageManager": "npm@11.6.2",
   "scripts": {
+    "test:email-receipts": "node scripts/verify-email-receipts.mjs",
     "test:notification-delivery": "node scripts/verify-notification-delivery.mjs",
     "test:container-runtime": "node scripts/verify-container-runtime.mjs",
     "ops:widget-check": "node scripts/verify-production-widget.mjs",

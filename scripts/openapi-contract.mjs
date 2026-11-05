@@ -6,6 +6,14 @@ const API_ROOT = join(process.cwd(), "src", "app", "api", "v1");
 const OPTIONAL_SESSION_PATHS = new Set(["/payments/providers"]);
 const OPTIONAL_SESSION_PREFIXES = ["/identifiers/products/"];
 const EXACT_OPERATIONS = {
+  "post /notifications/email-events": {
+    summary: "Verify exact-byte email callback signatures, deduplicate receipts and update delivery/suppression evidence",
+    externalProtocol: "signed-email-webhook", requestSchema: "EmailReceiptWebhookRequest", successSchema: "EmailReceiptWebhookResponse", successStatuses: ["200"],
+    parameters: [{ name: "svix-id", in: "header", required: true, schema: { type: "string", maxLength: 200 } }, { name: "svix-timestamp", in: "header", required: true, schema: { type: "string", pattern: "^[0-9]{1,12}$" } }],
+    errors: ["EMAIL_WEBHOOK_UNAVAILABLE", "UNSUPPORTED_PAYLOAD", "PAYLOAD_TOO_LARGE", "INVALID_PAYLOAD", "INVALID_WEBHOOK_SIGNATURE", "WEBHOOK_EVENT_CONFLICT", "EMAIL_WEBHOOK_RETRY"],
+  },
+  "get /admin/email-suppressions": { summary: "List private recipient-block review records with MFA and pagination", parameters: [{ name: "page", in: "query", schema: { type: "integer", minimum: 1, maximum: 10000, default: 1 } }, { name: "state", in: "query", schema: { type: "string", enum: ["active", "released"], default: "active" } }], errors: ["ADMIN_MFA_REQUIRED", "VALIDATION_ERROR"] },
+  "post /admin/email-suppressions/{suppressionId}/release": { summary: "Version-safely release a reviewed recipient block without resending failed mail", requestSchema: "EmailSuppressionReviewRequest", errors: ["ADMIN_MFA_REQUIRED", "UNTRUSTED_ORIGIN", "VALIDATION_ERROR", "SUPPRESSION_NOT_FOUND", "SUPPRESSION_VERSION_CONFLICT", "SUPPRESSION_RETRY_REQUIRED"] },
   "post /operations/packages/{packageId}/inspect": { summary: "Record one assigned package inspection with actor-bound retry identity and transactional stage guards", requestSchema: "PackageInspectionRequest", successSchema: "PackageInspectionResponse", successStatuses: ["200", "201"], errors: ["INSPECTION_ACCESS_REQUIRED", "UNTRUSTED_ORIGIN", "IDEMPOTENCY_KEY_REQUIRED", "VALIDATION_ERROR", "PACKAGE_NOT_FOUND", "INVALID_EVIDENCE", "IDEMPOTENCY_KEY_CONFLICT", "PACKAGE_NOT_READY_FOR_INSPECTION"] },
   "post /admin/orders/{orderId}/supplier-records/{recordId}/dispatch": { summary: "Record manual dispatch and create an expected parcel, never physical receipt", requestSchema: "SupplierDispatchRequest", successSchema: "SupplierDispatchResponse", successStatuses: ["200", "201"], errors: ["ADMIN_ACCESS_REQUIRED", "UNTRUSTED_ORIGIN", "IDEMPOTENCY_KEY_REQUIRED", "VALIDATION_ERROR", "IDEMPOTENCY_KEY_REUSED", "DISPATCH_NOT_READY", "SUPPLIER_RECORD_NOT_READY", "SUPPLIER_RECORDS_REQUIRED", "LEGACY_PACKAGE_REVIEW_REQUIRED", "ORIGIN_WAREHOUSE_REQUIRED", "TRACKING_ALREADY_USED", "DISPATCH_CONFLICT"] },
   "post /operations/packages/receive": { summary: "Idempotently receive a physically checked parcel under an assigned origin warehouse", requestSchema: "WarehouseReceiptRequest", successSchema: "WarehouseReceiptResponse", successStatuses: ["200", "201"], errors: ["WAREHOUSE_ACCESS_REQUIRED", "UNTRUSTED_ORIGIN", "IDEMPOTENCY_KEY_REQUIRED", "VALIDATION_ERROR", "PACKAGE_NOT_FOUND", "IDEMPOTENCY_KEY_CONFLICT", "ORDER_OR_WAREHOUSE_NOT_FOUND", "ORDER_NOT_READY_FOR_RECEIVING", "ORIGIN_WAREHOUSE_REQUIRED", "WAREHOUSE_COUNTRY_MISMATCH", "WAREHOUSE_ASSIGNMENT_MISMATCH", "RECEIPT_CONFLICT"] },
@@ -534,6 +542,7 @@ function operationId(method, path) {
 }
 
 function accessFor(path, source, exact) {
+  if (exact?.externalProtocol === "signed-email-webhook") return { security: [{ emailWebhookSignature: [] }], access: "external-provider-callback" };
   if (exact?.externalProtocol === "provider-ipn") return { security: [], access: "external-provider-callback" };
   if (exact?.externalProtocol === "provider-return") return { security: [], access: "external-provider-return" };
   if (exact?.externalProtocol === "browser-oauth-redirect") return { security: [], access: "browser-oauth-redirect" };
@@ -658,6 +667,7 @@ export function buildOpenApiDocument() {
     paths,
     components: {
       securitySchemes: {
+        emailWebhookSignature: { type: "apiKey", in: "header", name: "svix-signature", description: "HMAC-SHA256 over svix-id, svix-timestamp and the exact raw body. Signing secret stays server-side; timestamp tolerance is five minutes." },
         cookieSession: { type: "apiKey", in: "cookie", name: "crossly_session", description: "Secure HttpOnly browser session. Production uses the __Host- prefixed cookie." },
         schedulerBearer: { type: "http", scheme: "bearer", bearerFormat: "opaque", description: "Dedicated secret for protected scheduler endpoints; never a customer access token." },
       },
@@ -671,6 +681,9 @@ export function buildOpenApiDocument() {
         AcceptLanguage: { name: "Accept-Language", in: "header", required: false, schema: { type: "string", enum: ["en", "bn"] } },
       },
       schemas: {
+        EmailReceiptWebhookRequest: { type: "object", required: ["type", "created_at", "data"], properties: { type: { type: "string", description: "Supported email delivery events are processed; other signed event types are acknowledged without action." }, created_at: { type: "string", format: "date-time" }, data: { type: "object", required: ["email_id"], properties: { email_id: { type: "string", minLength: 1, maxLength: 255 } }, additionalProperties: true } }, additionalProperties: true },
+        EmailReceiptWebhookResponse: { type: "object", required: ["data"], properties: { data: { type: "object", required: ["received"], properties: { received: { type: "boolean", const: true } }, additionalProperties: false } }, additionalProperties: false },
+        EmailSuppressionReviewRequest: { type: "object", required: ["version", "reason", "evidenceReference", "verificationConfirmed"], properties: { version: { type: "integer", minimum: 1 }, reason: { type: "string", minLength: 10, maxLength: 500 }, evidenceReference: { type: "string", minLength: 10, maxLength: 500 }, verificationConfirmed: { type: "boolean", const: true } }, additionalProperties: false },
         KamStaffRequest: { type: "object", required: ["email"], properties: { email: { type: "string", format: "email" } }, additionalProperties: false },
         BusinessAccountAssignmentRequest: { type: "object", required: ["customerEmail", "kamEmail", "organizationName"], properties: { customerEmail: { type: "string", format: "email" }, kamEmail: { type: "string", format: "email" }, organizationName: { type: "string", minLength: 2, maxLength: 160 } }, additionalProperties: false },
         AccountActivityRequest: { type: "object", required: ["type", "subject", "note", "occurredAt"], properties: { type: { type: "string", enum: ["CALL", "MEETING", "EMAIL", "NOTE", "FOLLOW_UP"] }, subject: { type: "string", minLength: 2, maxLength: 160 }, note: { type: "string", minLength: 2, maxLength: 2000 }, occurredAt: { type: "string", format: "date-time" }, followUpAt: { type: "string", format: "date-time" }, sourcingRequestId: { type: "string", format: "uuid" } }, additionalProperties: false },

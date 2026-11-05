@@ -222,4 +222,12 @@ for (const [path, method, requestSchema, successSchema] of exactWishlistContract
 }
 for (const privateField of ["userId", "sellerProfileId", "deletedAt", "complianceRuleCodes"]) assert(!(privateField in committed.components.schemas.WishlistProduct.properties), `Wishlist product schema exposed ${privateField}.`);
 
+const emailReceipt = committed.paths["/notifications/email-events"]?.post;
+assert(emailReceipt, "Signed email receipt contract is missing.");
+assert(JSON.stringify(emailReceipt.security) === JSON.stringify([{ emailWebhookSignature: [] }]), "Email callbacks must require provider signatures.");
+for (const name of ["svix-id", "svix-timestamp"]) assert(emailReceipt.parameters?.some(parameter => parameter.name === name && parameter.in === "header" && parameter.required), `Email callback header ${name} is missing.`);
+assert(committed.components.securitySchemes.emailWebhookSignature?.name === "svix-signature", "Email signature header security scheme is missing.");
+assert(committed.paths["/admin/email-suppressions"]?.get, "Admin suppression listing is missing.");
+assert(committed.paths["/admin/email-suppressions/{suppressionId}/release"]?.post, "Admin suppression release is missing.");
+
 console.log(`OpenAPI verification passed: ${operations.length} operations are documented with explicit security, envelopes, errors, and idempotency headers.`);

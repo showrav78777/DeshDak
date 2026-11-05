@@ -1,8 +1,7 @@
 import assert from "node:assert/strict";
 import { randomBytes, randomUUID } from "node:crypto";
-import { readFile } from "node:fs/promises";
-import { stripTypeScriptTypes } from "node:module";
 import { PrismaClient } from "@prisma/client";
+import { loadNotificationWorker } from "./lib/load-notification-worker-for-test.mjs";
 
 const database = new URL(process.env.DATABASE_URL ?? "postgresql://invalid/invalid");
 if (!["localhost", "127.0.0.1", "[::1]"].includes(database.hostname) || !/^crossly_launch_verify_[a-f0-9]{16}$/.test(database.searchParams.get("schema") ?? "")) {
@@ -10,30 +9,15 @@ if (!["localhost", "127.0.0.1", "[::1]"].includes(database.hostname) || !/^cross
 }
 const prisma = new PrismaClient();
 const marker = randomBytes(8).toString("hex");
-const binding = `__deshdakDeliveryVerification_${marker}`;
 const originalFetch = globalThis.fetch;
 const originalEnvironment = Object.fromEntries(["EMAIL_DELIVERY_ENABLED", "RESEND_API_KEY", "EMAIL_FROM"].map(key => [key, process.env[key]]));
 let user;
-function moduleUrl(source) { return `data:text/javascript;base64,${Buffer.from(stripTypeScriptTypes(source)).toString("base64")}`; }
 const calls = [];
 let send;
 
 try {
   user = await prisma.user.create({ data: { email: `delivery-${marker}@example.test`, fullName: "Synthetic email worker", status: "ACTIVE", passwordHash: "not-used" } });
-  // Preserve real query/update behavior while restricting the worker to this
-  // synthetic user. Other checks may have queued records in the same schema.
-  globalThis[binding] = { notificationDelivery: {
-    findMany: args => prisma.notificationDelivery.findMany({ ...args, where: { AND: [args.where, { notification: { userId: user.id } }] } }),
-    updateMany: args => prisma.notificationDelivery.updateMany(args),
-  } };
-  const security = moduleUrl((await readFile(new URL("../src/lib/security-secrets.ts", import.meta.url), "utf8")).replace('import "server-only";', ""));
-  const source = (await readFile(new URL("../src/modules/notifications/delivery.ts", import.meta.url), "utf8"))
-    .replace('import "server-only";', "")
-    .replace('import { type NotificationDelivery, type Prisma } from "@prisma/client";', "")
-    .replace('from "@/lib/security-secrets"', `from "${security}"`)
-    .replace('import { prisma } from "@/lib/prisma";', `const prisma = globalThis[${JSON.stringify(binding)}];`);
-  const { runEmailDeliveryWorker } = await import(moduleUrl(source));
-  delete globalThis[binding];
+  const { runEmailDeliveryWorker, security } = await loadNotificationWorker(prisma, user.id);
   process.env.EMAIL_DELIVERY_ENABLED = "true";
   process.env.RESEND_API_KEY = "synthetic-no-network-key";
   process.env.EMAIL_FROM = "DeshDak <delivery@example.test>";
@@ -69,7 +53,7 @@ try {
   assert.equal((await runEmailDeliveryWorker()).accepted, 1);
   assert.deepEqual(calls.slice(-2), [retry.idempotencyKey, retry.idempotencyKey]);
 
-  const terminal = await queued("terminal", { attempts: 4 });
+  const terminal = await queued("terminal", { attempts: 4, recipientHash: security.hashEmailRecipient(user.email), ...security.encryptOutboxPayload({ recipient: user.email }) });
   send = async () => new Response("unavailable", { status: 503 });
   assert.equal((await runEmailDeliveryWorker()).failed, 1);
   saved = await prisma.notificationDelivery.findUniqueOrThrow({ where: { id: terminal.id } });
@@ -79,6 +63,11 @@ try {
   assert.equal((await runEmailDeliveryWorker()).failed, 1);
   assert.equal(calls.length, beforeExpired, "A sixth send attempt was made.");
   assert.equal((await prisma.notificationDelivery.findUniqueOrThrow({ where: { id: expired.id } })).attempts, 5);
+  const purged = await queued("purged-recipient", { attempts: 1, recipientHash: security.hashEmailRecipient(user.email) });
+  const beforePurged = calls.length;
+  assert.equal((await runEmailDeliveryWorker()).failed, 1);
+  assert.equal(calls.length, beforePurged, "A purged recipient snapshot was resent.");
+  assert.equal((await prisma.notificationDelivery.findUniqueOrThrow({ where: { id: purged.id } })).status, "FAILED");
 
   const simultaneous = await queued("simultaneous");
   send = async () => { await new Promise(resolve => setTimeout(resolve, 100)); return new Response(JSON.stringify({ id: "synthetic-concurrent-accepted" })); };
@@ -112,7 +101,6 @@ try {
   console.log("Notification-worker verification passed: acceptance is not delivery, accepted messages are not resent, stable idempotency/retry cap, concurrent claims, stale-completion fencing and disabled-provider safety. All provider responses were synthetic.");
 } finally {
   globalThis.fetch = originalFetch;
-  delete globalThis[binding];
   for (const [key, value] of Object.entries(originalEnvironment)) { if (value === undefined) delete process.env[key]; else process.env[key] = value; }
   if (user) await prisma.user.delete({ where: { id: user.id } });
   await prisma.$disconnect();

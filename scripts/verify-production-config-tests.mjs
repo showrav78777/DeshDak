@@ -19,6 +19,14 @@ const valid = {
 };
 
 assert.deepEqual(validateProductionEnvironment(valid), { ok: true, errors: [] });
+const email = { EMAIL_DELIVERY_ENABLED: "true", RESEND_API_KEY: "mail-" + "r".repeat(40), EMAIL_FROM: "DeshDak <mail@deshdak.invalid>", RESEND_WEBHOOK_SECRET: `whsec_${key(9)}`, EMAIL_SUPPRESSION_HASH_KEY: key(8) };
+assert.deepEqual(validateProductionEnvironment({ ...valid, ...email }), { ok: true, errors: [] });
+for (const secret of [undefined, "not-a-signing-key", "whsec_c2hvcnQ=", "whsec_%%%%"]) {
+  const result = validateProductionEnvironment({ ...valid, ...email, RESEND_WEBHOOK_SECRET: secret });
+  assert(!result.ok); assert(result.errors.some(error => error.includes("RESEND_WEBHOOK_SECRET")));
+  if (secret) assert(!JSON.stringify(result.errors).includes(`\"${secret}\"`));
+}
+for (const recipientKey of [undefined, "short", valid.AUTH_OUTBOX_ENCRYPTION_KEY]) assert(!validateProductionEnvironment({ ...valid, ...email, EMAIL_SUPPRESSION_HASH_KEY: recipientKey }).ok);
 const scanToken="scanner-"+"s".repeat(64);
 assert.deepEqual(validateProductionEnvironment({...valid,WEBSITE_MEDIA_SCAN_URL:"https://scan.internal/scan",WEBSITE_MEDIA_SCAN_TOKEN:scanToken}),{ok:true,errors:[]});
 for(const settings of [

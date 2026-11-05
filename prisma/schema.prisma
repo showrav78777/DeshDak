@@ -869,6 +869,9 @@ model NotificationDelivery {
   attempts                Int                        @default(0)
   nextAttemptAt           DateTime?
   providerReference       String?
+  recipientHash           String?
+  providerEventAt         DateTime?
+  providerEventType       String?
   lastError               String?
   securePayloadCiphertext String?
   securePayloadIv         String?
@@ -878,11 +881,49 @@ model NotificationDelivery {
   failedAt                DateTime?
   readAt                  DateTime?
   notification            Notification               @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+  emailEvents             EmailWebhookEvent[]
+  emailSuppressions       EmailSuppression[]
   createdAt               DateTime                   @default(now())
   updatedAt               DateTime                   @updatedAt
 
   @@index([channel, status, nextAttemptAt])
   @@index([notificationId, channel])
+  @@index([channel, providerReference])
+}
+
+model EmailWebhookEvent {
+  id                String                @id @default(uuid())
+  messageId         String                @unique
+  providerReference String
+  eventType         String
+  payloadHash       String
+  occurredAt        DateTime
+  outcome           String                @default("PENDING")
+  processedAt       DateTime?
+  deliveryId        String?
+  delivery          NotificationDelivery? @relation(fields: [deliveryId], references: [id], onDelete: SetNull)
+  createdAt         DateTime              @default(now())
+
+  @@index([providerReference, processedAt])
+  @@index([createdAt])
+}
+
+model EmailSuppression {
+  id               String                @id @default(uuid())
+  recipientHash    String                @unique
+  reason           String
+  active           Boolean               @default(true)
+  version          Int                   @default(1)
+  sourceDeliveryId String?
+  sourceDelivery   NotificationDelivery? @relation(fields: [sourceDeliveryId], references: [id], onDelete: SetNull)
+  firstSeenAt      DateTime              @default(now())
+  lastSeenAt       DateTime
+  releasedAt       DateTime?
+  releasedById     String?
+  releaseReason    String?
+  evidenceReference String?
+
+  @@index([active, lastSeenAt])
 }
 
 model SecurityToken {

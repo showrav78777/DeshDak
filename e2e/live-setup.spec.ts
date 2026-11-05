@@ -72,6 +72,42 @@ test("Admin live setup guide explains remaining configuration", async ({ browser
     await expect(notifications).toContainText("Provider accepted; recipient delivery is unconfirmed.");
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(viewport.width);
     await info.attach(`notification-operations-${info.project.name}`, { body: await page.screenshot(), contentType: "image/png" });
+    await page.getByRole("link", { name: /^Review blocked email addresses/ }).click();
+    const record = page.locator(`#suppression-${admin.suppressionId}:visible`);
+    await record.getByText("Review and release this address", { exact: true }).click();
+    const reason = "Verified synthetic recipient correction with controlled evidence.";
+    const evidence = "Synthetic support review reference 2026-11-05";
+    await record.getByLabel("Review reason", { exact: true }).fill(reason);
+    await record.getByLabel("Safe evidence reference", { exact: true }).fill(evidence);
+    await record.getByRole("checkbox").check();
+    const endpoint = `**/api/v1/admin/email-suppressions/${admin.suppressionId}/release`;
+    await page.route(endpoint, route => route.abort());
+    await record.getByRole("button", { name: "Record verified release", exact: true }).click();
+    await expect(record.getByRole("alert")).toContainText("Review could not be confirmed");
+    await expect(record.getByLabel("Review reason", { exact: true })).toHaveValue(reason);
+    await expect(record.getByRole("button", { name: "Record verified release", exact: true })).toBeEnabled();
+    await page.unroute(endpoint);
+    await page.route(endpoint, route => route.fulfill({ status: 200, contentType: "application/json", body: '{"data":{}}' }));
+    await record.getByRole("button", { name: "Record verified release", exact: true }).click();
+    await expect(record.getByRole("alert")).toContainText("Review could not be confirmed");
+    await expect(record.getByLabel("Safe evidence reference", { exact: true })).toHaveValue(evidence);
+    await page.unroute(endpoint);
+    const noJsReview = await browser.newContext({ baseURL, viewport, javaScriptEnabled: false, storageState: await context.storageState() });
+    try {
+      const noJsPage = await noJsReview.newPage(); await noJsPage.goto("/admin/notifications/email-suppressions");
+      const noJsRecord = noJsPage.locator(`#suppression-${admin.suppressionId}:visible`);
+      await noJsRecord.locator("summary").click();
+      await expect(noJsRecord.getByRole("button", { name: "Record verified release", exact: true })).toBeDisabled();
+    } finally { await noJsReview.close(); }
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(viewport.width);
+    await info.attach(`email-suppression-review-${info.project.name}`, { body: await page.screenshot(), contentType: "image/png" });
+    await record.getByRole("button", { name: "Record verified release", exact: true }).click();
+    await expect(record).toHaveCount(0);
+    await page.getByLabel("Show", { exact: true }).selectOption("released");
+    await page.getByRole("button", { name: "Apply filter", exact: true }).click();
+    await expect(record).toBeVisible();
+    await expect(record.locator("form")).toHaveCount(0);
+
   } finally {
     expect((await context.request.post("/api/v1/auth/logout", { headers: { Origin: baseURL! } })).status()).toBe(200);
     await context.close();

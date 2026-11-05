@@ -11,9 +11,12 @@ export const dynamic = "force-dynamic";
 export default async function AdminNotificationsPage() {
   const session = await getServerSession();
   if (!session?.roles.includes(ROLE.ADMIN) || session.portal !== "admin") redirect("/admin/login");
-  const [queuedEmail, acceptedEmail, failed, deliveredInApp, recent, campaigns, optedInCustomers] = await Promise.all([
+  const [queuedEmail, acceptedEmail, confirmedEmail, blockedEmail, pendingReceipts, failed, deliveredInApp, recent, campaigns, optedInCustomers] = await Promise.all([
     prisma.notificationDelivery.count({ where: { channel: "EMAIL", status: "QUEUED" } }),
     prisma.notificationDelivery.count({ where: { channel: "EMAIL", status: "SENT", providerReference: { not: null } } }),
+    prisma.notificationDelivery.count({ where: { channel: "EMAIL", status: { in: ["DELIVERED", "READ"] }, providerEventType: "email.delivered" } }),
+    prisma.emailSuppression.count({ where: { active: true } }),
+    prisma.emailWebhookEvent.count({ where: { processedAt: null } }),
     prisma.notificationDelivery.count({ where: { status: "FAILED" } }),
     prisma.notificationDelivery.count({ where: { channel: "IN_APP", status: { in: ["DELIVERED", "READ"] } } }),
     prisma.notificationDelivery.findMany({ include: { notification: { select: { eventType: true, title: true, priority: true, createdAt: true, user: { select: { fullName: true, email: true } } } } }, orderBy: { createdAt: "desc" }, take: 100 }),
@@ -28,8 +31,11 @@ export default async function AdminNotificationsPage() {
       <article className="admin-hub-card"><span>♢</span><div><h2>In-app delivered</h2><p>Delivered or read by customers.</p></div><b>{deliveredInApp}</b></article>
       <article className="admin-hub-card"><span>✉</span><div><h2>Email queued</h2><p>Waiting for provider setup, a worker run or retry time.</p></div><b>{queuedEmail}</b></article>
       <article className="admin-hub-card"><span>↗</span><div><h2>Email accepted</h2><p>Provider accepted; recipient delivery is unconfirmed.</p></div><b>{acceptedEmail}</b></article>
+      <article className="admin-hub-card"><span>✓</span><div><h2>Receipt-confirmed email</h2><p>Signed receipt confirms recipient-server delivery, not reading.</p></div><b>{confirmedEmail}</b></article>
       <article className="admin-hub-card"><span>!</span><div><h2>Failed delivery</h2><p>Requires provider or worker attention.</p></div><b>{failed}</b></article>
     </div>
+    <p><Link className="button secondary" href="/admin/notifications/email-suppressions">Review blocked email addresses ({blockedEmail}) →</Link></p>
+    {pendingReceipts ? <p className="form-help">{pendingReceipts} signed receipt(s) await a matching send record or legacy recipient evidence. Check worker/provider evidence; never infer delivery from an unmatched receipt.</p> : null}
     <AdminMarketingCampaignForm customers={optedInCustomers} />
     <section className="marketing-history"><div className="updates-head"><div><h2>Marketing campaign history</h2><p>Open a campaign to inspect its recipient and consent evidence.</p></div><div><span>{campaigns.length} recent</span><RunDueCampaignsButton /></div></div>
       {campaigns.length ? <div className="marketing-history-list">{campaigns.map((campaign) => <article key={campaign.id}>

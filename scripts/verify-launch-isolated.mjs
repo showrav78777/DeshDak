@@ -32,6 +32,10 @@ const testEnvironment = {
   DATABASE_URL: verificationUrl.toString(),
   APP_BASE_URL: testBaseUrl,
   TEST_BASE_URL: testBaseUrl,
+  // Per-run synthetic callback/recipient keys are shared by the test server and
+  // child checks. Never require real provider secrets for isolated acceptance.
+  RESEND_WEBHOOK_SECRET: `whsec_${randomBytes(32).toString("base64")}`,
+  EMAIL_SUPPRESSION_HASH_KEY: randomBytes(32).toString("base64"),
   // Workflow tests run against the development runtime so external CAPTCHA is
   // not falsely required. The optimized production bundle is verified by the
   // separate build gate before this isolated workflow suite is started.
