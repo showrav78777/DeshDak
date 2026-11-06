@@ -8,7 +8,7 @@ const checks = [
   "test:warehouse-receipt-policy",
   "test:supplier-order-records",
   "test:manual-purchase-review",
-  "test:website-media-safety", "test:private-upload-safety", "test:media-scanner",
+  "test:website-media-safety", "test:private-upload-safety", "test:private-photo-storage", "test:media-scanner",
   "test:isolated-route-retention", "test:identifier-layout", "test:catalog-sorting",
   "test:source-settings-request", "test:source-readiness", "test:otapi-client", "test:supplier-candidate",
   "api:generate", "api:contract", "typecheck", "lint", "test:production-config", "test:operations-safety", "test:performance-policy", "test:security-regressions", "test:verification-cookie-portability", "test:dependency-integrity", "test:dependency-audit", "test:container-security", "db:migration:verify",

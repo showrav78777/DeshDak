@@ -488,3 +488,16 @@
  No owner database, customer file, real malware sample or production account was
  used. HTTPS/ingress, image scanning/signing and deployment acceptance remain due;
  private identity/inspection object storage and video processing remain engineering.
+
+ Private photo storage adapter core, 6 November 2026: added pinned official S3 SDK
+ with opaque conditional writes, AES-GCM purpose/key binding, explicit KMS and owner
+ checks, checksums/exact versions, uncertain-write confirmation, bounded timed
+ retrieval and exact-version deletion. Local HTTP simulator tests used real SDK
+ signing with synthetic credentials; no AWS account was contacted. Invalid and
+ tampered responses, retry overwrite, unversioned writes, wrong encryption, lying
+ streams and stalls were rejected. Lint, TypeScript, production build, private
+ upload safety, API contract and dependency integrity passed. Production audit
+ remains zero; full audit remains eight moderate tooling findings. This module is
+ not imported by upload/download routes; production intake remains disabled pending
+ durable linking, scanning, retention and delivery integration. Manual infrastructure
+ prerequisites are in NIloy/PRIVATE_PHOTO_STORAGE_SETUP.md. No migration was needed.

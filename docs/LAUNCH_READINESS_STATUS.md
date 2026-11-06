@@ -46,6 +46,13 @@ paired with application decode/re-encode. It is not a general private-document
 scanner. TLS/ingress, approved image digests/CVE review, signature-update monitoring
 and production certification remain due. See `NIloy/MEDIA_SCANNER_SETUP.md`.
 
+The private-photo S3 adapter core was locally verified on 6 November with SDK-
+signed simulated requests, application encryption, KMS/version/checksum requirements,
+uncertain-write confirmation, bounded reads and exact-version deletion. It is not
+connected to routes and adds no activation switch; the durable intake, scanning,
+retention and delivery orchestration remains engineering work. No AWS account was
+contacted. See `PRIVATE_PHOTO_STORAGE_ADAPTER.md`.
+
 The owner database has not been migrated, AWS has not been provisioned, and no
 real provider has been accepted. Private storage/scanning and outstanding provider
 adapters remain engineering work as well as owner/service setup. Staging UAT,

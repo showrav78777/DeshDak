@@ -37,6 +37,8 @@ readiness status. Supply credentials through the deployment secret manager:
 - Google login: OAuth application and exact production redirect URLs.
 - Phone verification: contracted SMS service, sender approval and delivery tests.
 - Private media: object storage, scanning, access controls and delivery/retention.
+  See [private photo infrastructure prerequisites](PRIVATE_PHOTO_STORAGE_SETUP.md);
+  the adapter core is ready, while route/lifecycle integration remains engineering.
 - AI and suppliers: approved accounts, commercial rights, quotas and credentials.
 
 Some adapters still require engineering and certification; keys alone do not
