@@ -143,3 +143,12 @@ The local anonymous-browser and 390 x 844 responsive smoke pass is recorded in `
 The repository now also contains a multi-stage, non-root Next.js standalone container, a fail-closed runtime configuration check, a liveness health check, a restricted build context, and a CI container-policy test. Before launch, the infrastructure owner must select the platform, private registry, scanner and signing system; pin the approved base image by digest; build, scan, sign, and deploy the exact release image by immutable digest; and enforce readiness, private networking, a read-only filesystem, dropped capabilities, resource limits, monitoring, and rollback.
 
 The local container was built end-to-end on 1 September 2026. Its clean install reported zero npm vulnerabilities, its production build passed, the final image declares the non-root `nextjs` user and liveness check, and a no-secret startup test failed closed without disclosing values. Registry scanning/signing and a production-like deployment remain external launch gates.
+
+## Private upload reservation follow-up — 6 November 2026
+
+The internal storage adapter now has a durable PostgreSQL reservation/recovery
+ledger. Component acceptance passed one-write idempotency, verified lost-response
+recovery, namespace conflicts, corruption and stale-worker fencing. See
+PRIVATE_PHOTO_UPLOAD_LEDGER.md. This does not complete private production intake:
+identity/inspection linking, scanning, approved cleanup and authorized delivery
+remain disconnected. No owner migration or AWS operation was performed.

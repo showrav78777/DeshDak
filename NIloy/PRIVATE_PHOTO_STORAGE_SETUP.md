@@ -37,3 +37,13 @@ When the integration is ready for staging, your deployment operator must:
 No manual editing of application code is requested here. Existing development
 upload flags must stay disabled in production. Video, quarantine/orphan handling,
 retention and live-service certification are not completed merely by adding keys.
+
+## Durable reservation migration
+
+A durable upload/recovery component is now implemented and tested locally.
+Before a later staging/release integration uses it, review and apply migration
+`20261106190000_private_photo_upload_ledger` through the normal migration job with
+backup/rollback acceptance. It was applied only to disposable test schemas here.
+This adds no activation switch; identity/inspection linking, scanning, retention,
+Admin recovery controls and delivery are still engineering tasks. Do not delete
+uncertain reservations/objects or rotate their encryption keys to clear a warning.

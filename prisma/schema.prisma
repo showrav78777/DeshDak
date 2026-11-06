@@ -737,6 +737,7 @@ model User {
   advertisementsCreated       Advertisement[]                       @relation("AdvertisementCreator")
   marketingCampaignRecipients MarketingCampaignRecipient[]          @relation("MarketingCampaignRecipientUser")
   securityTokens              SecurityToken[]
+  privatePhotoUploads         PrivatePhotoUpload[]
   identityVerifications       IdentityVerification[]                @relation("IdentityVerificationCustomer")
   identityVerificationsReviewed IdentityVerification[]              @relation("IdentityVerificationReviewer")
   maintenanceRuns             MaintenanceJobRun[]                   @relation("MaintenanceRunActor")
@@ -3519,4 +3520,28 @@ model LaunchReadinessEvent {
   @@unique([itemId, itemVersion])
   @@index([itemId, occurredAt])
   @@index([toStatus, occurredAt])
+}
+
+
+model PrivatePhotoUpload {
+  id                  String   @id @default(uuid())
+  actorId             String
+  purpose             String   @db.VarChar(16)
+  idempotencyKey      String   @db.VarChar(128)
+  fingerprint         String   @db.VarChar(64)
+  storageNamespace    String   @db.VarChar(64)
+  status              String   @default("PREPARED") @db.VarChar(24)
+  preparedReference   Json
+  encryptedBody       Bytes?
+  storedReference     Json?
+  attempts            Int      @default(0)
+  leaseToken          String?  @db.VarChar(36)
+  leaseExpiresAt      DateTime?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  actor               User     @relation(fields: [actorId], references: [id], onDelete: Restrict)
+
+  @@unique([actorId, idempotencyKey])
+  @@index([status, leaseExpiresAt])
+  @@index([actorId, createdAt])
 }

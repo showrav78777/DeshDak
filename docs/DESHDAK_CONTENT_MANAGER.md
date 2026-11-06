@@ -501,3 +501,16 @@
  not imported by upload/download routes; production intake remains disabled pending
  durable linking, scanning, retention and delivery integration. Manual infrastructure
  prerequisites are in NIloy/PRIVATE_PHOTO_STORAGE_SETUP.md. No migration was needed.
+
+ Durable private photo reservation increment, 6 November 2026: added a reviewed
+ migration and internal PostgreSQL lifecycle for encrypted reservations, scoped
+ idempotency, configuration/key namespace fencing, tokenized leases, one PUT and
+ bounded verification-only retries. Exact bytes are read/authenticated before
+ STORED; temporary encrypted payload is cleared after success. Lost responses,
+ corruption and stale worker completion were tested. Real PostgreSQL and real
+ encryption with simulated S3 passed, along with the SDK HTTP simulator regression,
+ lint, TypeScript, Prisma validation/generation, API contract and production build.
+ Migration was applied only to disposable schemas, which were removed. Owner data
+ and AWS were untouched. This is not yet linked to identity/inspection HTTP flows;
+ scanning, recovery Admin/job, retention/cleanup and delivery remain engineering.
+ See PRIVATE_PHOTO_UPLOAD_LEDGER.md for status semantics and release prerequisites.

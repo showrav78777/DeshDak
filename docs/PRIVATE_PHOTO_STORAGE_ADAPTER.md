@@ -77,3 +77,11 @@ Owner infrastructure prerequisites are under `NIloy/PRIVATE_PHOTO_STORAGE_SETUP.
 Primary AWS references:
 - https://docs.aws.amazon.com/sdk-for-javascript/v3/developer-guide/s3-checksums.html
 - https://docs.aws.amazon.com/AmazonS3/latest/userguide/security-best-practices.html
+
+## Durable reservation follow-up, 6 November 2026
+
+The adapter is now connected to an internal PostgreSQL reservation/recovery
+component with scoped idempotency, storage/key namespace fencing, verified
+completion and private audit history. See PRIVATE_PHOTO_UPLOAD_LEDGER.md.
+Business-record linking, scanning, approved cleanup and delivery remain unfinished;
+no upload/download route or production activation switch was added.

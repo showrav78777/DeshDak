@@ -11,6 +11,7 @@
     "test:media-scanner": "node scripts/verify-media-scanner.mjs",
     "test:media-scanner-container": "node scripts/verify-media-scanner-container.mjs",
     "test:media-scanner-engine": "node scripts/verify-media-scanner-engine.mjs",
+    "test:private-upload-ledger": "node scripts/verify-private-upload-ledger.mjs",
     "test:private-photo-storage": "node scripts/verify-private-photo-storage.mjs",
     "test:private-upload-safety": "node --no-warnings --experimental-strip-types scripts/verify-private-upload-safety.mjs",
     "test:private-upload-workflow": "node scripts/verify-private-upload-workflow.mjs",

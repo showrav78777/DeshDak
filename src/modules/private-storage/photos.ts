@@ -1,5 +1,5 @@
 import "server-only";
-import { createCipheriv, createDecipheriv, createHash, randomBytes } from "node:crypto";
+import { createCipheriv, createDecipheriv, createHash, createHmac, randomBytes } from "node:crypto";
 import { S3Client, PutObjectCommand, GetObjectCommand, HeadObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
 import { z } from "zod";
 
@@ -111,5 +111,6 @@ export function createPrivatePhotoStore(input: { config: Configuration; keys: Re
       await client.send(new DeleteObjectCommand({ Bucket: config.bucket, Key: reference.key, VersionId: reference.versionId, ExpectedBucketOwner: config.expectedOwner }), { abortSignal: AbortSignal.timeout(12_000) });
     } catch { throw new PrivateStorageError(); }
   }
-  return { prepare, write, confirm, read, remove };
+  const namespace = createHmac("sha256",keys.identity).update("deshdak:private-photo-namespace:v1:").update(JSON.stringify(config)).update(keys.inspection).digest("hex");
+  return { namespace, prepare, write, confirm, read, remove };
 }
