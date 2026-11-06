@@ -464,3 +464,27 @@
  300-operation API contract passed. No migration was required. Synthetic data only;
  production upload gates remain closed pending private storage/scanning engineering.
  See PRIVATE_UPLOAD_INTAKE_SECURITY.md for scope and remaining requirements.
+
+ Website-image scanner increment, 6 November 2026: added a dependency-free bearer-
+ authenticated HTTP gateway using ClamAV INSTREAM with exact-byte framing, size/
+ reply bounds, two-operation concurrency cap, deadlines and fresh-definition checks.
+ Added non-root/read-only gateway image, private Compose topology, strict engine
+ limits and manual operator guidance in NIloy/MEDIA_SCANNER_SETUP.md. Admin live
+ setup now points to the supplied deployment artifacts. The simulated-daemon suite,
+ website image safety, lint, TypeScript, production config checks, 300-operation API
+ contract and application build passed (build completed 5 November during this
+ increment). Real-engine acceptance completed 6 November with ClamAV 1.4.6 under
+ explicit AMD64 emulation, not native ARM certification.
+
+ The real tests exposed two issues: concurrent initial updates could leave an
+ engine using old definitions, fixed by completing FreshClam before daemon startup;
+ and an upstream ZIP truncation path could return clean despite size alerts. The
+ gateway now independently rejects unsupported formats including ZIPs and remains
+ exclusively for website JPEG/PNG/WebP inputs, paired with full application decode/
+ re-encode. The final real-engine run passed freshness, clean image, antivirus test
+ string and unsupported/oversized-member ZIP rejection. Do not claim the engine's
+ limit flag proves complete scan coverage. Owned containers/networks/image tags/
+ temporary token files were removed; shared public images/build caches remain.
+ No owner database, customer file, real malware sample or production account was
+ used. HTTPS/ingress, image scanning/signing and deployment acceptance remain due;
+ private identity/inspection object storage and video processing remain engineering.

@@ -74,6 +74,11 @@ credential you need to supply.
 
 ### Website image scanner
 
+A deployable authenticated ClamAV gateway and engine-startup wrapper are supplied.
+Follow [the scanner deployment checklist](MEDIA_SCANNER_SETUP.md). This does not
+complete the private identity/inspection storage and video pipeline.
+
+
 Production Admin image uploads require `WEBSITE_MEDIA_SCAN_URL` and
 `WEBSITE_MEDIA_SCAN_TOKEN` together in the secret manager. Use an independent token
 of at least 32 characters. The endpoint must use HTTPS with no embedded credentials,

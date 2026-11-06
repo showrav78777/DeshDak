@@ -1,6 +1,6 @@
 # DeshDak launch readiness status
 
-Status reviewed: 5 November 2026, Asia/Dhaka
+Status reviewed: 6 November 2026, Asia/Dhaka
 
 ## Current handoff — 5 November 2026
 
@@ -36,6 +36,15 @@ exposure, image decoding/metadata handling, streamed-body bounds and concurrent
 pending submissions. Synthetic isolated identity/Compliance and Inspector evidence
 workflows passed; see `PRIVATE_UPLOAD_INTAKE_SECURITY.md`. Production private
 storage/scanning remains engineering work and intake remains disabled there.
+
+On 6 November the authenticated website-image scanner gateway and serialized
+FreshClam startup wrapper passed real-engine Docker acceptance with ClamAV 1.4.6
+(AMD64 emulation on the ARM host). Fresh definitions and a clean image passed;
+the antivirus test string and unsupported ZIP fixture were rejected. A reproduced
+upstream ZIP truncation limitation means this remains an image-only gateway,
+paired with application decode/re-encode. It is not a general private-document
+scanner. TLS/ingress, approved image digests/CVE review, signature-update monitoring
+and production certification remain due. See `NIloy/MEDIA_SCANNER_SETUP.md`.
 
 The owner database has not been migrated, AWS has not been provisioned, and no
 real provider has been accepted. Private storage/scanning and outstanding provider

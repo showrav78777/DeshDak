@@ -1,0 +1,56 @@
+name: deshdak-scanner
+
+# Private services only. Supply an approved HTTPS ingress for /scan; do not expose
+# either plaintext HTTP or clamd TCP directly to public or untrusted networks.
+services:
+  scanner:
+    image: ${DESHDAK_SCANNER_IMAGE:?Set the reviewed scanner image digest}
+    env_file:
+      - ${DESHDAK_SCANNER_ENV_FILE:?Set an external private scanner env file}
+    environment:
+      CLAMD_HOST: clamd
+      CLAMD_PORT: "3310"
+      PORT: "8080"
+    depends_on:
+      clamd:
+        condition: service_healthy
+    networks: [scanner_internal]
+    user: "1000:1000"
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    init: true
+    restart: unless-stopped
+    mem_limit: 256m
+    cpus: 1
+    pids_limit: 64
+    logging:
+      driver: json-file
+      options: {max-size: "10m", max-file: "3"}
+  clamd:
+    platform: linux/amd64
+    image: ${DESHDAK_CLAMAV_IMAGE:?Set the reviewed engine-wrapper image digest}
+    env_file:
+      - ./services/media-scanner/clamd.env
+    # Keep automatic signature updates and database testing enabled. Official
+    # entrypoint manages clamd/freshclam identities and writable database paths.
+    volumes:
+      - definitions:/var/lib/clamav
+    networks: [scanner_internal, definitions_egress]
+    security_opt: [no-new-privileges:true]
+    init: true
+    restart: unless-stopped
+    mem_limit: 4g
+    cpus: 2
+    pids_limit: 128
+    logging:
+      driver: json-file
+      options: {max-size: "10m", max-file: "3"}
+networks:
+  scanner_internal:
+    internal: true
+  # Restrict this egress at the hosting firewall to approved signature-update
+  # services. No host ports are published and the application is not on this net.
+  definitions_egress: {}
+volumes:
+  definitions: {}
