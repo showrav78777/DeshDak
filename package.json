@@ -13,6 +13,7 @@
     "test:media-scanner-engine": "node scripts/verify-media-scanner-engine.mjs",
     "test:private-photo-scanner": "node scripts/verify-private-photo-scanner.mjs",
     "test:scanned-private-intake": "node scripts/verify-scanned-private-intake.mjs",
+    "test:private-photo-delivery": "node scripts/verify-private-photo-delivery.mjs",
     "test:private-photo-links": "node scripts/verify-private-photo-links.mjs",
     "test:private-upload-ledger": "node scripts/verify-private-upload-ledger.mjs",
     "test:private-photo-storage": "node scripts/verify-private-photo-storage.mjs",

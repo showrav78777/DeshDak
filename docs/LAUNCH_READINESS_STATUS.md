@@ -172,3 +172,15 @@ metadata removal, idempotency, uncertain-write recovery and downstream bindings;
 S3 and scanner responses were simulated. See SCANNED_PRIVATE_PHOTO_INTAKE.md.
 This does not activate production HTTP intake, protected object-backed downloads,
 quarantine/recovery UI or retention. No owner database or AWS account was changed.
+
+
+## Protected object-reader follow-up — 7 November 2026
+
+An internal private-photo reader now checks current Compliance/customer/staff/
+Admin MFA access, immutable binding and both scan proofs before storage and again
+after decryption, with fail-closed audits and no legacy fallback. Local PostgreSQL
+acceptance includes in-flight authorization changes, storage corruption/outage
+and audit-write failure. S3 and scan proofs were simulated. See
+PRIVATE_PHOTO_DELIVERY.md. HTTP upload/download activation, quarantine/recovery UI,
+retention/holds and live-provider certification remain required. No owner database
+migration or AWS operation was performed.

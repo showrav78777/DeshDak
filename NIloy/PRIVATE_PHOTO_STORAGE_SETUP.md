@@ -75,3 +75,14 @@ production activation switch yet: authenticated HTTP intake, domain-record
 creation, object-backed protected downloads, quarantine/recovery controls and
 retention still require engineering and staging acceptance. Existing development
 flags stay disabled in production. No AWS account or customer files were used.
+
+
+## Protected reader component — 7 November 2026
+
+The internal object reader now supports current-role/session/owner checks and
+rejects access changes during a storage read. It does not add an activation flag
+or replace current download routes. No new credentials or owner migration are
+needed for this component. Complete the storage/private-scanner prerequisites
+above; routing, quarantine/recovery controls, approved retention/holds and
+staging acceptance still require engineering. Do not clear legacy evidence or
+manually change reservation status to activate access.
