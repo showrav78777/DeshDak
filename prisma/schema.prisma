@@ -738,6 +738,7 @@ model User {
   marketingCampaignRecipients MarketingCampaignRecipient[]          @relation("MarketingCampaignRecipientUser")
   securityTokens              SecurityToken[]
   privatePhotoUploads         PrivatePhotoUpload[]
+  privatePhotoLinks           PrivatePhotoLink[]
   identityVerifications       IdentityVerification[]                @relation("IdentityVerificationCustomer")
   identityVerificationsReviewed IdentityVerification[]              @relation("IdentityVerificationReviewer")
   maintenanceRuns             MaintenanceJobRun[]                   @relation("MaintenanceRunActor")
@@ -832,6 +833,7 @@ model IdentityVerification {
   version              Int                  @default(1)
   user                 User                 @relation("IdentityVerificationCustomer", fields: [userId], references: [id], onDelete: Cascade)
   reviewedBy           User?                @relation("IdentityVerificationReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
+  privatePhotoLink     PrivatePhotoLink?
 
   @@index([userId, status, submittedAt])
   @@index([status, submittedAt])
@@ -1871,6 +1873,7 @@ model InspectionEvidence {
   createdAt      DateTime @default(now())
   package        Package  @relation(fields: [packageId], references: [id], onDelete: Restrict)
   uploadedBy     User     @relation("InspectionEvidenceUploader", fields: [uploadedById], references: [id], onDelete: Restrict)
+  privatePhotoLink PrivatePhotoLink?
 
   @@index([packageId, createdAt])
   @@index([uploadedById, createdAt])
@@ -3532,6 +3535,8 @@ model PrivatePhotoUpload {
   storageNamespace    String   @db.VarChar(64)
   status              String   @default("PREPARED") @db.VarChar(24)
   preparedReference   Json
+  scanVerifiedSha256  String?  @db.VarChar(64)
+  scanVerifiedAt      DateTime?
   encryptedBody       Bytes?
   storedReference     Json?
   attempts            Int      @default(0)
@@ -3540,8 +3545,24 @@ model PrivatePhotoUpload {
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
   actor               User     @relation(fields: [actorId], references: [id], onDelete: Restrict)
+  privatePhotoLink    PrivatePhotoLink?
 
   @@unique([actorId, idempotencyKey])
   @@index([status, leaseExpiresAt])
   @@index([actorId, createdAt])
+}
+
+
+model PrivatePhotoLink {
+  id                     String @id @default(uuid())
+  uploadId               String @unique
+  identityVerificationId String? @unique
+  inspectionEvidenceId   String? @unique
+  linkedById             String
+  createdAt              DateTime @default(now())
+  upload                 PrivatePhotoUpload @relation(fields: [uploadId], references: [id], onDelete: Restrict)
+  identityVerification   IdentityVerification? @relation(fields: [identityVerificationId], references: [id], onDelete: Restrict)
+  inspectionEvidence     InspectionEvidence? @relation(fields: [inspectionEvidenceId], references: [id], onDelete: Restrict)
+  linkedBy               User @relation(fields: [linkedById], references: [id], onDelete: Restrict)
+  @@index([linkedById, createdAt])
 }

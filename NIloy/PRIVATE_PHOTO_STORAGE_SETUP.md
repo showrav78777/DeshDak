@@ -47,3 +47,13 @@ backup/rollback acceptance. It was applied only to disposable test schemas here.
 This adds no activation switch; identity/inspection linking, scanning, retention,
 Admin recovery controls and delivery are still engineering tasks. Do not delete
 uncertain reservations/objects or rotate their encryption keys to clear a warning.
+
+## Record binding migration
+
+A staged existing-record binding component now checks ownership, current sessions,
+roles/warehouse assignments, file metadata and scan attestation. Review migration
+`20261107110000_private_photo_bindings` through the normal backed-up staging/release
+job before it is used. No owner database was migrated here. Do not manually mark
+uploads scanned, clear legacy photo data or activate production intake: scanning
+attestation, new HTTP intake, object-backed authorized delivery and retention
+integration still need engineering and acceptance.

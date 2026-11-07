@@ -25,6 +25,10 @@ const referenceSchema = z.object({
   sizeBytes: z.number().int().positive().max(8 * 1024 * 1024),
   mimeType: z.enum(["image/jpeg", "image/png", "image/webp"]),
 }).strict().refine(value => value.key.startsWith(`private/v1/${value.purpose}/`));
+export function parsePrivatePhotoReference(value: unknown) {
+  try { return referenceSchema.parse(value); }
+  catch { throw new PrivateStorageError(); }
+}
 export type PrivatePhotoReference = z.infer<typeof referenceSchema>;
 export type PreparedPrivatePhoto = { reference: Omit<PrivatePhotoReference, "versionId">; encryptedBody: Buffer };
 export class PrivateStorageError extends Error {

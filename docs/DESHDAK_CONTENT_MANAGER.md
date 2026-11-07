@@ -514,3 +514,16 @@
  and AWS were untouched. This is not yet linked to identity/inspection HTTP flows;
  scanning, recovery Admin/job, retention/cleanup and delivery remain engineering.
  See PRIVATE_PHOTO_UPLOAD_LEDGER.md for status semantics and release prerequisites.
+
+ Private photo record-binding increment, 7 November 2026: added internal bindings
+ from confirmed reservations to existing identity/inspection records. Fresh database
+ sessions, roles, portals, MFA/warehouse assignments, owner/purpose, scan digest,
+ metadata and namespace checks are enforced. PostgreSQL constraints and a trigger
+ reject cross-owner/unscanned/mutable bindings. Isolated PostgreSQL acceptance
+ covered concurrent idempotence, role/assignment revocation, suspended/expired/
+ revoked sessions, denied Logistics, Admin MFA and legacy-data preservation. Scan
+ proofs were synthetic fixtures; no S3 or scanner was contacted. Ledger regression,
+ private upload safety, lint, TypeScript, schema, security regressions, API contract
+ and production build passed. No owner migration or production intake activation.
+ See PRIVATE_PHOTO_RECORD_LINKS.md: HTTP intake, scanning attestations, object-backed
+ delivery, Admin recovery and retention/cleanup remain separate engineering work.

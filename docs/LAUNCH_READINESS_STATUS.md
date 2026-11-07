@@ -1,6 +1,6 @@
 # DeshDak launch readiness status
 
-Status reviewed: 6 November 2026, Asia/Dhaka
+Status reviewed: 7 November 2026, Asia/Dhaka
 
 ## Current handoff — 5 November 2026
 
@@ -152,3 +152,12 @@ recovery, namespace conflicts, corruption and stale-worker fencing. See
 PRIVATE_PHOTO_UPLOAD_LEDGER.md. This does not complete private production intake:
 identity/inspection linking, scanning, approved cleanup and authorized delivery
 remain disconnected. No owner migration or AWS operation was performed.
+
+## Private photo binding follow-up — 7 November 2026
+
+Confirmed reservations can now be bound internally to existing identity or
+inspection records with fresh role/session/warehouse/MFA authorization, scan/digest
+and immutable database binding checks. Local PostgreSQL component acceptance
+passed; scan proofs were synthetic. Existing readers and legacy encrypted evidence
+remain unchanged. See PRIVATE_PHOTO_RECORD_LINKS.md. This does not activate private
+S3 intake/delivery or complete scanning, recovery UI or retention integration.
