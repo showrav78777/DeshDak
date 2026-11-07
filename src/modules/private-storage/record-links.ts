@@ -31,7 +31,7 @@ export function createPrivatePhotoLinks(db: PrismaClient, storageNamespace: stri
         const upload = await tx.privatePhotoUpload.findUnique({ where: { id: input.uploadId } });
         if (!upload || upload.actorId !== session.userId || upload.purpose !== input.kind || upload.status !== "STORED" || upload.storageNamespace !== storageNamespace) throw deny();
         const reference = parsePrivatePhotoReference(upload.storedReference);
-        if (reference.purpose !== input.kind || upload.scanVerifiedSha256 !== reference.plaintextSha256 || !upload.scanVerifiedAt || upload.scanVerifiedAt < upload.createdAt || upload.scanVerifiedAt.getTime() > Date.now()+300_000) throw deny();
+        if (!upload.originalScanVerifiedAt || !/^[a-f0-9]{64}$/.test(upload.originalScanSha256 ?? "") || (upload.scanVerifiedAt && upload.originalScanVerifiedAt > upload.scanVerifiedAt) || reference.purpose !== input.kind || upload.scanVerifiedSha256 !== reference.plaintextSha256 || !upload.scanVerifiedAt || upload.scanVerifiedAt < upload.createdAt || upload.scanVerifiedAt.getTime() > Date.now()+300_000) throw deny();
         if (input.kind === "identity") {
           if (session.portal !== "customer" || !session.roles.includes("customer_personal")) throw deny();
           await tx.$queryRaw`SELECT "id" FROM "IdentityVerification" WHERE "id" = ${input.subjectId} FOR UPDATE`;

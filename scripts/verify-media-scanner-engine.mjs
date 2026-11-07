@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import { deflateRawSync } from "node:zlib";
 const base = new URL(process.env.SCANNER_TEST_BASE_URL ?? "http://invalid");
 if (!["localhost","127.0.0.1","[::1]"].includes(base.hostname) || base.username || base.password || base.pathname !== "/" || base.search || base.hash) throw new Error("Scanner engine acceptance requires a local disposable scanner URL.");
@@ -10,6 +11,9 @@ assert.equal(ready.status,200,"Engine definitions must be available and fresh be
 const clean=Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII=","base64");
 const cleanResponse=await fetch(new URL("/scan",base),{method:"POST",headers,body:clean,signal:AbortSignal.timeout(12_000)});
 assert.equal(cleanResponse.status,200);assert.deepEqual(await cleanResponse.json(),{status:"clean"});
+const digest=createHash("sha256").update(clean).digest("hex");
+const bound=await fetch(new URL("/scan",base),{method:"POST",headers:{...headers,"X-Deshdak-Scan-Sha256":digest},body:clean,signal:AbortSignal.timeout(12_000)});
+assert.equal(bound.status,200);assert.deepEqual(await bound.json(),{status:"clean",sha256:digest});
 // Standard harmless antivirus test string, assembled only in memory. No test
 // file is written, and no customer upload or actual malicious sample is used.
 const antivirusTest=["X5O!P%@AP[4",String.fromCharCode(92),"PZX54(P^)7CC)7}","$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*"].join("");

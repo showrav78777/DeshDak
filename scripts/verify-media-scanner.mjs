@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { createServer as tcpServer } from "node:net";
-import { randomBytes } from "node:crypto";
+import { createHash, randomBytes } from "node:crypto";
 import { createScannerServer, scannerConfiguration } from "../services/media-scanner/server.mjs";
 import { clamdCommand, requireFreshDefinitions } from "../services/media-scanner/clamd.mjs";
 
@@ -45,6 +45,9 @@ try{
   assert.equal((await upload({},new Uint8Array())).status,422);
   const clean=await upload();assert.equal(clean.status,200);assert.match(clean.headers.get("cache-control"),/no-store/);assert.deepEqual(await clean.json(),{status:"clean"});assert(inputs.at(-1).equals(bytes),"INSTREAM framing changed uploaded bytes.");
   const archive=await upload({},Buffer.from("PK\x03\x04unsupported archive"));assert.equal(archive.status,415);assert.deepEqual(await archive.json(),{status:"unsupported_media"});
+  const digest=createHash("sha256").update(bytes).digest("hex");
+  const bound=await upload({"X-Deshdak-Scan-Sha256":digest});assert.equal(bound.status,200);assert.deepEqual(await bound.json(),{status:"clean",sha256:digest});
+  assert.equal((await upload({"X-Deshdak-Scan-Sha256":"0".repeat(64)})).status,400);
   for(const [state,status] of [["infected",422],["error",503],["malformed",503],["oversized-reply",503],["stale",503],["version-offline",503]]){mode=state;const response=await upload();assert.equal(response.status,status,state);assert(!JSON.stringify(await response.json()).includes("Synthetic.Test"));}
   mode="clean";const before=scanned;const oversized=new ReadableStream({start(controller){controller.enqueue(new Uint8Array(8*1024*1024+1));controller.close();}});assert.equal((await upload({},oversized)).status,413);assert.equal(scanned,before,"Oversized body reached engine scan.");
   mode="hang";const abort=new AbortController();const pending=clamdCommand({...config,signal:abort.signal},"INSTREAM",bytes);setTimeout(()=>abort.abort(),30);await assert.rejects(pending);

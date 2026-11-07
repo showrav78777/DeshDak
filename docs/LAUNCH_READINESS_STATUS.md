@@ -161,3 +161,14 @@ and immutable database binding checks. Local PostgreSQL component acceptance
 passed; scan proofs were synthetic. Existing readers and legacy encrypted evidence
 remain unchanged. See PRIVATE_PHOTO_RECORD_LINKS.md. This does not activate private
 S3 intake/delivery or complete scanning, recovery UI or retention integration.
+
+
+## Private photo scan proof follow-up — 7 November 2026
+
+The internal intake component now requires clean digest-bound scans of original
+and normalized photos before encrypted storage, and records proof after storage
+verification. Real PostgreSQL component acceptance covers scan/decode rejection,
+metadata removal, idempotency, uncertain-write recovery and downstream bindings;
+S3 and scanner responses were simulated. See SCANNED_PRIVATE_PHOTO_INTAKE.md.
+This does not activate production HTTP intake, protected object-backed downloads,
+quarantine/recovery UI or retention. No owner database or AWS account was changed.

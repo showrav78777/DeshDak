@@ -3535,6 +3535,8 @@ model PrivatePhotoUpload {
   storageNamespace    String   @db.VarChar(64)
   status              String   @default("PREPARED") @db.VarChar(24)
   preparedReference   Json
+  originalScanSha256  String?  @db.VarChar(64)
+  originalScanVerifiedAt DateTime?
   scanVerifiedSha256  String?  @db.VarChar(64)
   scanVerifiedAt      DateTime?
   encryptedBody       Bytes?

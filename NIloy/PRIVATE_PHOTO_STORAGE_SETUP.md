@@ -57,3 +57,21 @@ job before it is used. No owner database was migrated here. Do not manually mark
 uploads scanned, clear legacy photo data or activate production intake: scanning
 attestation, new HTTP intake, object-backed authorized delivery and retention
 integration still need engineering and acceptance.
+
+
+## Original and processed image scan proofs — 7 November 2026
+
+The internal intake component now scans the original and metadata-stripped image
+and persists digest-bound proof only after encrypted storage is verified.
+Review migration `20261107140000_private_photo_original_scan` with the previous
+private-photo migrations in backed-up staging before integration. No owner
+migration has been run. Do not backfill or manually mark scan proof fields.
+
+Approve a separate private scanner deployment/token, location, access policy and
+retention/logging contract for identity and inspection photos. Do not route these
+files to a public/shared website scanner merely because it is available. The
+internal client requires HTTPS and digest-bound acknowledgements. There is no
+production activation switch yet: authenticated HTTP intake, domain-record
+creation, object-backed protected downloads, quarantine/recovery controls and
+retention still require engineering and staging acceptance. Existing development
+flags stay disabled in production. No AWS account or customer files were used.

@@ -68,3 +68,9 @@ cleanup. The current readers still serve legacy evidence; a binding alone must
 not be treated as a storage handoff or a quarantine/revocation mechanism. Do not
 clear legacy ciphertext or activate production intake until that lifecycle passes
 staging and live-provider acceptance. Video remains separate.
+
+
+Follow-up, 7 November: original/normalized scanning and durable proof production
+are now implemented internally; see SCANNED_PRIVATE_PHOTO_INTAKE.md and migration
+`20261107140000_private_photo_original_scan`. Binding now requires both proofs.
+The HTTP, delivery, quarantine and retention limitations above still apply.

@@ -68,12 +68,15 @@ export function createScannerServer(config) {
       } finally { removeAbort?.(); }
       if (!size) { respond(response, 422, { status: "empty_upload" }); return; }
       const bytes = Buffer.concat(chunks);
+      const requestedDigest = request.headers["x-deshdak-scan-sha256"];
+      const digest = createHash("sha256").update(bytes).digest("hex");
+      if (requestedDigest !== undefined && (typeof requestedDigest !== "string" || !/^[a-f0-9]{64}$/.test(requestedDigest) || requestedDigest !== digest)) { respond(response,400,{ status: "digest_mismatch" }); return; }
       const verdict = await clamdCommand(engine, "INSTREAM", bytes);
       // This gateway is exclusively for website images. The application must
       // additionally decode/re-encode before storage. Do not trust an engine's
       // clean verdict for archives or other unsupported file formats.
       if (verdict === "stream: OK" && !supportedWebsiteImage(bytes)) respond(response, 415, { status: "unsupported_media" });
-      else if (verdict === "stream: OK") respond(response, 200, { status: "clean" });
+      else if (verdict === "stream: OK") respond(response, 200, requestedDigest === undefined ? { status: "clean" } : { status: "clean", sha256: digest });
       else if (/^stream: [^\r\n\0]{1,512} FOUND$/.test(verdict)) respond(response, 422, { status: "infected" });
       else respond(response, 503, { status: "unavailable" });
     } catch { respond(response, 503, { status: "unavailable" }); }

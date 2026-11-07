@@ -55,3 +55,16 @@ reused as a general document/archive/video scanner. Keep the limit alerts enable
 but do not treat them as complete coverage. Track the upstream fix and repeat the
 archive regression before broadening supported formats:
 https://github.com/Cisco-Talos/clamav/commit/9f84fb3404b9a66c782e33f3e2b0da5e3d32af76
+
+
+## Digest-bound acknowledgements
+
+A caller may send `X-Deshdak-Scan-Sha256` with the lowercase SHA-256 digest
+of the complete submitted bytes. A mismatched digest returns 400 before scanning.
+After successful engine and media checks, the reply is exactly
+`{"status":"clean","sha256":"<verified digest>"}`. Callers without this header
+retain the existing `{"status":"clean"}` response. This is transport binding,
+not a signature or permanent scan certificate. The private photo client requires
+the digest response over HTTPS and has no development bypass. Deployment for
+identity/inspection photos requires separate privacy approval, private ingress
+and a dedicated token; website scanning configuration does not enable it.
