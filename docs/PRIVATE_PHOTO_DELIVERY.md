@@ -67,3 +67,10 @@ contract, security regressions, dependency integrity and production build passed
 Generated schemas and the owned disposable database were removed. No owner
 database migration, live AWS action, browser-route activation or full-system SQA
 was performed in this increment.
+
+
+Quarantine follow-up, 7 November: the reader now checks an independent immutable
+quarantine in both authorization passes, and Compliance reads explicitly require
+MFA. Linked legacy routes enforce and audit the same block. See
+PRIVATE_PHOTO_QUARANTINE.md. Ordinary REVIEW_REQUIRED recovery cannot clear this
+separate quarantine; controlled release and retention remain unfinished.

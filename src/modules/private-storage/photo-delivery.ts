@@ -27,7 +27,7 @@ export function createPrivatePhotoDelivery(db: PrismaClient, store: Pick<ReturnT
     await tx.$queryRaw`SELECT "id" FROM "User" WHERE "id" = ${initial.userId} FOR NO KEY UPDATE`;
     await tx.$queryRaw`SELECT "id" FROM "AuthSession" WHERE "id" = ${input.sessionId} FOR SHARE`;
     const session = await tx.authSession.findUnique({ where: { id: input.sessionId }, include: { user: { include: { roles: { include: { role: true } } } } } });
-    if (!session || session.revokedAt || session.expiresAt <= new Date() || session.user.status !== "ACTIVE") throw denied();
+    if (!session || session.revokedAt || session.expiresAt <= new Date() || session.user.status !== "ACTIVE" || session.user.deletedAt) throw denied();
     const roles = session.user.roles.map(item => item.role.code);
     const target = input.kind === "identity" ? { identityVerificationId: input.subjectId } : { inspectionEvidenceId: input.subjectId };
     const initialLink = await tx.privatePhotoLink.findFirst({ where: target, select: { id: true, uploadId: true } });
@@ -35,14 +35,14 @@ export function createPrivatePhotoDelivery(db: PrismaClient, store: Pick<ReturnT
     // Match the upload/linking lock order; no transaction is held during S3 I/O.
     await tx.$queryRaw`SELECT "id" FROM "PrivatePhotoUpload" WHERE "id" = ${initialLink.uploadId} FOR SHARE`;
     await tx.$queryRaw`SELECT "id" FROM "PrivatePhotoLink" WHERE "id" = ${initialLink.id} FOR SHARE`;
-    const link = await tx.privatePhotoLink.findFirst({ where: { ...target, id: initialLink.id }, include: { upload: true } });
+    const link = await tx.privatePhotoLink.findFirst({ where: { ...target, id: initialLink.id }, include: { upload: { include: { quarantine: true } } } });
     if (!link) throw denied();
     const upload = link.upload;
-    if (upload.status !== "STORED" || upload.purpose !== input.kind || upload.storageNamespace !== store.namespace || link.linkedById !== upload.actorId) throw denied();
+    if (upload.quarantine || upload.status !== "STORED" || upload.purpose !== input.kind || upload.storageNamespace !== store.namespace || link.linkedById !== upload.actorId) throw denied();
     const reference = parsePrivatePhotoReference(upload.storedReference);
     if (reference.purpose !== input.kind || !upload.originalScanVerifiedAt || !/^[a-f0-9]{64}$/.test(upload.originalScanSha256 ?? "") || !upload.scanVerifiedAt || upload.originalScanVerifiedAt > upload.scanVerifiedAt || upload.scanVerifiedAt < upload.createdAt || upload.scanVerifiedAt.getTime() > Date.now() + 300_000 || upload.scanVerifiedSha256 !== reference.plaintextSha256) throw denied();
     if (input.kind === "identity") {
-      if (session.portal !== "compliance" || !roles.includes("compliance")) throw denied();
+      if (session.portal !== "compliance" || !roles.includes("compliance") || !session.mfaVerifiedAt) throw denied();
       await tx.$queryRaw`SELECT "id" FROM "IdentityVerification" WHERE "id" = ${input.subjectId} FOR SHARE`;
       const subject = await tx.identityVerification.findUnique({ where: { id: input.subjectId } });
       if (!subject || subject.userId !== upload.actorId || subject.documentPhotoSha256 !== reference.plaintextSha256 || subject.documentPhotoMimeType !== reference.mimeType || subject.documentPhotoSizeBytes !== reference.sizeBytes) throw denied();

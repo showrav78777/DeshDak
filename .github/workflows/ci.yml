@@ -95,5 +95,8 @@ jobs:
       - name: Build production application
         run: npm run build
 
+      - name: Install Chromium for private-photo desktop/mobile acceptance
+        run: npx playwright install --with-deps chromium
+
       - name: Run complete isolated launch verification
         run: npm run verify:launch:isolated

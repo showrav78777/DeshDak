@@ -1,3 +1,4 @@
+import { blockQuarantinedPrivateRecord } from "@/modules/private-storage/quarantine";
 import { type NextRequest, NextResponse } from "next/server";
 import { apiError } from "@/lib/api";
 import { prisma } from "@/lib/prisma";
@@ -16,8 +17,10 @@ export async function GET(request: NextRequest, context: RouteContext<"/api/v1/o
   const [inspectorAccess, warehouseAccess] = customerAllowed ? [null, null] : await Promise.all([getInspectorAccess(session), getWarehouseAccess(session)]);
   const staffAllowed = Boolean((inspectorAccess ?? warehouseAccess) && canAccessWarehouse(inspectorAccess ?? warehouseAccess!, evidence.package.warehouseId));
   if (!customerAllowed && !staffAllowed) return apiError("EVIDENCE_ACCESS_DENIED", "You do not have access to this inspection evidence.", 403);
+  if (await blockQuarantinedPrivateRecord(prisma, "inspection", evidenceId, session.userId)) return apiError("PHOTO_QUARANTINED", "This photo is blocked pending a controlled security review.", 410);
   let bytes: Buffer;
   try { bytes = decryptInspectionEvidence(evidence); }
   catch { return apiError("EVIDENCE_UNAVAILABLE", "This evidence cannot be read securely.", 410); }
+  if (await blockQuarantinedPrivateRecord(prisma, "inspection", evidenceId, session.userId)) return apiError("PHOTO_QUARANTINED", "This photo is blocked pending a controlled security review.", 410);
   return new NextResponse(new Uint8Array(bytes), { headers: { "Content-Type": evidence.mimeType, "Content-Length": String(bytes.length), "Cache-Control": "private, no-store, max-age=0", "Content-Disposition": `inline; filename=inspection-evidence-${evidence.id}.${evidence.mediaKind === "VIDEO" ? "mp4" : "image"}`, "X-Content-Type-Options": "nosniff" } });
 }

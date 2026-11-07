@@ -4584,6 +4584,148 @@
         }
       }
     },
+    "/admin/private-photos": {
+      "get": {
+        "operationId": "get_admin_private_photos",
+        "tags": [
+          "admin"
+        ],
+        "summary": "List redacted private-photo reservation and quarantine metadata with Admin MFA",
+        "security": [
+          {
+            "cookieSession": []
+          }
+        ],
+        "x-crossly-access": "authenticated",
+        "x-crossly-error-codes": [
+          "ADMIN_MFA_REQUIRED",
+          "VALIDATION_ERROR",
+          "PHOTO_QUEUE_UNAVAILABLE"
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 10000,
+              "default": 1
+            }
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "all",
+                "quarantined"
+              ],
+              "default": "all"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Success"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "#/components/responses/Unprocessable"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/admin/private-photos/{uploadId}/quarantine": {
+      "post": {
+        "operationId": "post_admin_private_photos_uploadId_quarantine",
+        "tags": [
+          "admin"
+        ],
+        "summary": "Permanently quarantine a private photo without deleting evidence or history",
+        "security": [
+          {
+            "cookieSession": []
+          }
+        ],
+        "x-crossly-access": "authenticated",
+        "x-crossly-error-codes": [
+          "ADMIN_MFA_REQUIRED",
+          "UNTRUSTED_ORIGIN",
+          "IDEMPOTENCY_KEY_REQUIRED",
+          "VALIDATION_ERROR",
+          "PHOTO_QUARANTINE_CONFLICT",
+          "PHOTO_QUARANTINE_DENIED",
+          "PHOTO_QUARANTINE_UNAVAILABLE"
+        ],
+        "parameters": [
+          {
+            "name": "uploadId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Success"
+          },
+          "201": {
+            "$ref": "#/components/responses/Created"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "#/components/responses/Unprocessable"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
     "/admin/product-revisions/{revisionId}/review": {
       "patch": {
         "operationId": "patch_admin_product_revisions_revisionId_review",
@@ -18513,6 +18655,28 @@
               }
             },
             "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "PrivatePhotoQuarantineRequest": {
+        "type": "object",
+        "required": [
+          "reason",
+          "confirmed"
+        ],
+        "properties": {
+          "reason": {
+            "type": "string",
+            "enum": [
+              "SUSPECTED_MALWARE",
+              "PRIVACY_REVIEW",
+              "INTEGRITY_FAILURE"
+            ]
+          },
+          "confirmed": {
+            "type": "boolean",
+            "const": true
           }
         },
         "additionalProperties": false

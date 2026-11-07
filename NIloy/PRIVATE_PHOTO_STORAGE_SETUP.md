@@ -86,3 +86,22 @@ needed for this component. Complete the storage/private-scanner prerequisites
 above; routing, quarantine/recovery controls, approved retention/holds and
 staging acceptance still require engineering. Do not clear legacy evidence or
 manually change reservation status to activate access.
+
+
+## Admin quarantine — 7 November 2026
+
+After backed-up staging review, deploy migration
+`20261107170000_private_photo_quarantine` with the earlier private-photo migrations.
+Only disposable test schemas were migrated during development. Admin → System →
+Private photo safety lists redacted reservation references and provides an audited
+permanent quarantine. Match the reference to your approved incident review, choose
+a reason and confirm. A network failure can occur after the block commits: retry
+the same request or reload the queue. Do not edit SQL, delete a block or change
+storage status to release a file. The block preserves evidence and applies to
+linked legacy photos as well as the internal object reader. Unlinked legacy
+photos need the separate migration/review workflow. No provider credentials are
+needed to quarantine; production object intake/delivery remains disabled.
+
+Approve operational incident handling, retention/holds and a separate reviewed
+release/rescan procedure before live use. Release/recovery, deletion and production
+routing still need engineering; adding keys or this migration does not finish them.

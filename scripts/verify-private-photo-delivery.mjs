@@ -67,6 +67,8 @@ try {
   const identity = await db.identityVerification.create({ data: { userId: customer.user.id, documentType: "PASSPORT", issuingCountryCode: "BD", documentNumberLast4: "A123", documentPhotoSha256: sha, documentPhotoMimeType: "image/png", documentPhotoSizeBytes: image.length, documentPhotoCiphertext: "LEGACY_DO_NOT_FALL_BACK" } });
   await links.link({ sessionId: customer.session.id, uploadId: identityUpload.id, kind: "identity", subjectId: identity.id });
   const documentRead = { sessionId: compliance.session.id, kind: "identity", subjectId: identity.id };
+  await expectDenied(documentRead);
+  await db.authSession.update({ where: { id: compliance.session.id }, data: { mfaVerifiedAt: new Date() } });
   const document = await delivery.read(documentRead); assert(document.bytes.equals(image)); assert.equal(document.mimeType, "image/png"); assert.deepEqual(Object.keys(document).sort(), ["bytes", "mimeType"]);
   for (const actor of [customer, other, inspector, admin]) await expectDenied({ ...documentRead, sessionId: actor.session.id });
   await expectDenied({ ...documentRead, subjectId: randomUUID() });
@@ -107,6 +109,8 @@ try {
   storageFailure = true; await assert.rejects(() => delivery.read(photoRead), unavailable); storageFailure = false;
   const stored = await db.privatePhotoUpload.findUniqueOrThrow({ where: { id: evidenceUpload.id } }); const object = objects.get(stored.storedReference.key); object.bytes[0] ^= 1; await assert.rejects(() => delivery.read(photoRead), unavailable); object.bytes[0] ^= 1;
   const brokenReader = createPrivatePhotoDelivery(db, { namespace: store.namespace, read: async () => Buffer.from("incorrect bytes") }); await assert.rejects(() => brokenReader.read(photoRead), unavailable);
+  await db.user.update({ where: { id: customer.user.id }, data: { deletedAt: new Date() } }); await expectDenied(photoRead);
+  await db.user.update({ where: { id: customer.user.id }, data: { deletedAt: null } });
   await db.user.update({ where: { id: customer.user.id }, data: { status: "SUSPENDED" } }); await expectDenied(photoRead);
   const audit = JSON.stringify(await db.auditLog.findMany({ where: { action: { in: ["private_photo.viewed", "private_photo.view_blocked"] } } }));
   for (const secret of ["private/v1/", "storedReference", "SECRET_PROVIDER_DIAGNOSTIC", "LEGACY_DO_NOT_FALL_BACK", store.namespace, sha]) assert(!audit.includes(secret));

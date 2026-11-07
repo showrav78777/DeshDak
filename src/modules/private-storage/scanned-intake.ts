@@ -17,8 +17,8 @@ export function createScannedPrivateIntake(db: PrismaClient, store: ReturnType<t
   return { intake: async (input: { actorId: string; purpose: "identity" | "inspection"; idempotencyKey: string; file: File }) => {
     try {
       if (typeof input.idempotencyKey !== "string" || !/^[A-Za-z0-9:_-]{16,128}$/.test(input.idempotencyKey) || !(input.file instanceof File) || !["identity","inspection"].includes(input.purpose) || !input.file.size || input.file.size > (input.purpose === "identity" ? 5 : 8)*1024*1024 || !["image/jpeg","image/png","image/webp"].includes(input.file.type)) throw new Error("Invalid input");
-      const actor = await db.user.findUnique({ where: { id: input.actorId }, select: { status: true } });
-      if (actor?.status !== "ACTIVE") throw new Error("Inactive actor");
+      const actor = await db.user.findUnique({ where: { id: input.actorId }, select: { status: true, deletedAt: true } });
+      if (actor?.status !== "ACTIVE" || actor.deletedAt) throw new Error("Inactive actor");
       const original = Buffer.from(await input.file.arrayBuffer());
       if (original.length !== input.file.size) throw new Error("Invalid photo size");
       const originalProof = await scan(Buffer.from(original)); verifyProof(originalProof,original);
@@ -28,11 +28,11 @@ export function createScannedPrivateIntake(db: PrismaClient, store: ReturnType<t
       if (stored.state !== "STORED") return { state: stored.state, uploadId: stored.uploadId };
       await db.$transaction(async tx => {
         await tx.$queryRaw`SELECT "id" FROM "User" WHERE "id" = ${input.actorId} FOR NO KEY UPDATE`;
-        const currentActor = await tx.user.findUnique({ where: { id: input.actorId }, select: { status: true } });
-        if (currentActor?.status !== "ACTIVE") throw new Error("Inactive actor");
+        const currentActor = await tx.user.findUnique({ where: { id: input.actorId }, select: { status: true, deletedAt: true } });
+        if (currentActor?.status !== "ACTIVE" || currentActor.deletedAt) throw new Error("Inactive actor");
         await tx.$queryRaw`SELECT "id" FROM "PrivatePhotoUpload" WHERE "id" = ${stored.uploadId} FOR UPDATE`;
-        const row = await tx.privatePhotoUpload.findUniqueOrThrow({ where: { id: stored.uploadId } });
-        if (row.actorId !== input.actorId || row.status !== "STORED" || row.storageNamespace !== store.namespace || stored.reference.plaintextSha256 !== normalizedProof.sha256) throw new Error("Unconfirmed photo");
+        const row = await tx.privatePhotoUpload.findUniqueOrThrow({ where: { id: stored.uploadId }, include: { quarantine: true } });
+        if (row.quarantine || row.actorId !== input.actorId || row.status !== "STORED" || row.storageNamespace !== store.namespace || stored.reference.plaintextSha256 !== normalizedProof.sha256) throw new Error("Unconfirmed photo");
         if (row.originalScanSha256 || row.scanVerifiedSha256) {
           if (row.originalScanSha256 !== originalProof.sha256 || row.scanVerifiedSha256 !== normalizedProof.sha256 || !row.originalScanVerifiedAt || !row.scanVerifiedAt) throw new Error("PRIVATE_PHOTO_SCAN_CONFLICT");
           return;

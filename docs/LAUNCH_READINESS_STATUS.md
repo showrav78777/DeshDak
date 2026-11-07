@@ -184,3 +184,15 @@ and audit-write failure. S3 and scan proofs were simulated. See
 PRIVATE_PHOTO_DELIVERY.md. HTTP upload/download activation, quarantine/recovery UI,
 retention/holds and live-provider certification remain required. No owner database
 migration or AWS operation was performed.
+
+
+## Admin private-photo quarantine — 7 November 2026
+
+Admin → System → Private photo safety now provides a paginated redacted queue and
+MFA-protected permanent quarantine with fixed reasons, explicit confirmation,
+CSRF protection, bounded JSON, safe retries and audit. Immutable blocks prevent
+ordinary upload recovery or binding from reopening a photo; object reads and
+linked legacy downloads enforce them. Compliance object reads explicitly require
+MFA. See PRIVATE_PHOTO_QUARANTINE.md. Production object routing, controlled release/
+rescan/recovery, retention/holds, video and live-provider/full-system acceptance
+remain unfinished. No owner migration or AWS operation was performed.

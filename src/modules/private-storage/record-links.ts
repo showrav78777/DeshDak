@@ -15,7 +15,7 @@ async function authorizedSession(tx: Tx, sessionId: string) {
   await tx.$queryRaw`SELECT "id" FROM "User" WHERE "id" = ${initial.userId} FOR NO KEY UPDATE`;
   await tx.$queryRaw`SELECT "id" FROM "AuthSession" WHERE "id" = ${sessionId} FOR SHARE`;
   const session = await tx.authSession.findUnique({ where: { id: sessionId }, include: { user: { include: { roles: { include: { role: true } } } } } });
-  if (!session || session.revokedAt || session.expiresAt <= new Date() || session.user.status !== "ACTIVE") throw deny();
+  if (!session || session.revokedAt || session.expiresAt <= new Date() || session.user.status !== "ACTIVE" || session.user.deletedAt) throw deny();
   return { userId: session.userId, portal: session.portal, roles: session.user.roles.map(item => item.role.code), mfaVerifiedAt: session.mfaVerifiedAt };
 }
 
@@ -28,8 +28,8 @@ export function createPrivatePhotoLinks(db: PrismaClient, storageNamespace: stri
       return await db.$transaction(async tx => {
         const session = await authorizedSession(tx,input.sessionId);
         await tx.$queryRaw`SELECT "id" FROM "PrivatePhotoUpload" WHERE "id" = ${input.uploadId} FOR UPDATE`;
-        const upload = await tx.privatePhotoUpload.findUnique({ where: { id: input.uploadId } });
-        if (!upload || upload.actorId !== session.userId || upload.purpose !== input.kind || upload.status !== "STORED" || upload.storageNamespace !== storageNamespace) throw deny();
+        const upload = await tx.privatePhotoUpload.findUnique({ where: { id: input.uploadId }, include: { quarantine: true } });
+        if (!upload || upload.quarantine || upload.actorId !== session.userId || upload.purpose !== input.kind || upload.status !== "STORED" || upload.storageNamespace !== storageNamespace) throw deny();
         const reference = parsePrivatePhotoReference(upload.storedReference);
         if (!upload.originalScanVerifiedAt || !/^[a-f0-9]{64}$/.test(upload.originalScanSha256 ?? "") || (upload.scanVerifiedAt && upload.originalScanVerifiedAt > upload.scanVerifiedAt) || reference.purpose !== input.kind || upload.scanVerifiedSha256 !== reference.plaintextSha256 || !upload.scanVerifiedAt || upload.scanVerifiedAt < upload.createdAt || upload.scanVerifiedAt.getTime() > Date.now()+300_000) throw deny();
         if (input.kind === "identity") {

@@ -739,6 +739,7 @@ model User {
   securityTokens              SecurityToken[]
   privatePhotoUploads         PrivatePhotoUpload[]
   privatePhotoLinks           PrivatePhotoLink[]
+  privatePhotoQuarantines     PrivatePhotoQuarantine[]
   identityVerifications       IdentityVerification[]                @relation("IdentityVerificationCustomer")
   identityVerificationsReviewed IdentityVerification[]              @relation("IdentityVerificationReviewer")
   maintenanceRuns             MaintenanceJobRun[]                   @relation("MaintenanceRunActor")
@@ -3548,6 +3549,7 @@ model PrivatePhotoUpload {
   updatedAt           DateTime @updatedAt
   actor               User     @relation(fields: [actorId], references: [id], onDelete: Restrict)
   privatePhotoLink    PrivatePhotoLink?
+  quarantine          PrivatePhotoQuarantine?
 
   @@unique([actorId, idempotencyKey])
   @@index([status, leaseExpiresAt])
@@ -3567,4 +3569,18 @@ model PrivatePhotoLink {
   inspectionEvidence     InspectionEvidence? @relation(fields: [inspectionEvidenceId], references: [id], onDelete: Restrict)
   linkedBy               User @relation(fields: [linkedById], references: [id], onDelete: Restrict)
   @@index([linkedById, createdAt])
+}
+
+
+model PrivatePhotoQuarantine {
+  id             String @id @default(uuid())
+  uploadId       String @unique
+  actorId        String
+  idempotencyKey String @db.VarChar(36)
+  reason         String @db.VarChar(32)
+  createdAt      DateTime @default(now())
+  upload         PrivatePhotoUpload @relation(fields: [uploadId], references: [id], onDelete: Restrict)
+  actor          User @relation(fields: [actorId], references: [id], onDelete: Restrict)
+  @@unique([actorId, idempotencyKey])
+  @@index([createdAt, id])
 }

@@ -20,8 +20,8 @@ export function createPrivateUploadLedger(db: PrismaClient, store: Store) {
     const fingerprint = createHash("sha256").update(`deshdak:photo-upload:v1:${data.purpose}:${data.mimeType}:`).update(input.bytes).digest("hex");
     const row = await db.$transaction(async tx => {
       await tx.$queryRaw`SELECT "id" FROM "User" WHERE "id" = ${data.actorId} FOR UPDATE`;
-      const actor = await tx.user.findUnique({ where: { id: data.actorId }, select: { status: true } });
-      if (actor?.status !== "ACTIVE") throw new PrivateUploadLedgerError("PRIVATE_UPLOAD_UNAVAILABLE");
+      const actor = await tx.user.findUnique({ where: { id: data.actorId }, select: { status: true, deletedAt: true } });
+      if (actor?.status !== "ACTIVE" || actor.deletedAt) throw new PrivateUploadLedgerError("PRIVATE_UPLOAD_UNAVAILABLE");
       const existing = await tx.privatePhotoUpload.findUnique({ where: { actorId_idempotencyKey: { actorId: data.actorId, idempotencyKey: data.idempotencyKey } } });
       if (existing) {
         if (existing.fingerprint !== fingerprint || existing.storageNamespace !== store.namespace) throw new PrivateUploadLedgerError("PRIVATE_UPLOAD_CONFLICT");
@@ -32,10 +32,15 @@ export function createPrivateUploadLedger(db: PrismaClient, store: Store) {
       await tx.auditLog.create({ data: { actorId: data.actorId, action: "private_photo.prepared", entityType: "PrivatePhotoUpload", entityId: created.id, metadata: { purpose: data.purpose } } });
       return created;
     });
+    if (await db.privatePhotoQuarantine.findUnique({ where: { uploadId: row.id }, select: { id: true } })) return { state: "REVIEW_REQUIRED", uploadId: row.id };
     if (row.status === "STORED") return { state: "STORED", uploadId: row.id, reference: row.storedReference as unknown as PrivatePhotoReference };
     if (row.attempts >= 5) return { state: "REVIEW_REQUIRED", uploadId: row.id };
     const leaseToken = randomUUID(); const now = new Date();
-    const claimed = await db.privatePhotoUpload.updateMany({ where: { id: row.id, attempts: row.attempts, status: { in: ["PREPARED","REVIEW_REQUIRED"] }, OR: [{ leaseExpiresAt: null },{ leaseExpiresAt: { lte: now } }] }, data: { leaseToken, leaseExpiresAt: new Date(now.getTime()+60_000), attempts: { increment: 1 } } });
+    const claimed = await db.$transaction(async tx => {
+      await tx.$queryRaw`SELECT "id" FROM "PrivatePhotoUpload" WHERE "id" = ${row.id} FOR UPDATE`;
+      if (await tx.privatePhotoQuarantine.findUnique({ where: { uploadId: row.id }, select: { id: true } })) return { count: 0 };
+      return tx.privatePhotoUpload.updateMany({ where: { id: row.id, quarantine: { is: null }, attempts: row.attempts, status: { in: ["PREPARED","REVIEW_REQUIRED"] }, OR: [{ leaseExpiresAt: null },{ leaseExpiresAt: { lte: now } }] }, data: { leaseToken, leaseExpiresAt: new Date(now.getTime()+60_000), attempts: { increment: 1 } } });
+    });
     if (!claimed.count) return { state: "BUSY", uploadId: row.id };
     const lease = { id: row.id, leaseToken, status: { in: ["PREPARED","REVIEW_REQUIRED"] } };
     let reference: PrivatePhotoReference | undefined;
@@ -48,9 +53,11 @@ export function createPrivateUploadLedger(db: PrismaClient, store: Store) {
       const received = createHash("sha256").update(`deshdak:photo-upload:v1:${data.purpose}:${data.mimeType}:`).update(verified).digest("hex");
       if (received !== fingerprint) throw new PrivateUploadLedgerError("PRIVATE_UPLOAD_UNAVAILABLE");
       const stored = await db.$transaction(async tx => {
-        const actor = await tx.user.findUnique({ where: { id: data.actorId }, select: { status: true } });
-        if (actor?.status !== "ACTIVE") return false;
-        const changed = await tx.privatePhotoUpload.updateMany({ where: lease, data: { status: "STORED", storedReference: reference, encryptedBody: null, leaseToken: null, leaseExpiresAt: null } });
+        await tx.$queryRaw`SELECT "id" FROM "PrivatePhotoUpload" WHERE "id" = ${row.id} FOR UPDATE`;
+        if (await tx.privatePhotoQuarantine.findUnique({ where: { uploadId: row.id }, select: { id: true } })) return false;
+        const actor = await tx.user.findUnique({ where: { id: data.actorId }, select: { status: true, deletedAt: true } });
+        if (actor?.status !== "ACTIVE" || actor.deletedAt) return false;
+        const changed = await tx.privatePhotoUpload.updateMany({ where: { ...lease, quarantine: { is: null } }, data: { status: "STORED", storedReference: reference, encryptedBody: null, leaseToken: null, leaseExpiresAt: null } });
         if (!changed.count) return false;
         await tx.auditLog.create({ data: { actorId: data.actorId, action: "private_photo.stored", entityType: "PrivatePhotoUpload", entityId: row.id, metadata: { purpose: data.purpose } } });
         return true;
