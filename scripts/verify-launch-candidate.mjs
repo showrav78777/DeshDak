@@ -22,7 +22,7 @@ const checks = [
   "test:ship-for-me", "test:rma-workflow", "test:support-workflow", "test:support-policy", "test:help-centre", "test:ai-chat-handoff",
   "test:public-rate-limit",
   "test:admin-shell", "test:admin-audit-log", "test:launch-readiness", "test:notification-preferences", "test:marketing-campaigns",
-  ...(canInjectDatabaseFaults ? ["test:private-photo-quarantine"] : []),
+  ...(canInjectDatabaseFaults ? ["test:private-photo-quarantine", "test:private-photo-reviews"] : []),
   ...(skipBuild ? [] : ["build"]),
 ];
 

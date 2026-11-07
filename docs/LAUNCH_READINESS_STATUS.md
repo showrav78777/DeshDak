@@ -196,3 +196,16 @@ linked legacy downloads enforce them. Compliance object reads explicitly require
 MFA. See PRIVATE_PHOTO_QUARANTINE.md. Production object routing, controlled release/
 rescan/recovery, retention/holds, video and live-provider/full-system acceptance
 remain unfinished. No owner migration or AWS operation was performed.
+
+
+## Quarantine review history — 7 November 2026
+
+Private photo safety now records immutable, version-checked next-action reviews
+with case references and complete paginated history. Admin MFA, fresh roles/
+sessions, CSRF, bounded JSON, confirmed blocked status, safe retries and atomic
+audit are enforced. Concurrent decisions conflict rather than overwrite. All
+outcomes leave quarantine and evidence unchanged; rescan/replacement tasks are
+not executed or certified by recording them. See PRIVATE_PHOTO_REVIEW_WORKFLOW.md.
+Actual rescan/replacement/release, retention/holds, production object routing,
+video and staging/full-system acceptance remain unfinished. No owner migration
+or provider operation was performed.

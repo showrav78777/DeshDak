@@ -13,6 +13,8 @@ const EXACT_OPERATIONS = {
     errors: ["EMAIL_WEBHOOK_UNAVAILABLE", "UNSUPPORTED_PAYLOAD", "PAYLOAD_TOO_LARGE", "INVALID_PAYLOAD", "INVALID_WEBHOOK_SIGNATURE", "WEBHOOK_EVENT_CONFLICT", "EMAIL_WEBHOOK_RETRY"],
   },
   "get /admin/private-photos": { summary: "List redacted private-photo reservation and quarantine metadata with Admin MFA", parameters: [{ name: "page", in: "query", schema: { type: "integer", minimum: 1, maximum: 10000, default: 1 } }, { name: "state", in: "query", schema: { type: "string", enum: ["all", "quarantined"], default: "all" } }], errors: ["ADMIN_MFA_REQUIRED", "VALIDATION_ERROR", "PHOTO_QUEUE_UNAVAILABLE"] },
+  "get /admin/private-photos/{uploadId}/quarantine/reviews": { summary: "Read immutable quarantine review history with Admin MFA", parameters: [{ name: "page", in: "query", schema: { type: "integer", minimum: 1, maximum: 10000, default: 1 } }], errors: ["ADMIN_MFA_REQUIRED", "VALIDATION_ERROR", "PHOTO_REVIEW_DENIED", "PHOTO_REVIEW_UNAVAILABLE"] },
+  "post /admin/private-photos/{uploadId}/quarantine/reviews": { summary: "Record a version-checked quarantine review without releasing or certifying the photo", requestSchema: "PrivatePhotoReviewRequest", errors: ["ADMIN_MFA_REQUIRED", "UNTRUSTED_ORIGIN", "IDEMPOTENCY_KEY_REQUIRED", "VALIDATION_ERROR", "PHOTO_REVIEW_CONFLICT", "PHOTO_REVIEW_DENIED", "PHOTO_REVIEW_UNAVAILABLE"] },
   "post /admin/private-photos/{uploadId}/quarantine": { summary: "Permanently quarantine a private photo without deleting evidence or history", requestSchema: "PrivatePhotoQuarantineRequest", errors: ["ADMIN_MFA_REQUIRED", "UNTRUSTED_ORIGIN", "IDEMPOTENCY_KEY_REQUIRED", "VALIDATION_ERROR", "PHOTO_QUARANTINE_CONFLICT", "PHOTO_QUARANTINE_DENIED", "PHOTO_QUARANTINE_UNAVAILABLE"] },
   "get /admin/email-suppressions": { summary: "List private recipient-block review records with MFA and pagination", parameters: [{ name: "page", in: "query", schema: { type: "integer", minimum: 1, maximum: 10000, default: 1 } }, { name: "state", in: "query", schema: { type: "string", enum: ["active", "released"], default: "active" } }], errors: ["ADMIN_MFA_REQUIRED", "VALIDATION_ERROR"] },
   "post /admin/email-suppressions/{suppressionId}/release": { summary: "Version-safely release a reviewed recipient block without resending failed mail", requestSchema: "EmailSuppressionReviewRequest", errors: ["ADMIN_MFA_REQUIRED", "UNTRUSTED_ORIGIN", "VALIDATION_ERROR", "SUPPRESSION_NOT_FOUND", "SUPPRESSION_VERSION_CONFLICT", "SUPPRESSION_RETRY_REQUIRED"] },
@@ -555,14 +557,14 @@ function accessFor(path, source, exact) {
   return { security: [], access: "public" };
 }
 
-function parameterList(path, source, exact) {
+function parameterList(method, path, source, exact) {
   const parameters = [...path.matchAll(/\{([^}]+)\}/g)].map((match) => ({
     name: match[1],
     in: "path",
     required: true,
     schema: { type: "string" },
   }));
-  if (source.includes('headers.get("Idempotency-Key")')) parameters.push({ $ref: "#/components/parameters/IdempotencyKey" });
+  if (["post", "put", "patch", "delete"].includes(method) && source.includes('headers.get("Idempotency-Key")')) parameters.push({ $ref: "#/components/parameters/IdempotencyKey" });
   if (exact?.parameters) parameters.push(...exact.parameters);
   return parameters;
 }
@@ -639,7 +641,7 @@ export function buildOpenApiDocument() {
   for (const operation of discoverOperations()) {
     const exact = EXACT_OPERATIONS[`${operation.method} ${operation.path}`];
     const access = accessFor(operation.path, operation.source, exact);
-    const parameters = parameterList(operation.path, operation.source, exact);
+    const parameters = parameterList(operation.method, operation.path, operation.source, exact);
     const body = requestBody(operation.method, operation.path, operation.source, exact);
     paths[operation.path] ??= {};
     paths[operation.path][operation.method] = {
@@ -685,6 +687,7 @@ export function buildOpenApiDocument() {
       schemas: {
         EmailReceiptWebhookRequest: { type: "object", required: ["type", "created_at", "data"], properties: { type: { type: "string", description: "Supported email delivery events are processed; other signed event types are acknowledged without action." }, created_at: { type: "string", format: "date-time" }, data: { type: "object", required: ["email_id"], properties: { email_id: { type: "string", minLength: 1, maxLength: 255 } }, additionalProperties: true } }, additionalProperties: true },
         EmailReceiptWebhookResponse: { type: "object", required: ["data"], properties: { data: { type: "object", required: ["received"], properties: { received: { type: "boolean", const: true } }, additionalProperties: false } }, additionalProperties: false },
+        PrivatePhotoReviewRequest: { type: "object", required: ["decision", "caseReference", "expectedSequence", "blockedConfirmed"], properties: { decision: { type: "string", enum: ["KEEP_BLOCKED", "RESCAN_REQUIRED", "REPLACEMENT_REQUIRED"] }, caseReference: { type: "string", minLength: 8, maxLength: 80, pattern: "^(INC|SEC|KYC|OPS)-[A-Z0-9]+(-[A-Z0-9]+){0,5}$" }, expectedSequence: { type: "integer", minimum: 0, maximum: 1000000 }, blockedConfirmed: { type: "boolean", const: true } }, additionalProperties: false },
         PrivatePhotoQuarantineRequest: { type: "object", required: ["reason", "confirmed"], properties: { reason: { type: "string", enum: ["SUSPECTED_MALWARE", "PRIVACY_REVIEW", "INTEGRITY_FAILURE"] }, confirmed: { type: "boolean", const: true } }, additionalProperties: false },
         EmailSuppressionReviewRequest: { type: "object", required: ["version", "reason", "evidenceReference", "verificationConfirmed"], properties: { version: { type: "integer", minimum: 1 }, reason: { type: "string", minLength: 10, maxLength: 500 }, evidenceReference: { type: "string", minLength: 10, maxLength: 500 }, verificationConfirmed: { type: "boolean", const: true } }, additionalProperties: false },
         KamStaffRequest: { type: "object", required: ["email"], properties: { email: { type: "string", format: "email" } }, additionalProperties: false },

@@ -3051,9 +3051,6 @@
         ],
         "parameters": [
           {
-            "$ref": "#/components/parameters/IdempotencyKey"
-          },
-          {
             "name": "targetUserId",
             "in": "query",
             "required": false,
@@ -3712,9 +3709,6 @@
             "schema": {
               "type": "string"
             }
-          },
-          {
-            "$ref": "#/components/parameters/IdempotencyKey"
           },
           {
             "name": "page",
@@ -4726,6 +4720,143 @@
         }
       }
     },
+    "/admin/private-photos/{uploadId}/quarantine/reviews": {
+      "get": {
+        "operationId": "get_admin_private_photos_uploadId_quarantine_reviews",
+        "tags": [
+          "admin"
+        ],
+        "summary": "Read immutable quarantine review history with Admin MFA",
+        "security": [
+          {
+            "cookieSession": []
+          }
+        ],
+        "x-crossly-access": "authenticated",
+        "x-crossly-error-codes": [
+          "ADMIN_MFA_REQUIRED",
+          "VALIDATION_ERROR",
+          "PHOTO_REVIEW_DENIED",
+          "PHOTO_REVIEW_UNAVAILABLE"
+        ],
+        "parameters": [
+          {
+            "name": "uploadId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 10000,
+              "default": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Success"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "#/components/responses/Unprocessable"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      },
+      "post": {
+        "operationId": "post_admin_private_photos_uploadId_quarantine_reviews",
+        "tags": [
+          "admin"
+        ],
+        "summary": "Record a version-checked quarantine review without releasing or certifying the photo",
+        "security": [
+          {
+            "cookieSession": []
+          }
+        ],
+        "x-crossly-access": "authenticated",
+        "x-crossly-error-codes": [
+          "ADMIN_MFA_REQUIRED",
+          "UNTRUSTED_ORIGIN",
+          "IDEMPOTENCY_KEY_REQUIRED",
+          "VALIDATION_ERROR",
+          "PHOTO_REVIEW_CONFLICT",
+          "PHOTO_REVIEW_DENIED",
+          "PHOTO_REVIEW_UNAVAILABLE"
+        ],
+        "parameters": [
+          {
+            "name": "uploadId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Success"
+          },
+          "201": {
+            "$ref": "#/components/responses/Created"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "#/components/responses/Unprocessable"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
     "/admin/product-revisions/{revisionId}/review": {
       "patch": {
         "operationId": "patch_admin_product_revisions_revisionId_review",
@@ -5307,11 +5438,6 @@
           }
         ],
         "x-crossly-access": "authenticated",
-        "parameters": [
-          {
-            "$ref": "#/components/parameters/IdempotencyKey"
-          }
-        ],
         "responses": {
           "200": {
             "$ref": "#/components/responses/Success"
@@ -9468,9 +9594,6 @@
             }
           },
           {
-            "$ref": "#/components/parameters/IdempotencyKey"
-          },
-          {
             "name": "page",
             "in": "query",
             "required": false,
@@ -10180,11 +10303,6 @@
         "x-crossly-error-codes": [
           "FINANCE_ACCESS_REQUIRED"
         ],
-        "parameters": [
-          {
-            "$ref": "#/components/parameters/IdempotencyKey"
-          }
-        ],
         "responses": {
           "200": {
             "description": "Successful response.",
@@ -10551,11 +10669,6 @@
           }
         ],
         "x-crossly-access": "authenticated",
-        "parameters": [
-          {
-            "$ref": "#/components/parameters/IdempotencyKey"
-          }
-        ],
         "responses": {
           "200": {
             "$ref": "#/components/responses/Success"
@@ -13764,11 +13877,6 @@
           }
         ],
         "x-crossly-access": "authenticated",
-        "parameters": [
-          {
-            "$ref": "#/components/parameters/IdempotencyKey"
-          }
-        ],
         "responses": {
           "200": {
             "$ref": "#/components/responses/Success"
@@ -14776,11 +14884,6 @@
           }
         ],
         "x-crossly-access": "authenticated",
-        "parameters": [
-          {
-            "$ref": "#/components/parameters/IdempotencyKey"
-          }
-        ],
         "responses": {
           "200": {
             "$ref": "#/components/responses/Success"
@@ -15308,9 +15411,6 @@
             "schema": {
               "type": "string"
             }
-          },
-          {
-            "$ref": "#/components/parameters/IdempotencyKey"
           }
         ],
         "responses": {
@@ -16646,11 +16746,6 @@
           }
         ],
         "x-crossly-access": "authenticated",
-        "parameters": [
-          {
-            "$ref": "#/components/parameters/IdempotencyKey"
-          }
-        ],
         "responses": {
           "200": {
             "$ref": "#/components/responses/Success"
@@ -17280,11 +17375,6 @@
           }
         ],
         "x-crossly-access": "authenticated",
-        "parameters": [
-          {
-            "$ref": "#/components/parameters/IdempotencyKey"
-          }
-        ],
         "responses": {
           "200": {
             "$ref": "#/components/responses/Success"
@@ -18655,6 +18745,41 @@
               }
             },
             "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "PrivatePhotoReviewRequest": {
+        "type": "object",
+        "required": [
+          "decision",
+          "caseReference",
+          "expectedSequence",
+          "blockedConfirmed"
+        ],
+        "properties": {
+          "decision": {
+            "type": "string",
+            "enum": [
+              "KEEP_BLOCKED",
+              "RESCAN_REQUIRED",
+              "REPLACEMENT_REQUIRED"
+            ]
+          },
+          "caseReference": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 80,
+            "pattern": "^(INC|SEC|KYC|OPS)-[A-Z0-9]+(-[A-Z0-9]+){0,5}$"
+          },
+          "expectedSequence": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1000000
+          },
+          "blockedConfirmed": {
+            "type": "boolean",
+            "const": true
           }
         },
         "additionalProperties": false

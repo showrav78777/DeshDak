@@ -22,9 +22,10 @@ for (const operation of operations) {
   assert(published, `Missing contract operation: ${operation.method.toUpperCase()} ${operation.path}`);
   assert(Array.isArray(published.security), `Missing explicit security declaration: ${operation.method.toUpperCase()} ${operation.path}`);
   assert(published.responses?.["500"]?.$ref, `Missing safe server-error contract: ${operation.method.toUpperCase()} ${operation.path}`);
-  if (operation.source.includes('headers.get("Idempotency-Key")')) {
+  if (["post", "put", "patch", "delete"].includes(operation.method) && operation.source.includes('headers.get("Idempotency-Key")')) {
     assert(published.parameters?.some((parameter) => parameter.$ref === "#/components/parameters/IdempotencyKey"), `Missing Idempotency-Key contract: ${operation.method.toUpperCase()} ${operation.path}`);
   }
+  if (["get", "head", "options"].includes(operation.method)) assert(!published.parameters?.some(parameter => parameter.$ref === "#/components/parameters/IdempotencyKey"), `Read-only operations must not require mutation retry keys: ${operation.method.toUpperCase()} ${operation.path}`);
   if (operation.source.includes("getRequestSession")) {
     assert(published["x-crossly-access"] !== "public", `Session-aware operation was incorrectly published as public: ${operation.method.toUpperCase()} ${operation.path}`);
   }

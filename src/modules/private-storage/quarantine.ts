@@ -9,6 +9,19 @@ export const photoQuarantineReasons = {
 } as const;
 export const photoQueueQuery = z.object({ page: z.coerce.number().int().min(1).max(10000).default(1), state: z.enum(["all", "quarantined"]).default("all") }).strict();
 export const photoQuarantineRequest = z.object({ reason: z.enum(["SUSPECTED_MALWARE", "PRIVACY_REVIEW", "INTEGRITY_FAILURE"]), confirmed: z.literal(true), idempotencyKey: z.uuid() }).strict();
+export const photoReviewDecisions = {
+  KEEP_BLOCKED: "Keep blocked",
+  RESCAN_REQUIRED: "Rescan required (not performed)",
+  REPLACEMENT_REQUIRED: "Replacement photo required",
+} as const;
+export const photoReviewRequest = z.object({
+  decision: z.enum(["KEEP_BLOCKED", "RESCAN_REQUIRED", "REPLACEMENT_REQUIRED"]),
+  caseReference: z.string().min(8).max(80).regex(/^(INC|SEC|KYC|OPS)-[A-Z0-9]+(?:-[A-Z0-9]+){0,5}$/),
+  expectedSequence: z.number().int().nonnegative().max(1_000_000),
+  blockedConfirmed: z.literal(true), idempotencyKey: z.uuid(),
+}).strict();
+export const photoReviewPage = z.object({ page: z.coerce.number().int().min(1).max(10000).default(1) }).strict();
+const reviewSelect = { id: true, sequence: true, decision: true, caseReference: true, createdAt: true, actor: { select: { fullName: true } } } as const;
 export class PhotoQuarantineError extends Error {
   constructor(code: "PHOTO_QUARANTINE_DENIED" | "PHOTO_QUARANTINE_CONFLICT" | "PHOTO_QUARANTINE_UNAVAILABLE") { super(code); }
 }
@@ -38,9 +51,35 @@ export function createPhotoQuarantine(db: PrismaClient) {
   return {
     list: (sessionId: string, raw: z.input<typeof photoQueueQuery>) => run(sessionId, async (tx, actorId) => {
       const { page, state } = photoQueueQuery.parse(raw);
-      const rows = await tx.privatePhotoUpload.findMany({ where: state === "quarantined" ? { quarantine: { isNot: null } } : {}, select: { id: true, purpose: true, status: true, createdAt: true, privatePhotoLink: { select: { id: true } }, quarantine: { select: { id: true, reason: true, createdAt: true } } }, orderBy: [{ createdAt: "desc" }, { id: "asc" }], skip: (page - 1) * 50, take: 51 });
+      const rows = await tx.privatePhotoUpload.findMany({ where: state === "quarantined" ? { quarantine: { isNot: null } } : {}, select: { id: true, purpose: true, status: true, createdAt: true, privatePhotoLink: { select: { id: true } }, quarantine: { select: { id: true, reason: true, createdAt: true, reviews: { select: { sequence: true, decision: true }, orderBy: { sequence: "desc" }, take: 1 } } } }, orderBy: [{ createdAt: "desc" }, { id: "asc" }], skip: (page - 1) * 50, take: 51 });
       await tx.auditLog.create({ data: { actorId, action: "private_photo.queue_viewed", entityType: "PrivatePhotoQuarantine", metadata: { page, state } } });
       return { items: rows.slice(0, 50).map(({ privatePhotoLink, ...row }) => ({ ...row, linked: Boolean(privatePhotoLink) })), page, hasMore: rows.length > 50 };
+    }),
+    history: (sessionId: string, uploadId: string, raw: z.input<typeof photoReviewPage>) => run(sessionId, async (tx, actorId) => {
+      z.uuid().parse(uploadId); const { page } = photoReviewPage.parse(raw);
+      const item = await tx.privatePhotoQuarantine.findUnique({ where: { uploadId }, select: { id: true } });
+      if (!item) throw new PhotoQuarantineError("PHOTO_QUARANTINE_DENIED");
+      const rows = await tx.privatePhotoQuarantineReview.findMany({ where: { quarantineId: item.id }, select: reviewSelect, orderBy: { sequence: "desc" }, skip: (page - 1) * 50, take: 51 });
+      const latest = await tx.privatePhotoQuarantineReview.findFirst({ where: { quarantineId: item.id }, orderBy: { sequence: "desc" }, select: { sequence: true } });
+      await tx.auditLog.create({ data: { actorId, action: "private_photo.review_history_viewed", entityType: "PrivatePhotoQuarantine", entityId: item.id, metadata: { page } } });
+      return { items: rows.slice(0, 50), page, hasMore: rows.length > 50, quarantined: true, latestSequence: latest?.sequence ?? 0 };
+    }),
+    review: (sessionId: string, uploadId: string, raw: z.input<typeof photoReviewRequest>) => run(sessionId, async (tx, actorId) => {
+      z.uuid().parse(uploadId); const input = photoReviewRequest.parse(raw);
+      await tx.$queryRaw`SELECT "id" FROM "PrivatePhotoUpload" WHERE "id" = ${uploadId} FOR UPDATE`;
+      const item = await tx.privatePhotoQuarantine.findUnique({ where: { uploadId }, select: { id: true } });
+      if (!item) throw new PhotoQuarantineError("PHOTO_QUARANTINE_DENIED");
+      const existing = await tx.privatePhotoQuarantineReview.findUnique({ where: { actorId_idempotencyKey: { actorId, idempotencyKey: input.idempotencyKey } }, select: { ...reviewSelect, quarantineId: true } });
+      if (existing) {
+        if (existing.quarantineId !== item.id || existing.sequence !== input.expectedSequence + 1 || existing.decision !== input.decision || existing.caseReference !== input.caseReference) throw new PhotoQuarantineError("PHOTO_QUARANTINE_CONFLICT");
+        const { quarantineId: _privateId, ...review } = existing; void _privateId;
+        return { review, quarantined: true, replayed: true };
+      }
+      const latest = await tx.privatePhotoQuarantineReview.findFirst({ where: { quarantineId: item.id }, orderBy: { sequence: "desc" }, select: { sequence: true } });
+      if ((latest?.sequence ?? 0) !== input.expectedSequence) throw new PhotoQuarantineError("PHOTO_QUARANTINE_CONFLICT");
+      const review = await tx.privatePhotoQuarantineReview.create({ data: { quarantineId: item.id, actorId, idempotencyKey: input.idempotencyKey, sequence: input.expectedSequence + 1, decision: input.decision, caseReference: input.caseReference }, select: reviewSelect });
+      await tx.auditLog.create({ data: { actorId, action: "private_photo.quarantine_reviewed", entityType: "PrivatePhotoQuarantineReview", entityId: review.id, metadata: { decision: input.decision, sequence: review.sequence } } });
+      return { review, quarantined: true, replayed: false };
     }),
     block: (sessionId: string, uploadId: string, raw: z.input<typeof photoQuarantineRequest>) => run(sessionId, async (tx, actorId) => {
       z.uuid().parse(uploadId);

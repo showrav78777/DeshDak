@@ -105,3 +105,23 @@ needed to quarantine; production object intake/delivery remains disabled.
 Approve operational incident handling, retention/holds and a separate reviewed
 release/rescan procedure before live use. Release/recovery, deletion and production
 routing still need engineering; adding keys or this migration does not finish them.
+
+
+## Recording quarantine reviews — 7 November 2026
+
+Review and deploy migration `20261107220000_private_photo_quarantine_reviews` in
+backed-up staging with the earlier private-photo migrations before using the new
+review screen. Only disposable schemas were migrated during development.
+
+In Admin → System → Private photo safety, record the next action or open View
+review history. Choose Keep blocked, Rescan required (not performed), or Replacement
+photo required. Enter an existing INC/SEC/KYC/OPS case reference and confirm that
+the photo stays blocked. Do not enter personal data or secrets. The history page
+lists earlier decisions and reviewer names. A stale review requires a reload;
+a lost response can be retried with the same decision. Never remove the quarantine
+or edit SQL/status to recover a file.
+
+Assign an authorized investigation owner to carry out the required scan or safe
+replacement separately. Recording a decision does not perform that work or certify
+it. Fresh rescanning, replacement intake, release/recovery and retention policies
+still need engineering and approval; no new provider credentials enable them here.

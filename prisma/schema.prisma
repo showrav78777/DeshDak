@@ -740,6 +740,7 @@ model User {
   privatePhotoUploads         PrivatePhotoUpload[]
   privatePhotoLinks           PrivatePhotoLink[]
   privatePhotoQuarantines     PrivatePhotoQuarantine[]
+  privatePhotoQuarantineReviews PrivatePhotoQuarantineReview[]
   identityVerifications       IdentityVerification[]                @relation("IdentityVerificationCustomer")
   identityVerificationsReviewed IdentityVerification[]              @relation("IdentityVerificationReviewer")
   maintenanceRuns             MaintenanceJobRun[]                   @relation("MaintenanceRunActor")
@@ -3581,6 +3582,23 @@ model PrivatePhotoQuarantine {
   createdAt      DateTime @default(now())
   upload         PrivatePhotoUpload @relation(fields: [uploadId], references: [id], onDelete: Restrict)
   actor          User @relation(fields: [actorId], references: [id], onDelete: Restrict)
+  reviews        PrivatePhotoQuarantineReview[]
   @@unique([actorId, idempotencyKey])
   @@index([createdAt, id])
+}
+
+
+model PrivatePhotoQuarantineReview {
+  id             String @id @default(uuid())
+  quarantineId   String
+  actorId        String
+  idempotencyKey String @db.VarChar(36)
+  sequence       Int
+  decision       String @db.VarChar(32)
+  caseReference  String @db.VarChar(80)
+  createdAt      DateTime @default(now())
+  quarantine     PrivatePhotoQuarantine @relation(fields: [quarantineId], references: [id], onDelete: Restrict)
+  actor          User @relation(fields: [actorId], references: [id], onDelete: Restrict)
+  @@unique([actorId, idempotencyKey])
+  @@unique([quarantineId, sequence])
 }

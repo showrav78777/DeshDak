@@ -86,3 +86,9 @@ integrity and production build passed. CI installs Chromium for this acceptance
 and runs permanent-quarantine fixtures last before discarding the isolated schema.
 No owner migration or live AWS/provider operation was performed. This is targeted
 acceptance, not a current full-system or physical-device completion certificate.
+
+
+Review follow-up, 7 November: immutable next-action records and a complete
+paginated Admin review history are now available. Every outcome keeps the original
+quarantine. See PRIVATE_PHOTO_REVIEW_WORKFLOW.md; actual scanning, replacement and
+release remain unfinished. Recording a requirement is not evidence it was done.
