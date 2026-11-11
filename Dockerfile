@@ -19,6 +19,7 @@ FROM dependencies AS migrations
 ENV NODE_ENV=production
 COPY scripts/verify-production-config.mjs ./scripts/verify-production-config.mjs
 COPY scripts/lib/production-config.mjs ./scripts/lib/production-config.mjs
+COPY scripts/lib/private-photo-rescan-config.mjs ./scripts/lib/private-photo-rescan-config.mjs
 USER node
 CMD ["/bin/sh", "-c", "node scripts/verify-production-config.mjs && exec ./node_modules/.bin/prisma migrate deploy"]
 
@@ -47,6 +48,7 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/scripts/verify-production-config.mjs ./scripts/verify-production-config.mjs
 COPY --from=builder --chown=nextjs:nodejs /app/scripts/lib/production-config.mjs ./scripts/lib/production-config.mjs
+COPY --from=builder --chown=nextjs:nodejs /app/scripts/lib/private-photo-rescan-config.mjs ./scripts/lib/private-photo-rescan-config.mjs
 
 USER nextjs
 EXPOSE 3000

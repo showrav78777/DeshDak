@@ -8,6 +8,29 @@ type CatalogProduct = {
 
 type ChatHistoryItem = { role: "user" | "assistant"; text: string };
 
+function completedResponseText(payload: unknown): string | null {
+  if (!payload || typeof payload !== "object") return null;
+  const response = payload as Record<string, unknown>;
+  if (response.status !== "completed" || response.error || response.incomplete_details || !Array.isArray(response.output)) return null;
+  const parts: string[] = [];
+  let length = 0;
+  for (const item of response.output) {
+    if (!item || typeof item !== "object" || item.type !== "message") continue;
+    if (item.role !== "assistant" || item.status !== "completed" || !Array.isArray(item.content)) return null;
+    for (const content of item.content) {
+      if (!content || typeof content !== "object") return null;
+      if (content.type === "refusal") return null;
+      if (content.type !== "output_text") continue;
+      if (typeof content.text !== "string") return null;
+      length += content.text.length;
+      if (length > 3_000) return null;
+      parts.push(content.text);
+    }
+  }
+  const answer = parts.join("\n").trim();
+  return answer && answer.length <= 3_000 ? answer : null;
+}
+
 function redactSensitiveText(value: string) {
   return value
     .replace(/\b[\w.+-]+@[\w-]+\.[\w.-]+\b/g, "[email removed]")
@@ -73,9 +96,7 @@ export async function generateShoppingAssistantReply(input: {
       }),
     });
     if (!response.ok) return null;
-    const payload = await response.json() as { output_text?: unknown };
-    const answer = typeof payload.output_text === "string" ? payload.output_text.trim() : "";
-    return answer && answer.length <= 3_000 ? answer : null;
+    return completedResponseText(await response.json());
   } catch {
     return null;
   } finally {

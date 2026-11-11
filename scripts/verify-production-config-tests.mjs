@@ -88,3 +88,26 @@ for (const secret of [unsafe.AUTH_SECRET, unsafe.AUTH_OUTBOX_ENCRYPTION_KEY, uns
 }
 
 console.log("Production configuration regression checks passed.");
+
+
+const privateRescan = {
+  PRIVATE_PHOTO_RESCAN_ENABLED: "true", PRIVATE_PHOTO_STORAGE_BUCKET: "deshdak-private-media",
+  PRIVATE_PHOTO_STORAGE_REGION: "us-east-1", PRIVATE_PHOTO_STORAGE_EXPECTED_OWNER: "123456789012",
+  PRIVATE_PHOTO_STORAGE_KMS_KEY_ARN: "arn:aws:kms:us-east-1:123456789012:key/11111111-1111-4111-8111-111111111111",
+  PRIVATE_PHOTO_SCANNER_URL: "https://private-scan.internal/scan", PRIVATE_PHOTO_SCANNER_TOKEN: "private-scan-" + "r".repeat(48),
+  KYC_DOCUMENT_ENCRYPTION_KEY: key(21), INSPECTION_EVIDENCE_ENCRYPTION_KEY: key(22),
+};
+assert.deepEqual(validateProductionEnvironment({ ...valid, ...privateRescan }), { ok: true, errors: [] });
+for (const invalid of [
+  { PRIVATE_PHOTO_RESCAN_ENABLED: "yes" }, { PRIVATE_PHOTO_STORAGE_BUCKET: "" }, { PRIVATE_PHOTO_STORAGE_EXPECTED_OWNER: "987654321098" },
+  { PRIVATE_PHOTO_SCANNER_URL: "http://private-scan.internal/scan" }, { PRIVATE_PHOTO_SCANNER_URL: "https://scan.internal/scan?secret=PRIVATE" },
+  { PRIVATE_PHOTO_SCANNER_TOKEN: "short" }, { PRIVATE_PHOTO_SCANNER_TOKEN: privateRescan.PRIVATE_PHOTO_SCANNER_TOKEN + "\0" }, { PRIVATE_PHOTO_SCANNER_TOKEN: valid.AUTH_SECRET },
+  { WEBSITE_MEDIA_SCAN_URL: privateRescan.PRIVATE_PHOTO_SCANNER_URL, WEBSITE_MEDIA_SCAN_TOKEN: scanToken },
+  { INSPECTION_EVIDENCE_ENCRYPTION_KEY: privateRescan.KYC_DOCUMENT_ENCRYPTION_KEY }, { KYC_DOCUMENT_ENCRYPTION_KEY: valid.MFA_ENCRYPTION_KEY },
+]) {
+  const checked = validateProductionEnvironment({ ...valid, ...privateRescan, ...invalid });
+  assert(!checked.ok, "Unsafe private scanner configuration passed startup checks.");
+  assert(!JSON.stringify(checked.errors).includes(privateRescan.PRIVATE_PHOTO_SCANNER_TOKEN));
+  assert(!JSON.stringify(checked.errors).includes("secret=PRIVATE"));
+}
+console.log("Private-photo rescan startup checks passed: independent private HTTPS endpoint/token, expected storage owner/KMS, encryption keys and fail-closed activation.");

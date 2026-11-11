@@ -5,7 +5,7 @@ export type PrivatePhotoScanProof = { sha256: string; verifiedAt: Date };
 export function createPrivatePhotoScanner(config: { url: string; token: string }, transport: typeof fetch = fetch) {
   let url: URL;
   try { url = new URL(config.url); } catch { throw new Error("PRIVATE_PHOTO_SCANNER_UNAVAILABLE"); }
-  if (url.protocol !== "https:" || url.username || url.password || url.search || url.hash || config.token.length < 32 || config.token.length > 256 || /\s/.test(config.token)) throw new Error("PRIVATE_PHOTO_SCANNER_UNAVAILABLE");
+  if (url.protocol !== "https:" || url.username || url.password || url.search || url.hash || config.token.length < 32 || config.token.length > 256 || /[\s\u0000-\u001f\u007f]/.test(config.token)) throw new Error("PRIVATE_PHOTO_SCANNER_UNAVAILABLE");
   return async (input: Buffer): Promise<PrivatePhotoScanProof> => {
     const bytes = Buffer.from(input);
     if (!bytes.length || bytes.length > 8*1024*1024) throw new Error("PRIVATE_PHOTO_SCAN_FAILED");

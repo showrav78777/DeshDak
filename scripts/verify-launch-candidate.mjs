@@ -11,7 +11,7 @@ const checks = [
   "test:website-media-safety", "test:private-upload-safety", "test:private-photo-storage", "test:private-photo-scanner", "test:media-scanner",
   "test:isolated-route-retention", "test:identifier-layout", "test:catalog-sorting",
   "test:source-settings-request", "test:source-readiness", "test:otapi-client", "test:supplier-candidate",
-  "api:generate", "api:contract", "typecheck", "lint", "test:production-config", "test:operations-safety", "test:performance-policy", "test:security-regressions", "test:verification-cookie-portability", "test:dependency-integrity", "test:dependency-audit", "test:container-security", "db:migration:verify",
+  "api:generate", "api:contract", "typecheck", "lint", "test:production-config", "test:operations-safety", "test:performance-policy", "test:security-regressions", "test:phone-verification-availability", "test:verification-cookie-portability", "test:dependency-integrity", "test:dependency-audit", "test:container-security", "db:migration:verify",
   "test:csrf-rules", "test:csrf-boundary", "test:admin-mfa", "test:auth-recovery", "test:session-management", "test:observability",
   ...(canInjectDatabaseFaults ? ["test:logout-atomicity", "test:website-media", "test:notification-delivery", "test:email-receipts", "test:private-upload-workflow", "test:private-upload-ledger", "test:private-photo-links", "test:scanned-private-intake", "test:private-photo-delivery"] : []),
   "test:identifier-rules", "test:identifier-database", "test:identifier-assets", "test:identifier-workflow",
@@ -19,10 +19,10 @@ const checks = [
   ...(process.env.MAINTENANCE_JOB_SECRET ? ["test:security-cleanup", "test:payment-operations-monitor"] : []),
   "test:rich-catalog", "test:product-reviews", "test:reels", "test:sales-kam", "test:seller-store-revisions", "test:seller-product-revisions", "test:seller-catalog-imports", "test:seller-catalog-connections",
   "test:restricted-goods", "test:compliance-portal", "test:finance-portal", "test:sourcing-portal", "test:warehouse-portal", "test:inspector-portal", "test:logistics-portal",
-  "test:ship-for-me", "test:rma-workflow", "test:support-workflow", "test:support-policy", "test:help-centre", "test:ai-chat-handoff",
+  "test:ship-for-me", "test:rma-workflow", "test:support-workflow", "test:support-policy", "test:help-centre", "test:ai-chat-handoff", "test:ai-provider-response",
   "test:public-rate-limit",
   "test:admin-shell", "test:admin-audit-log", "test:launch-readiness", "test:notification-preferences", "test:marketing-campaigns",
-  ...(canInjectDatabaseFaults ? ["test:private-photo-quarantine", "test:private-photo-reviews"] : []),
+  ...(canInjectDatabaseFaults ? ["test:private-photo-quarantine", "test:private-photo-reviews", "test:private-photo-rescans"] : []),
   ...(skipBuild ? [] : ["build"]),
 ];
 

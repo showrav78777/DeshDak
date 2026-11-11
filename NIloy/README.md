@@ -25,6 +25,10 @@ are not production configuration. See `docs/DEPLOYMENT_RECOVERY_RUNBOOK.md`.
 
 ## 3. Production services
 
+Start with [the API connection guide](API_CONNECTION_GUIDE.md) for 1688,
+Pinduoduo, Google login/Gmail, OpenAI, email verification, SMS and WhatsApp.
+It lists account steps, existing environment names and unfinished adapters.
+
 Open Admin → System → Live setup guide for the required variables, setup steps and
 readiness status. Supply credentials through the deployment secret manager:
 

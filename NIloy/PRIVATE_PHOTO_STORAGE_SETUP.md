@@ -13,7 +13,8 @@ When the integration is ready for staging, your deployment operator must:
 2. Create the approved KMS encryption key in the same region/account. Record only
    the bucket name, region, account ID and key ARN in controlled deployment
    configuration; actual authentication/encryption secrets belong in the secret
-   manager. This adapter does not yet consume new environment switches.
+   manager. Production intake/download activation remains unavailable; the optional
+   stored-copy rescan configuration is described below.
 3. Give the app workload role only the required object PutObject and
    GetObjectVersion/checksum permissions for the private purpose prefixes and the
    corresponding KMS GenerateDataKey/Decrypt permissions. Review exact actions
@@ -125,3 +126,47 @@ Assign an authorized investigation owner to carry out the required scan or safe
 replacement separately. Recording a decision does not perform that work or certify
 it. Fresh rescanning, replacement intake, release/recovery and retention policies
 still need engineering and approval; no new provider credentials enable them here.
+
+## Controlled stored-copy rescanning — 11 November 2026
+
+This supersedes the earlier statement that all rescanning remains unimplemented.
+The controlled Admin stored-copy workflow now exists; production object intake,
+delivery routing, release/replacement, retention and video remain unfinished.
+
+Before enabling this optional workflow in staging:
+
+1. Review migration `20261107230000_private_photo_rescans` with all earlier
+   private-photo/quarantine/review migrations. Apply through the migration job
+   after backup. Development verification uses disposable schemas only.
+2. Have Compliance approve the private scanner's processing, data residency,
+   logging and retention. Deploy an authenticated HTTPS endpoint separately from
+   the public website-image scanner; certify exact-byte digest acknowledgements,
+   rejection, outages, fresh signatures and timeouts.
+3. Configure `PRIVATE_PHOTO_STORAGE_BUCKET`, `PRIVATE_PHOTO_STORAGE_REGION`,
+   `PRIVATE_PHOTO_STORAGE_EXPECTED_OWNER`, `PRIVATE_PHOTO_STORAGE_KMS_KEY_ARN`,
+   `PRIVATE_PHOTO_SCANNER_URL` and an independent `PRIVATE_PHOTO_SCANNER_TOKEN`
+   through deployment settings/secret management. Preserve the separate existing
+   `KYC_DOCUMENT_ENCRYPTION_KEY` and `INSPECTION_EVIDENCE_ENCRYPTION_KEY` with
+   reviewed read/rotation compatibility. Never paste secrets into Admin or Git.
+4. Use workload identity and narrowly scoped exact-version private-object access.
+   This rescan handler does not need S3 write/delete permission. Review required
+   `s3:GetObjectVersion` and SSE-KMS permissions against the
+   [AWS GetObject documentation](https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetObject.html),
+   and verify blocked public access and bucket ownership against
+   [AWS security guidance](https://docs.aws.amazon.com/AmazonS3/latest/userguide/security-best-practices.html).
+   Certify the actual policies with the deployment operator.
+5. After staging approval, set `PRIVATE_PHOTO_RESCAN_ENABLED=true`, run production
+   configuration checks and redeploy. A green configuration check proves field
+   validation only, not provider approval. Keep the flag false otherwise.
+
+In Admin → System → Private photo safety, open a quarantined reference, record
+Rescan required with its incident reference, and open review history. Choose Scan
+stored copy and confirm. Review the recorded outcome; even a clean result leaves
+quarantine in place. The original upload is not rescanned. A lost response must be
+retried with the same request or checked in history before any new reviewed
+attempt. One attempt is allowed per review, one pending per photo, and five per
+photo per rolling day. Never delete a block or alter SQL to release the photo.
+
+See [engineering scope and acceptance](../docs/PRIVATE_PHOTO_RESCAN.md). Account,
+scanner and policy setup require your authorized deployment/operator team; missing
+routing/recovery/retention code remains engineering work.

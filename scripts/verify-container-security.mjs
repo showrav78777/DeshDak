@@ -9,6 +9,7 @@ const [dockerfile, dockerignore, nextConfig, sitemap, productionCompose] = await
 ]);
 
 const checks = [
+  ["private rescan startup validator copied into migrations and runtime", (dockerfile.match(/^COPY.*private-photo-rescan-config\.mjs/gm) ?? []).length === 2],
   ["separate non-root migration image", /FROM dependencies AS migrations[\s\S]*USER node[\s\S]*prisma migrate deploy/.test(dockerfile)],
   ["production app read-only filesystem", /read_only:\s*true/.test(productionCompose)],
   ["production host app port bound to loopback", /127\.0\.0\.1:3000:3000/.test(productionCompose)],

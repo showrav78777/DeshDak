@@ -1121,3 +1121,22 @@ accepted the database again after each object was dropped. CLI fixture coverage
 also verifies that a nonempty target is rejected before `pg_restore` executes.
 Operations-safety tests, targeted ESLint and whitespace checks passed. The second
 disposable container was removed; no owner database was accessed.
+
+## 2026-11-11 — phone verification availability
+
+- Scope: correct unavailable SMS behavior without implementing a provider or bypassing verification for ordering. Request and confirmation reject outside explicit local development/test mode; placeholder credentials and a production development flag cannot enable the path. Existing verified status is preserved.
+- The profile server passes a derived availability enum only. Unavailable customers see guidance instead of nonfunctional code controls; development users see test-only labels and a local code. No SMS delivery is queued and notification text makes no delivery claim.
+- API contracts document the development response and service-unavailable errors. Admin setup and NIloy/API_CONNECTION_GUIDE.md explain the missing sender and live acceptance requirements.
+- Automated evidence: test:phone-verification-availability executes the handlers with simulated dependencies and renders unavailable/development component states. Covers authentication/origin checks, unavailable/no-write behavior, explicit mode, rate limits, code validation, no-store, no SMS outbox and local confirmation. This is not real SMS delivery or database workflow certification.
+- Verification passed for this increment: lint, TypeScript, API contract generation/validation, security regressions, targeted availability tests and production build. No owner database, deployment secrets or live messaging service was changed.
+
+## 2026-11-11 — controlled quarantined-photo rescan
+
+- Implemented immutable rescan requests/results, current Admin/MFA checks before and after processing, review/reference/namespace/deadline binding, idempotent replay and enforced attempt limits. Scan proof covers only the exact normalized stored copy; every outcome preserves quarantine and evidence.
+- Added the protected API and history-page control, independent scanner/storage setup validation, startup/Docker packaging and operator instructions. No production identity/inspection upload/download route, release action, replacement flow or video pipeline was activated.
+- Reran `test:private-photo-rescans`, `test:private-photo-reviews`, `test:private-photo-quarantine` and `test:private-photo-delivery` successfully against generated schema `crossly_launch_verify_e259b029b1eaa9a2` in disposable PostgreSQL. The wrapper removed the schema afterward. PostgreSQL and encryption were real; S3/scanner responses were simulated. No owner database was used.
+- Protected HTTP setup denial and desktop/mobile setup/history checks passed. Inspected 1440×1000 and 390×844 screenshots: no horizontal overflow. Configured live HTTP success and actual AWS/scanner acceptance remain staging work.
+- Production-configuration regressions, private-scanner checks, 24 static container controls and Prisma validation passed. The production application build passed in the preceding phone-availability increment with this rescan source present.
+- Scope/risks and manual prerequisites are documented in `docs/PRIVATE_PHOTO_RESCAN.md` and `NIloy/PRIVATE_PHOTO_STORAGE_SETUP.md`. The rescan flag remains disabled by default; credentials and configuration alone do not certify safe live operation.
+- Docker runtime acceptance passed after building both images without application environment files. Disposable migration/runtime checks passed for startup, health/public pages, private-page guards, UID/read-only filesystem restrictions, signed email receipt checks and synthetic browser widgets. The test removed its owned containers/network/image tags and temporary credential files. The older disposable rescan PostgreSQL container was also removed after workflow acceptance. No live provider, cloud deployment, vulnerability/load test or physical device was certified.
+- Lint, TypeScript, API contract and dependency-integrity checks passed. This is a verified increment, not full release/security clearance; existing launch blockers remain.

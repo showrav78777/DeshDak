@@ -1,3 +1,4 @@
+import { validatePrivatePhotoRescanEnvironment } from "./private-photo-rescan-config.mjs";
 const PLACEHOLDER_PATTERN = /(replace[-_ ]?with|change[-_ ]?me|example|crossly_dev_password|your[-_ ]?(secret|key|password)|^test$)/i;
 const LOCAL_HOSTS = new Set(["localhost", "127.0.0.1", "0.0.0.0", "::1"]);
 
@@ -99,6 +100,7 @@ export function validateProductionEnvironment(env) {
   validateOptionalPair(env, "FACEBOOK_APP_ID", "FACEBOOK_APP_SECRET", errors);
   validateOptionalPair(env, "SMS_PROVIDER_API_KEY", "SMS_PROVIDER_SENDER_ID", errors);
   validateOptionalPair(env, "SSLCOMMERZ_STORE_ID", "SSLCOMMERZ_STORE_PASSWORD", errors);
+  errors.push(...validatePrivatePhotoRescanEnvironment(env).errors);
   validateOptionalPair(env, "WEBSITE_MEDIA_SCAN_URL", "WEBSITE_MEDIA_SCAN_TOKEN", errors);
   if (configured(env.WEBSITE_MEDIA_SCAN_TOKEN)) {
     const scannerSecret = requireSecret(env, "WEBSITE_MEDIA_SCAN_TOKEN", errors);

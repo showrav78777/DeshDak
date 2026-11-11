@@ -4,6 +4,7 @@ import { CustomerProfileManager } from "@/components/customer-profile-manager";
 import { CustomerNav } from "@/components/store-header";
 import { PrivacyAnalyticsControl } from "@/components/privacy-analytics-control";
 import { IdentityVerificationPanel } from "@/components/identity-verification-panel";
+import { getPhoneVerificationMode } from "@/modules/auth/phone-verification-mode";
 import { prisma } from "@/lib/prisma";
 import { ROLE } from "@/lib/roles";
 import { getServerSession } from "@/lib/server-session";
@@ -24,5 +25,5 @@ export default async function CustomerProfilePage() {
   const countries = [...countryNames].map(([isoCode, name]) => ({ isoCode, name })).sort((left, right) => left.name.localeCompare(right.name));
   const currencies = [...new Set(["BDT", profile.preferredCurrency, ...activeCountries.map((country) => country.defaultCurrency)])].sort();
   const identitySubmissions = await prisma.identityVerification.findMany({ where: { userId: session.userId }, select: { id: true, documentType: true, issuingCountryCode: true, documentNumberLast4: true, status: true, submittedAt: true, reviewedAt: true, reviewNote: true }, orderBy: { submittedAt: "desc" }, take: 10 });
-  return <main className="dashboard-shell profile-page"><CustomerNav session={session} /><section className="profile-content"><div className="profile-page-head"><p className="eyebrow">MY PROFILE</p><h1>Account and delivery details.</h1><p>Manage the information DeshDak uses for your account and checkout. Sensitive changes remain protected and auditable.</p></div><IdentityVerificationPanel phone={profile.phone} phoneVerifiedAt={profile.phoneVerifiedAt} kycStatus={profile.kycStatus} submissions={identitySubmissions} residenceCountryCode={profile.residenceCountryCode} /><CustomerProfileManager profile={profile} addresses={addresses} countries={countries} currencies={currencies} /><PrivacyAnalyticsControl enabled={profile.analyticsConsent} recordedAt={profile.analyticsConsentAt?.toISOString() ?? null} /></section></main>;
+  return <main className="dashboard-shell profile-page"><CustomerNav session={session} /><section className="profile-content"><div className="profile-page-head"><p className="eyebrow">MY PROFILE</p><h1>Account and delivery details.</h1><p>Manage the information DeshDak uses for your account and checkout. Sensitive changes remain protected and auditable.</p></div><IdentityVerificationPanel phoneVerificationMode={getPhoneVerificationMode()} phone={profile.phone} phoneVerifiedAt={profile.phoneVerifiedAt} kycStatus={profile.kycStatus} submissions={identitySubmissions} residenceCountryCode={profile.residenceCountryCode} /><CustomerProfileManager profile={profile} addresses={addresses} countries={countries} currencies={currencies} /><PrivacyAnalyticsControl enabled={profile.analyticsConsent} recordedAt={profile.analyticsConsentAt?.toISOString() ?? null} /></section></main>;
 }

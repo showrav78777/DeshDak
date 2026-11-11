@@ -38,7 +38,7 @@ function hash(bytes: Buffer, encoding: "hex" | "base64") { return createHash("sh
 function aad(purpose: Purpose, key: string) { return Buffer.from(`deshdak:private-photo:v1:${purpose}:${key}`); }
 function maximum(purpose: Purpose) { return purpose === "identity" ? 5 * 1024 * 1024 : 8 * 1024 * 1024; }
 
-/** No feature flag or route imports this adapter until intake lifecycle acceptance. */
+/** Admin rescanning may use this adapter; normal private intake/delivery remains disabled. */
 export function createPrivatePhotoStore(input: { config: Configuration; keys: Record<Purpose, Buffer>; client?: S3Client }) {
   const config = privateStorageConfigSchema.parse(input.config);
   const keys = { identity: Buffer.from(input.keys.identity), inspection: Buffer.from(input.keys.inspection) };
@@ -116,5 +116,5 @@ export function createPrivatePhotoStore(input: { config: Configuration; keys: Re
     } catch { throw new PrivateStorageError(); }
   }
   const namespace = createHmac("sha256",keys.identity).update("deshdak:private-photo-namespace:v1:").update(JSON.stringify(config)).update(keys.inspection).digest("hex");
-  return { namespace, prepare, write, confirm, read, remove };
+  return { namespace, prepare, write, confirm, read, remove, close: () => client.destroy?.() };
 }

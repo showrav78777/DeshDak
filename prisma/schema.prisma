@@ -741,6 +741,7 @@ model User {
   privatePhotoLinks           PrivatePhotoLink[]
   privatePhotoQuarantines     PrivatePhotoQuarantine[]
   privatePhotoQuarantineReviews PrivatePhotoQuarantineReview[]
+  privatePhotoRescans          PrivatePhotoRescan[]
   identityVerifications       IdentityVerification[]                @relation("IdentityVerificationCustomer")
   identityVerificationsReviewed IdentityVerification[]              @relation("IdentityVerificationReviewer")
   maintenanceRuns             MaintenanceJobRun[]                   @relation("MaintenanceRunActor")
@@ -3551,6 +3552,7 @@ model PrivatePhotoUpload {
   actor               User     @relation(fields: [actorId], references: [id], onDelete: Restrict)
   privatePhotoLink    PrivatePhotoLink?
   quarantine          PrivatePhotoQuarantine?
+  rescans             PrivatePhotoRescan[]
 
   @@unique([actorId, idempotencyKey])
   @@index([status, leaseExpiresAt])
@@ -3583,6 +3585,7 @@ model PrivatePhotoQuarantine {
   upload         PrivatePhotoUpload @relation(fields: [uploadId], references: [id], onDelete: Restrict)
   actor          User @relation(fields: [actorId], references: [id], onDelete: Restrict)
   reviews        PrivatePhotoQuarantineReview[]
+  rescans        PrivatePhotoRescan[]
   @@unique([actorId, idempotencyKey])
   @@index([createdAt, id])
 }
@@ -3600,5 +3603,37 @@ model PrivatePhotoQuarantineReview {
   quarantine     PrivatePhotoQuarantine @relation(fields: [quarantineId], references: [id], onDelete: Restrict)
   actor          User @relation(fields: [actorId], references: [id], onDelete: Restrict)
   @@unique([actorId, idempotencyKey])
+  rescan         PrivatePhotoRescan?
   @@unique([quarantineId, sequence])
+}
+
+
+model PrivatePhotoRescan {
+  id                String @id @default(uuid())
+  uploadId          String
+  quarantineId      String
+  reviewId          String @unique
+  actorId           String
+  idempotencyKey    String @db.VarChar(36)
+  storageNamespace  String @db.VarChar(64)
+  referenceSnapshot Json
+  createdAt         DateTime @default(now())
+  deadlineAt        DateTime
+  upload            PrivatePhotoUpload @relation(fields: [uploadId], references: [id], onDelete: Restrict)
+  quarantine        PrivatePhotoQuarantine @relation(fields: [quarantineId], references: [id], onDelete: Restrict)
+  review            PrivatePhotoQuarantineReview @relation(fields: [reviewId], references: [id], onDelete: Restrict)
+  actor             User @relation(fields: [actorId], references: [id], onDelete: Restrict)
+  result            PrivatePhotoRescanResult?
+  @@unique([actorId, idempotencyKey])
+  @@index([uploadId, createdAt])
+}
+
+model PrivatePhotoRescanResult {
+  id          String @id @default(uuid())
+  rescanId    String @unique
+  state       String @db.VarChar(16)
+  sha256      String? @db.VarChar(64)
+  verifiedAt  DateTime?
+  completedAt DateTime @default(now())
+  rescan      PrivatePhotoRescan @relation(fields: [rescanId], references: [id], onDelete: Restrict)
 }

@@ -25,7 +25,7 @@ const reviewSelect = { id: true, sequence: true, decision: true, caseReference: 
 export class PhotoQuarantineError extends Error {
   constructor(code: "PHOTO_QUARANTINE_DENIED" | "PHOTO_QUARANTINE_CONFLICT" | "PHOTO_QUARANTINE_UNAVAILABLE") { super(code); }
 }
-async function admin(tx: Prisma.TransactionClient, sessionId: string) {
+export async function authorizePrivatePhotoAdmin(tx: Prisma.TransactionClient, sessionId: string) {
   const first = await tx.authSession.findUnique({ where: { id: sessionId }, select: { userId: true } });
   if (!first) throw new PhotoQuarantineError("PHOTO_QUARANTINE_DENIED");
   await tx.$queryRaw`SELECT "id" FROM "User" WHERE "id" = ${first.userId} FOR NO KEY UPDATE`;
@@ -38,7 +38,7 @@ export function createPhotoQuarantine(db: PrismaClient) {
   async function run<T>(sessionId: string, action: (tx: Prisma.TransactionClient, actorId: string) => Promise<T>) {
     try {
       z.uuid().parse(sessionId);
-      return await db.$transaction(async tx => action(tx, await admin(tx, sessionId)));
+      return await db.$transaction(async tx => action(tx, await authorizePrivatePhotoAdmin(tx, sessionId)));
     } catch (error) {
       try {
         const session = z.uuid().safeParse(sessionId).success ? await db.authSession.findUnique({ where: { id: sessionId }, select: { userId: true } }) : null;
@@ -60,9 +60,10 @@ export function createPhotoQuarantine(db: PrismaClient) {
       const item = await tx.privatePhotoQuarantine.findUnique({ where: { uploadId }, select: { id: true } });
       if (!item) throw new PhotoQuarantineError("PHOTO_QUARANTINE_DENIED");
       const rows = await tx.privatePhotoQuarantineReview.findMany({ where: { quarantineId: item.id }, select: reviewSelect, orderBy: { sequence: "desc" }, skip: (page - 1) * 50, take: 51 });
-      const latest = await tx.privatePhotoQuarantineReview.findFirst({ where: { quarantineId: item.id }, orderBy: { sequence: "desc" }, select: { sequence: true } });
+      const latest = await tx.privatePhotoQuarantineReview.findFirst({ where: { quarantineId: item.id }, orderBy: { sequence: "desc" }, select: { sequence: true, decision: true } });
+      const rescans = await tx.privatePhotoRescan.findMany({ where: { uploadId }, select: { id: true, createdAt: true, deadlineAt: true, review: { select: { sequence: true } }, result: { select: { state: true, completedAt: true } } }, orderBy: [{ createdAt: "desc" }, { id: "asc" }], take: 10 });
       await tx.auditLog.create({ data: { actorId, action: "private_photo.review_history_viewed", entityType: "PrivatePhotoQuarantine", entityId: item.id, metadata: { page } } });
-      return { items: rows.slice(0, 50), page, hasMore: rows.length > 50, quarantined: true, latestSequence: latest?.sequence ?? 0 };
+      return { items: rows.slice(0, 50), page, hasMore: rows.length > 50, quarantined: true, latestSequence: latest?.sequence ?? 0, latestDecision: latest?.decision ?? null, rescans: rescans.map(row => ({ id: row.id, state: row.result?.state ?? (row.deadlineAt <= new Date() ? "EXPIRED" : "PENDING"), createdAt: row.createdAt, completedAt: row.result?.completedAt ?? null, reviewSequence: row.review.sequence })) };
     }),
     review: (sessionId: string, uploadId: string, raw: z.input<typeof photoReviewRequest>) => run(sessionId, async (tx, actorId) => {
       z.uuid().parse(uploadId); const input = photoReviewRequest.parse(raw);

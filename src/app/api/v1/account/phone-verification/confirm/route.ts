@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { getRequestSession } from "@/lib/request-session";
 import { hashSecurityToken } from "@/lib/security-secrets";
 import { consumeConfirmationLimit } from "@/modules/auth/rate-limit";
+import { getPhoneVerificationMode } from "@/modules/auth/phone-verification-mode";
 import { recordUserEvent } from "@/modules/activity/service";
 
 const schema = z.object({ code: z.string().regex(/^\d{6}$/) });
@@ -14,6 +15,7 @@ export async function POST(request: NextRequest) {
   const session = await getRequestSession(request);
   if (!session) return apiError("AUTHENTICATION_REQUIRED", "Please sign in to verify your phone number.", 401);
   if (!hasTrustedMutationOrigin(request)) return apiError("UNTRUSTED_ORIGIN", "Phone verification must be completed from the protected customer application.", 403);
+  if (getPhoneVerificationMode() === "UNAVAILABLE") return apiError("SMS_PROVIDER_NOT_CONFIGURED", "Phone verification is temporarily unavailable. Please contact support.", 503);
   const parsed = schema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return apiError("PHONE_CODE_INVALID", "Enter the six-digit verification code.", 422);
   const limit = await consumeConfirmationLimit(request, "phone-verification-confirm");

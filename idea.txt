@@ -122,3 +122,18 @@ Status meanings:
 - Status: REQUIRED — owner action only.
 - The application already has a safe catalog/rules fallback. To enable real conversational replies, set `OPENAI_API_KEY` in the server-only environment or secret manager, optionally set `OPENAI_CHAT_MODEL` (default: `gpt-5.5`), then restart the application and test `/assistant`.
 - Never place this key in client-side variables, source code, Admin forms, screenshots, or this register. The owner must provide the billing-enabled API project, secret storage, and authority to use it; these cannot be completed safely by application code alone.
+
+## API connection review — 2026-11-08
+- Owner guide: NIloy/API_CONNECTION_GUIDE.md. Official supplier entitlements need account-specific confirmation; 1688 solution page was inaccessible under browser site-safety policy. No account was purchased or activated.
+- SOURCE_1688/PINDUODUO remain unconfigured adapters; OTAPI search/detail transport is not wired into the live registry. Purchasing and logistics require separate acceptance.
+- SMS still lacks a delivery adapter; key presence and an existing sent notification do not prove delivery. Correct its production availability/status during provider implementation. WhatsApp has no sender/webhook adapter or active credential contract. These remain engineering, not owner-only work.
+- Conversational Responses REST parsing corrected; simulated response/error/redaction checks added. This supersedes any suggestion that the earlier parser was already certified. Live project/billing/model access and controlled acceptance still required; image/vector integration remains separate.
+
+## Phone verification availability correction — 2026-11-11
+- Production request/confirmation now reject while no live sender exists, regardless of placeholder keys or the development flag. No customer verification requirement was bypassed.
+- Explicit development/test mode with ALLOW_DEV_AUTH_LINKS=true generates a labelled local code and in-app test notice only; no undeliverable SMS is queued. Profile hides unavailable controls and Admin explains the integration requirement. This supersedes the earlier sent-notification/key-guard gap.
+- Real SMS delivery, receipts, retries, provider approval and controlled-number acceptance remain engineering/provider work; follow NIloy/API_CONNECTION_GUIDE.md.
+
+## Private-photo stored-copy rescan — 2026-11-11
+- Controlled Admin/MFA stored-copy rescanning and immutable result history are implemented; see docs/PRIVATE_PHOTO_RESCAN.md and NIloy/PRIVATE_PHOTO_STORAGE_SETUP.md. This does not release quarantine or activate production private intake/downloads.
+- Real scanner/data-processing approval and IAM/KMS/provider staging acceptance remain external prerequisites. Production routing, original-file handling, replacement/release, retention/holds and video remain engineering. Keep PRIVATE_PHOTO_RESCAN_ENABLED=false until accepted.

@@ -111,30 +111,45 @@
         "tags": [
           "account"
         ],
-        "summary": "POST /account/phone-verification/confirm",
+        "summary": "Confirm a local development code; reject while live SMS verification is unavailable",
         "security": [
           {
             "cookieSession": []
           }
         ],
         "x-crossly-access": "authenticated",
+        "x-crossly-error-codes": [
+          "AUTHENTICATION_REQUIRED",
+          "UNTRUSTED_ORIGIN",
+          "PHONE_CODE_INVALID",
+          "SMS_PROVIDER_NOT_CONFIGURED",
+          "TOO_MANY_REQUESTS"
+        ],
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "additionalProperties": true
+                "$ref": "#/components/schemas/PhoneCodeRequest"
               }
             }
           }
         },
         "responses": {
           "200": {
-            "$ref": "#/components/responses/Success"
-          },
-          "201": {
-            "$ref": "#/components/responses/Created"
+            "description": "Successful response.",
+            "headers": {
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PhoneVerifiedResponse"
+                }
+              }
+            }
           },
           "400": {
             "$ref": "#/components/responses/BadRequest"
@@ -159,6 +174,9 @@
           },
           "500": {
             "$ref": "#/components/responses/ServerError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServerError"
           }
         }
       }
@@ -169,19 +187,35 @@
         "tags": [
           "account"
         ],
-        "summary": "POST /account/phone-verification/request",
+        "summary": "Generate an explicit local development code; live SMS delivery is unavailable",
         "security": [
           {
             "cookieSession": []
           }
         ],
         "x-crossly-access": "authenticated",
+        "x-crossly-error-codes": [
+          "AUTHENTICATION_REQUIRED",
+          "UNTRUSTED_ORIGIN",
+          "PHONE_REQUIRED",
+          "SMS_PROVIDER_NOT_CONFIGURED",
+          "TOO_MANY_REQUESTS"
+        ],
         "responses": {
           "200": {
-            "$ref": "#/components/responses/Success"
-          },
-          "201": {
-            "$ref": "#/components/responses/Created"
+            "description": "Successful response.",
+            "headers": {
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PhoneVerificationRequestResponse"
+                }
+              }
+            }
           },
           "400": {
             "$ref": "#/components/responses/BadRequest"
@@ -205,6 +239,9 @@
             "$ref": "#/components/responses/RateLimited"
           },
           "500": {
+            "$ref": "#/components/responses/ServerError"
+          },
+          "503": {
             "$ref": "#/components/responses/ServerError"
           }
         }
@@ -4672,6 +4709,76 @@
           "PHOTO_QUARANTINE_CONFLICT",
           "PHOTO_QUARANTINE_DENIED",
           "PHOTO_QUARANTINE_UNAVAILABLE"
+        ],
+        "parameters": [
+          {
+            "name": "uploadId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Success"
+          },
+          "201": {
+            "$ref": "#/components/responses/Created"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "#/components/responses/Unprocessable"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/admin/private-photos/{uploadId}/quarantine/rescans": {
+      "post": {
+        "operationId": "post_admin_private_photos_uploadId_quarantine_rescans",
+        "tags": [
+          "admin"
+        ],
+        "summary": "Verify and rescan the exact stored copy without releasing quarantine",
+        "security": [
+          {
+            "cookieSession": []
+          }
+        ],
+        "x-crossly-access": "authenticated",
+        "x-crossly-error-codes": [
+          "ADMIN_MFA_REQUIRED",
+          "UNTRUSTED_ORIGIN",
+          "IDEMPOTENCY_KEY_REQUIRED",
+          "VALIDATION_ERROR",
+          "PRIVATE_RESCAN_SETUP_REQUIRED",
+          "PRIVATE_RESCAN_DENIED",
+          "PRIVATE_RESCAN_CONFLICT",
+          "PRIVATE_RESCAN_UNAVAILABLE"
         ],
         "parameters": [
           {
@@ -18694,6 +18801,104 @@
       }
     },
     "schemas": {
+      "PhoneCodeRequest": {
+        "type": "object",
+        "required": [
+          "code"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "pattern": "^[0-9]{6}$"
+          }
+        },
+        "additionalProperties": false
+      },
+      "PhoneVerifiedResponse": {
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "type": "object",
+            "required": [
+              "verified"
+            ],
+            "properties": {
+              "verified": {
+                "type": "boolean",
+                "enum": [
+                  true
+                ]
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "PhoneVerificationRequestResponse": {
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "oneOf": [
+              {
+                "type": "object",
+                "required": [
+                  "verified"
+                ],
+                "properties": {
+                  "verified": {
+                    "type": "boolean",
+                    "enum": [
+                      true
+                    ]
+                  }
+                },
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "required": [
+                  "requested",
+                  "expiresAt",
+                  "developmentCode",
+                  "deliveryStatus"
+                ],
+                "properties": {
+                  "requested": {
+                    "type": "boolean",
+                    "enum": [
+                      true
+                    ]
+                  },
+                  "expiresAt": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "developmentCode": {
+                    "type": "string",
+                    "pattern": "^[0-9]{6}$",
+                    "description": "Explicit non-production testing only; never available in production."
+                  },
+                  "deliveryStatus": {
+                    "type": "string",
+                    "enum": [
+                      "DEVELOPMENT_ONLY"
+                    ]
+                  }
+                },
+                "additionalProperties": false
+              }
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
       "EmailReceiptWebhookRequest": {
         "type": "object",
         "required": [
@@ -18745,6 +18950,25 @@
               }
             },
             "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "PrivatePhotoRescanRequest": {
+        "type": "object",
+        "required": [
+          "expectedSequence",
+          "blockedConfirmed"
+        ],
+        "properties": {
+          "expectedSequence": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1000000
+          },
+          "blockedConfirmed": {
+            "type": "boolean",
+            "const": true
           }
         },
         "additionalProperties": false

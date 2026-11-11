@@ -85,3 +85,11 @@ component with scoped idempotency, storage/key namespace fencing, verified
 completion and private audit history. See PRIVATE_PHOTO_UPLOAD_LEDGER.md.
 Business-record linking, scanning, approved cleanup and delivery remain unfinished;
 no upload/download route or production activation switch was added.
+
+## Stored-copy rescan follow-up, 11 November 2026
+
+An Admin/MFA-controlled stored-copy rescan is implemented separately from
+production intake/delivery. See [PRIVATE_PHOTO_RESCAN.md](PRIVATE_PHOTO_RESCAN.md)
+for configuration, immutable history, failure behavior and acceptance limits.
+Quarantine remains in place after every result; original bytes and video are
+not rescanned, and production routing/release/retention remain gated.
