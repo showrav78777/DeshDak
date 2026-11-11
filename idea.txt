@@ -137,3 +137,8 @@ Status meanings:
 ## Private-photo stored-copy rescan — 2026-11-11
 - Controlled Admin/MFA stored-copy rescanning and immutable result history are implemented; see docs/PRIVATE_PHOTO_RESCAN.md and NIloy/PRIVATE_PHOTO_STORAGE_SETUP.md. This does not release quarantine or activate production private intake/downloads.
 - Real scanner/data-processing approval and IAM/KMS/provider staging acceptance remain external prerequisites. Production routing, original-file handling, replacement/release, retention/holds and video remain engineering. Keep PRIVATE_PHOTO_RESCAN_ENABLED=false until accepted.
+
+## Dependency recheck — 2026-11-11
+- Full moderate-or-higher npm audit still fails: seven moderate package-chain findings rooted in GHSA-g3hv-75wg-m249. Production-only audit reports zero vulnerabilities. This supersedes the earlier eight-finding snapshot.
+- Official npm metadata and v8.72.2 upstream manifest still specify minimatch ^10.2.2; the advisory's patch is 11.0.1. npm audit fix --dry-run proposes compatible TypeScript ESLint updates, but the required minimatch range remains affected. No forced override, tooling downgrade, package mutation or audit suppression was applied.
+- Continue to block full security/release sign-off until an approved upstream fix or separately validated tooling migration resolves the chain.

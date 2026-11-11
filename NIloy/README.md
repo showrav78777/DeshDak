@@ -68,15 +68,17 @@ This folder is not a completion certificate. Production storage/scanning,
 outstanding provider adapters, wider release acceptance and dependency security clearance remain engineering
 work. Do not classify these as owner-only tasks or deploy as production-ready.
 
-Dependency check on 5 November 2026: Next.js and its matching lint configuration
-are pinned to 16.4.5. The production dependency audit is clear, but the full audit
-still reports 8 moderate findings through the development lint dependency tree
-(minimatch advisory GHSA-g3hv-75wg-m249). The remaining advisory affects the minimatch 10.x range required by TypeScript
-ESLint; its latest inspected 8.72.1 release still requires ^10.2.2. A compatible
-patched release remains unavailable. The moderate
-audit gate remains blocking; do not bypass it with a forced major-version
-override, downgrade or suppressed audit. This is engineering follow-up, not a
-credential you need to supply.
+Dependency recheck on 11 November 2026: Next.js and its matching lint configuration
+remain pinned to 16.4.5. The production-only audit reports zero vulnerabilities;
+the full audit reports seven moderate package-chain findings rooted in
+[minimatch GHSA-g3hv-75wg-m249](https://github.com/advisories/GHSA-g3hv-75wg-m249).
+Official npm metadata and the
+[TypeScript ESLint 8.72.2 manifest](https://github.com/typescript-eslint/typescript-eslint/blob/v8.72.2/packages/typescript-estree/package.json)
+still require minimatch ^10.2.2. The compatible update proposed by npm's dry run
+does not provide the patched minimatch 11 line. No package versions were changed
+and no audit gate was bypassed. A compatible upstream fix or separately reviewed
+tooling migration remains engineering follow-up, not an owner credential task.
+Production release/security clearance remains blocked by the full audit gate.
 
 ### Website image scanner
 

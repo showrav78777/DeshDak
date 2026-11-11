@@ -83,7 +83,7 @@ try {
   containers.add(database);
   run(["run", "--detach", "--name", database, "--label", "deshdak.acceptance=true", "--network", network,
     "--network-alias", "database.internal", "--tmpfs", "/var/lib/postgresql/data:rw", "--env-file", dbFile, "postgres:16-alpine"]);
-  await until(() => run(["exec", database, "pg_isready", "-U", "postgres", "-d", "acceptance"], { allowFailure: true }).status === 0, "Disposable database did not become ready.");
+  await until(() => run(["exec", database, "pg_isready", "-h", "127.0.0.1", "-U", "postgres", "-d", "acceptance"], { allowFailure: true }).status === 0, "Disposable database did not become ready.");
 
   console.log("Applying production migrations to the disposable database through the gated migration image.");
   const migration = `${prefix}-migrate`;
