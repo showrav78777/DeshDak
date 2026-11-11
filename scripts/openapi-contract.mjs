@@ -8,7 +8,7 @@ const OPTIONAL_SESSION_PREFIXES = ["/identifiers/products/"];
 const EXACT_OPERATIONS = {
   "patch /notifications": { summary: "Mark the authenticated user's current unread notifications read", requestSchema: "NotificationMarkAllRequest", successSchema: "NotificationMarkAllResponse", successStatuses: ["200"], errors: ["AUTHENTICATION_REQUIRED", "UNTRUSTED_ORIGIN", "VALIDATION_ERROR"] },
   "patch /notifications/{notificationId}/read": { summary: "Mark an owned notification read while preserving its first read timestamp", successSchema: "NotificationReadResponse", successStatuses: ["200"], errors: ["AUTHENTICATION_REQUIRED", "UNTRUSTED_ORIGIN", "VALIDATION_ERROR", "NOTIFICATION_NOT_FOUND"] },
-  "post /account/phone-verification/request": { summary: "Generate an explicit local development code; live SMS delivery is unavailable", successSchema: "PhoneVerificationRequestResponse", successStatuses: ["200"], unavailable: true, errors: ["AUTHENTICATION_REQUIRED", "UNTRUSTED_ORIGIN", "PHONE_REQUIRED", "SMS_PROVIDER_NOT_CONFIGURED", "TOO_MANY_REQUESTS"] },
+  "post /account/phone-verification/request": { summary: "Generate an explicit local development code; live SMS delivery is unavailable", successSchema: "PhoneVerificationRequestResponse", successStatuses: ["200"], unavailable: true, errors: ["AUTHENTICATION_REQUIRED", "UNTRUSTED_ORIGIN", "PHONE_REQUIRED", "SMS_PROVIDER_NOT_CONFIGURED", "ACCOUNT_SESSION_CHANGED", "PHONE_CHANGED", "TOO_MANY_REQUESTS"] },
   "post /account/phone-verification/confirm": { summary: "Confirm a local development code; reject while live SMS verification is unavailable", requestSchema: "PhoneCodeRequest", successSchema: "PhoneVerifiedResponse", successStatuses: ["200"], unavailable: true, errors: ["AUTHENTICATION_REQUIRED", "UNTRUSTED_ORIGIN", "PHONE_CODE_INVALID", "SMS_PROVIDER_NOT_CONFIGURED", "TOO_MANY_REQUESTS"] },
   "post /notifications/email-events": {
     summary: "Verify exact-byte email callback signatures, deduplicate receipts and update delivery/suppression evidence",
@@ -269,7 +269,7 @@ const EXACT_OPERATIONS = {
     requestSchema: "CustomerProfileUpdateRequest",
     successSchema: "CustomerProfileUpdateResponse",
     successStatuses: ["200"],
-    errors: ["AUTHENTICATION_REQUIRED", "UNTRUSTED_ORIGIN", "VALIDATION_ERROR", "MARKET_NOT_AVAILABLE", "PHONE_IN_USE"],
+    errors: ["AUTHENTICATION_REQUIRED", "UNTRUSTED_ORIGIN", "VALIDATION_ERROR", "MARKET_NOT_AVAILABLE", "PHONE_IN_USE", "ACCOUNT_SESSION_CHANGED"],
   },
   "get /users/me/addresses": {
     summary: "List the authenticated customer's active saved delivery addresses",

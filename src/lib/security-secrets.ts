@@ -30,6 +30,11 @@ export function hashSecurityToken(purpose: SecurityTokenPurpose, token: string) 
   return createHmac("sha256", authSecret()).update(`crossly:${purpose}:${token}`).digest("hex");
 }
 
+/** A code for one account/number cannot verify another account or a changed number. */
+export function hashPhoneVerificationCode(userId: string, phone: string, code: string) {
+  return hashSecurityToken("PHONE_VERIFICATION", JSON.stringify(["phone-v2", userId, phone, code]));
+}
+
 export function hashRateLimitKey(scope: string, value: string) {
   return createHmac("sha256", authSecret()).update(`crossly:rate-limit:${scope}:${value}`).digest("hex");
 }

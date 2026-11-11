@@ -6,6 +6,7 @@
   "scripts": {
     "test:email-receipts": "node scripts/verify-email-receipts.mjs",
     "test:notification-delivery": "node scripts/verify-notification-delivery.mjs",
+    "test:sqa:isolated": "node scripts/verify-sqa-isolated.mjs",
     "test:container-runtime": "node scripts/verify-container-runtime.mjs",
     "ops:widget-check": "node scripts/verify-production-widget.mjs",
     "test:media-scanner": "node scripts/verify-media-scanner.mjs",
@@ -94,6 +95,7 @@
     "test:support-workflow": "node --env-file-if-exists=.env scripts/verify-support-workflow.mjs",
     "test:support-policy": "node --env-file-if-exists=.env scripts/verify-support-policy.mjs",
     "test:help-centre": "node --env-file-if-exists=.env scripts/verify-help-centre.mjs",
+    "test:phone-code-binding": "node scripts/verify-phone-code-binding.mjs",
     "test:phone-verification-availability": "node scripts/verify-phone-verification-availability.mjs",
     "test:ai-provider-response": "node scripts/verify-ai-provider-response.mjs",
     "test:ai-chat-handoff": "node --env-file-if-exists=.env scripts/verify-ai-chat-handoff.mjs",

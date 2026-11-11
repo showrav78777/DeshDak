@@ -142,3 +142,13 @@ Status meanings:
 - Full moderate-or-higher npm audit still fails: seven moderate package-chain findings rooted in GHSA-g3hv-75wg-m249. Production-only audit reports zero vulnerabilities. This supersedes the earlier eight-finding snapshot.
 - Official npm metadata and v8.72.2 upstream manifest still specify minimatch ^10.2.2; the advisory's patch is 11.0.1. npm audit fix --dry-run proposes compatible TypeScript ESLint updates, but the required minimatch range remains affected. No forced override, tooling downgrade, package mutation or audit suppression was applied.
 - Continue to block full security/release sign-off until an approved upstream fix or separately validated tooling migration resolves the chain.
+
+## Phone-code account/number binding — 2026-11-11
+- Fixed a prerequisite for future live SMS: HMAC code lookup is bound to account and exact current phone. Profile phone changes invalidate all outstanding phone-verification tokens atomically and clear verification using the locked current row. Older unbound codes cannot be reused; request a new development code.
+- Account mutations serialize against phone confirmation and recheck current session/account after locks. Confirmation evaluates token expiry after waiting. In-flight revocation, phone-change races and password-reset token isolation passed real disposable PostgreSQL/API tests.
+- Production SMS remains unavailable; no live sender, WhatsApp channel or provider certification was inferred from this fix. No new owner credentials or schema migration are required.
+
+## Messaging provider direction — 2026-11-11
+- Owner selected Bangladesh SMS gateway plus Meta WhatsApp Cloud API. Researched SSL Wireless ISMS Plus as the preferred SMS candidate, BulkSMSBD as an alternative; see NIloy/SMS_WHATSAPP_SETUP.md. No account or commercial plan was purchased or contacted.
+- Official indexed ISMS Plus docs expose OTP/sender/IP/reference features, but direct retrieval timed out. Current account-specific secure OTP/signature, receipt/reconciliation and commercial conditions still require confirmation. Do not guess them or activate generic SMS placeholders.
+- Meta official Cloud API collection was accessible; getting-started console requires login, and the old Node SDK is archived. Sending/receipt integration and live certification remain engineering/provider prerequisites, with production SMS/WhatsApp still disabled.

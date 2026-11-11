@@ -4,9 +4,10 @@ import { apiError, apiSuccess } from "@/lib/api";
 import { hasTrustedMutationOrigin } from "@/lib/mfa-session";
 import { prisma } from "@/lib/prisma";
 import { getRequestSession } from "@/lib/request-session";
-import { hashSecurityToken } from "@/lib/security-secrets";
-import { consumeConfirmationLimit } from "@/modules/auth/rate-limit";
+import { hashPhoneVerificationCode } from "@/lib/security-secrets";
+import { consumeConfirmationLimit, consumeSecurityRateLimit } from "@/modules/auth/rate-limit";
 import { getPhoneVerificationMode } from "@/modules/auth/phone-verification-mode";
+import { lockActiveAccount } from "@/modules/auth/account-mutation";
 import { recordUserEvent } from "@/modules/activity/service";
 
 const schema = z.object({ code: z.string().regex(/^\d{6}$/) });
@@ -18,11 +19,16 @@ export async function POST(request: NextRequest) {
   if (getPhoneVerificationMode() === "UNAVAILABLE") return apiError("SMS_PROVIDER_NOT_CONFIGURED", "Phone verification is temporarily unavailable. Please contact support.", 503);
   const parsed = schema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return apiError("PHONE_CODE_INVALID", "Enter the six-digit verification code.", 422);
-  const limit = await consumeConfirmationLimit(request, "phone-verification-confirm");
-  if (!limit.allowed) { const response = apiError("TOO_MANY_REQUESTS", "Too many attempts. Please wait before trying again.", 429); response.headers.set("Retry-After", String(limit.retryAfterSeconds)); return response; }
-  const now = new Date();
+  const [ipLimit, accountLimit] = await Promise.all([
+    consumeConfirmationLimit(request, "phone-verification-confirm"),
+    consumeSecurityRateLimit("phone-verification-confirm:account", session.userId, 10, 15 * 60_000),
+  ]);
+  if (!ipLimit.allowed || !accountLimit.allowed) { const response = apiError("TOO_MANY_REQUESTS", "Too many attempts. Please wait before trying again.", 429); response.headers.set("Retry-After", String(Math.max(ipLimit.retryAfterSeconds, accountLimit.retryAfterSeconds))); return response; }
   const verified = await prisma.$transaction(async (tx) => {
-    const token = await tx.securityToken.findUnique({ where: { tokenHash: hashSecurityToken("PHONE_VERIFICATION", parsed.data.code) }, select: { id: true, userId: true, purpose: true, usedAt: true, expiresAt: true } });
+    const current = await lockActiveAccount(tx, session.userId, session.sessionId);
+    if (!current?.phone) return false;
+    const now = new Date();
+    const token = await tx.securityToken.findUnique({ where: { tokenHash: hashPhoneVerificationCode(session.userId, current.phone, parsed.data.code) }, select: { id: true, userId: true, purpose: true, usedAt: true, expiresAt: true } });
     if (!token || token.userId !== session.userId || token.purpose !== "PHONE_VERIFICATION" || token.usedAt || token.expiresAt <= now) return false;
     const consumed = await tx.securityToken.updateMany({ where: { id: token.id, usedAt: null, expiresAt: { gt: now } }, data: { usedAt: now } });
     if (consumed.count !== 1) return false;

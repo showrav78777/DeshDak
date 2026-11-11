@@ -1,11 +1,12 @@
 import { randomInt } from "node:crypto";
 import { type NextRequest } from "next/server";
 import { apiError, apiSuccess } from "@/lib/api";
-import { hashSecurityToken } from "@/lib/security-secrets";
+import { hashPhoneVerificationCode } from "@/lib/security-secrets";
 import { hasTrustedMutationOrigin } from "@/lib/mfa-session";
 import { prisma } from "@/lib/prisma";
 import { getRequestSession } from "@/lib/request-session";
 import { getPhoneVerificationMode } from "@/modules/auth/phone-verification-mode";
+import { lockActiveAccount } from "@/modules/auth/account-mutation";
 import { consumeIdentityRequestLimit } from "@/modules/auth/rate-limit";
 
 export async function POST(request: NextRequest) {
@@ -21,12 +22,18 @@ export async function POST(request: NextRequest) {
   const code = String(randomInt(0, 1_000_000)).padStart(6, "0");
   const now = new Date();
   const expiresAt = new Date(now.getTime() + 10 * 60_000);
-  await prisma.$transaction(async (tx) => {
+  const outcome = await prisma.$transaction(async (tx) => {
+    const current = await lockActiveAccount(tx, session.userId, session.sessionId);
+    if (!current) return "DENIED";
+    if (current.phone !== user.phone || current.phoneVerifiedAt) return "CHANGED";
     await tx.securityToken.updateMany({ where: { userId: user.id, purpose: "PHONE_VERIFICATION", usedAt: null }, data: { usedAt: now } });
-    const token = await tx.securityToken.create({ data: { userId: user.id, purpose: "PHONE_VERIFICATION", tokenHash: hashSecurityToken("PHONE_VERIFICATION", code), expiresAt } });
+    const token = await tx.securityToken.create({ data: { userId: user.id, purpose: "PHONE_VERIFICATION", tokenHash: hashPhoneVerificationCode(user.id, user.phone!, code), expiresAt } });
     await tx.notification.create({ data: { userId: user.id, eventType: "PHONE_VERIFICATION_REQUESTED", category: "SECURITY", priority: "HIGH", title: "Phone verification code requested", body: "A development-only verification code was generated. No SMS was sent. It expires after 10 minutes.", titleBn: "ফোন যাচাইকরণ কোড অনুরোধ করা হয়েছে", bodyBn: "শুধু ডেভেলপমেন্ট পরীক্ষার জন্য একটি কোড তৈরি হয়েছে। কোনো এসএমএস পাঠানো হয়নি। কোডটি ১০ মিনিট পরে মেয়াদোত্তীর্ণ হবে।", deepLink: "/profile", entityType: "SecurityToken", entityId: token.id, idempotencyKey: `phone-verification:${token.id}`, deliveries: { create: [{ channel: "IN_APP", status: "DELIVERED", deliveredAt: now, idempotencyKey: `phone-verification:${token.id}:in-app` }] } } });
     await tx.auditLog.create({ data: { actorId: user.id, action: "auth.phone_verification_requested", entityType: "SecurityToken", entityId: token.id, metadata: { expiresAt: expiresAt.toISOString(), deliveryStatus: "DEVELOPMENT_ONLY" } } });
+    return "ISSUED";
   });
+  if (outcome === "DENIED") return apiError("ACCOUNT_SESSION_CHANGED", "Your account session changed. Sign in again before verifying your phone.", 403);
+  if (outcome !== "ISSUED") return apiError("PHONE_CHANGED", "Your phone details changed. Reload your profile before requesting a new code.", 409);
   const developmentCode = code;
   return apiSuccess({ requested: true, expiresAt, developmentCode, deliveryStatus: "DEVELOPMENT_ONLY" }, { headers: { "Cache-Control": "private, no-store, max-age=0" } });
 }

@@ -97,19 +97,25 @@ Run `npm run test:ai-provider-response` for simulated parser/failure tests. Then
 
 ## Mobile messages / phone verification
 
-Choose one contracted SMS provider with confirmed Bangladesh delivery, sender registration and destination coverage. Obtain its API documentation, sandbox, credentials, sender identity and delivery-receipt requirements. Check [Bangladesh SMS guidelines](https://www.twilio.com/en-us/guidelines/bd/sms) if considering Twilio; confirm actual account eligibility and pricing before purchase.
+Your chosen approach is a Bangladesh gateway plus Meta WhatsApp. Start with
+[the provider research and setup checklist](SMS_WHATSAPP_SETUP.md); SSL Wireless
+ISMS Plus is the recommended SMS candidate pending its proposal and access.
+
+Confirm Bangladesh delivery, sender registration, destination coverage, sandbox access and delivery-receipt requirements with the selected local gateway. Use the researched setup checklist above; confirm actual account eligibility and pricing before purchase.
 
 **Current limitation:** `SMS_PROVIDER_API_KEY` and `SMS_PROVIDER_SENDER_ID` are reserved placeholders. No sending adapter is connected, so production code requests and confirmations now return unavailable even when keys or the development flag are set. The profile hides code-entry controls and explains the unavailable service. Existing verified numbers remain verified; ordering guards are not bypassed. Explicit `development`/`test` mode with `ALLOW_DEV_AUTH_LINKS=true` generates a local test code, clearly says no SMS was sent, and creates no SMS outbox record.
 
+Phone codes are now bound to the account and exact current phone number. Changing the number clears verification and invalidates old phone codes; changing it back does not restore them. Codes issued before this change must be requested again. Email/password-recovery tokens are unaffected. Session and expiry checks run after the account lock to reject in-flight revocation and late confirmation. No new credential or migration is needed for this security fix.
+
 Engineering must implement authenticated delivery, bounded retries, expiry handling, receipts, spend/abuse limits and truthful delivery status; then test controlled numbers and invalid/expired codes. A reviewed sender and acceptance must replace the current unavailable gate before enabling live verification.
 
-[Twilio Verify](https://www.twilio.com/docs/verify/api) is a managed OTP alternative. Choosing it requires changing both request and confirmation to its verification workflow; its service credentials cannot simply be inserted into the generic placeholder fields.
+If a different provider later manages OTP generation and confirmation itself, both verification endpoints need adaptation. Its credentials cannot simply replace the current generic placeholders.
 
 ## WhatsApp
 
 WhatsApp delivery is not connected. A schema channel named `WHATSAPP` does not implement sending, templates or callbacks.
 
-Choose Meta Cloud API directly or a supported business messaging provider. Arrange business onboarding, a WhatsApp Business Account, a registered business sender number, production credentials, required permissions, customer opt-in and approved templates. Confirm the provider's account-specific onboarding requirements. Twilio offers a [WhatsApp sandbox and setup guide](https://www.twilio.com/docs/whatsapp/quickstart); sandbox access is not production sender approval.
+Use Meta Cloud API directly, as selected. Arrange business onboarding, a WhatsApp Business Account, a registered sender number, production credentials, required permissions, customer opt-in and approved templates. Follow [Meta’s official Cloud API collection](https://www.postman.com/meta/whatsapp-business-platform/collection/wlk6lh4/whatsapp-cloud-api) and confirm account-specific approval; test access is not production sender approval.
 
 Engineering still needs the sender adapter, secret resolution, template mapping, authenticated webhook/signature validation, delivery receipts, retry/idempotency controls and opt-out handling. No working WhatsApp callback or supported environment-variable contract exists in this project yet. Do not put credentials in invented fields.
 

@@ -199,6 +199,8 @@
           "UNTRUSTED_ORIGIN",
           "PHONE_REQUIRED",
           "SMS_PROVIDER_NOT_CONFIGURED",
+          "ACCOUNT_SESSION_CHANGED",
+          "PHONE_CHANGED",
           "TOO_MANY_REQUESTS"
         ],
         "responses": {
@@ -17879,7 +17881,8 @@
           "UNTRUSTED_ORIGIN",
           "VALIDATION_ERROR",
           "MARKET_NOT_AVAILABLE",
-          "PHONE_IN_USE"
+          "PHONE_IN_USE",
+          "ACCOUNT_SESSION_CHANGED"
         ],
         "requestBody": {
           "required": true,

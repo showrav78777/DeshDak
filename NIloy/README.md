@@ -28,6 +28,8 @@ are not production configuration. See `docs/DEPLOYMENT_RECOVERY_RUNBOOK.md`.
 Start with [the API connection guide](API_CONNECTION_GUIDE.md) for 1688,
 Pinduoduo, Google login/Gmail, OpenAI, email verification, SMS and WhatsApp.
 It lists account steps, existing environment names and unfinished adapters.
+Your selected messaging approach and researched SMS recommendation are in
+[Bangladesh SMS and Meta WhatsApp setup](SMS_WHATSAPP_SETUP.md).
 
 Open Admin → System → Live setup guide for the required variables, setup steps and
 readiness status. Supply credentials through the deployment secret manager:
@@ -49,6 +51,9 @@ Some adapters still require engineering and certification; keys alone do not
 complete them. Do not enable an unavailable service just to clear a readiness item.
 
 ## 4. Business and operational acceptance
+
+Follow [the SQA runbook](SQA_RUNBOOK.md) for repeatable local workflow tests and
+the real staff/device/provider acceptance that still requires your team.
 
 Supply the registered company identity, address, tax/VAT rules, support contacts,
 approved privacy/refund/terms text, licensed catalog and real warehouse/rate data.
