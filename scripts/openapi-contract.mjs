@@ -6,6 +6,8 @@ const API_ROOT = join(process.cwd(), "src", "app", "api", "v1");
 const OPTIONAL_SESSION_PATHS = new Set(["/payments/providers"]);
 const OPTIONAL_SESSION_PREFIXES = ["/identifiers/products/"];
 const EXACT_OPERATIONS = {
+  "patch /notifications": { summary: "Mark the authenticated user's current unread notifications read", requestSchema: "NotificationMarkAllRequest", successSchema: "NotificationMarkAllResponse", successStatuses: ["200"], errors: ["AUTHENTICATION_REQUIRED", "UNTRUSTED_ORIGIN", "VALIDATION_ERROR"] },
+  "patch /notifications/{notificationId}/read": { summary: "Mark an owned notification read while preserving its first read timestamp", successSchema: "NotificationReadResponse", successStatuses: ["200"], errors: ["AUTHENTICATION_REQUIRED", "UNTRUSTED_ORIGIN", "VALIDATION_ERROR", "NOTIFICATION_NOT_FOUND"] },
   "post /account/phone-verification/request": { summary: "Generate an explicit local development code; live SMS delivery is unavailable", successSchema: "PhoneVerificationRequestResponse", successStatuses: ["200"], unavailable: true, errors: ["AUTHENTICATION_REQUIRED", "UNTRUSTED_ORIGIN", "PHONE_REQUIRED", "SMS_PROVIDER_NOT_CONFIGURED", "TOO_MANY_REQUESTS"] },
   "post /account/phone-verification/confirm": { summary: "Confirm a local development code; reject while live SMS verification is unavailable", requestSchema: "PhoneCodeRequest", successSchema: "PhoneVerifiedResponse", successStatuses: ["200"], unavailable: true, errors: ["AUTHENTICATION_REQUIRED", "UNTRUSTED_ORIGIN", "PHONE_CODE_INVALID", "SMS_PROVIDER_NOT_CONFIGURED", "TOO_MANY_REQUESTS"] },
   "post /notifications/email-events": {
@@ -689,6 +691,9 @@ export function buildOpenApiDocument() {
         AcceptLanguage: { name: "Accept-Language", in: "header", required: false, schema: { type: "string", enum: ["en", "bn"] } },
       },
       schemas: {
+        NotificationMarkAllRequest: { type: "object", required: ["action"], properties: { action: { type: "string", enum: ["MARK_ALL_READ"] } }, additionalProperties: false },
+        NotificationMarkAllResponse: { type: "object", required: ["data"], properties: { data: { type: "object", required: ["updated"], properties: { updated: { type: "integer", minimum: 0 } }, additionalProperties: false } }, additionalProperties: false },
+        NotificationReadResponse: { type: "object", required: ["data"], properties: { data: { type: "object", required: ["id", "readAt"], properties: { id: { type: "string", format: "uuid" }, readAt: { type: "string", format: "date-time" } }, additionalProperties: false } }, additionalProperties: false },
         PhoneCodeRequest: { type: "object", required: ["code"], properties: { code: { type: "string", pattern: "^[0-9]{6}$" } }, additionalProperties: false },
         PhoneVerifiedResponse: { type: "object", required: ["data"], properties: { data: { type: "object", required: ["verified"], properties: { verified: { type: "boolean", enum: [true] } }, additionalProperties: false } }, additionalProperties: false },
         PhoneVerificationRequestResponse: { type: "object", required: ["data"], properties: { data: { oneOf: [{ type: "object", required: ["verified"], properties: { verified: { type: "boolean", enum: [true] } }, additionalProperties: false }, { type: "object", required: ["requested", "expiresAt", "developmentCode", "deliveryStatus"], properties: { requested: { type: "boolean", enum: [true] }, expiresAt: { type: "string", format: "date-time" }, developmentCode: { type: "string", pattern: "^[0-9]{6}$", description: "Explicit non-production testing only; never available in production." }, deliveryStatus: { type: "string", enum: ["DEVELOPMENT_ONLY"] } }, additionalProperties: false }] } }, additionalProperties: false },

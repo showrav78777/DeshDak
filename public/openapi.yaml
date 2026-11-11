@@ -12005,27 +12005,43 @@
         "tags": [
           "notifications"
         ],
-        "summary": "PATCH /notifications",
+        "summary": "Mark the authenticated user's current unread notifications read",
         "security": [
           {
             "cookieSession": []
           }
         ],
         "x-crossly-access": "authenticated",
+        "x-crossly-error-codes": [
+          "AUTHENTICATION_REQUIRED",
+          "UNTRUSTED_ORIGIN",
+          "VALIDATION_ERROR"
+        ],
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "additionalProperties": true
+                "$ref": "#/components/schemas/NotificationMarkAllRequest"
               }
             }
           }
         },
         "responses": {
           "200": {
-            "$ref": "#/components/responses/Success"
+            "description": "Successful response.",
+            "headers": {
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationMarkAllResponse"
+                }
+              }
+            }
           },
           "400": {
             "$ref": "#/components/responses/BadRequest"
@@ -12060,13 +12076,19 @@
         "tags": [
           "notifications"
         ],
-        "summary": "PATCH /notifications/{notificationId}/read",
+        "summary": "Mark an owned notification read while preserving its first read timestamp",
         "security": [
           {
             "cookieSession": []
           }
         ],
         "x-crossly-access": "authenticated",
+        "x-crossly-error-codes": [
+          "AUTHENTICATION_REQUIRED",
+          "UNTRUSTED_ORIGIN",
+          "VALIDATION_ERROR",
+          "NOTIFICATION_NOT_FOUND"
+        ],
         "parameters": [
           {
             "name": "notificationId",
@@ -12079,7 +12101,19 @@
         ],
         "responses": {
           "200": {
-            "$ref": "#/components/responses/Success"
+            "description": "Successful response.",
+            "headers": {
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationReadResponse"
+                }
+              }
+            }
           },
           "400": {
             "$ref": "#/components/responses/BadRequest"
@@ -18801,6 +18835,70 @@
       }
     },
     "schemas": {
+      "NotificationMarkAllRequest": {
+        "type": "object",
+        "required": [
+          "action"
+        ],
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": [
+              "MARK_ALL_READ"
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "NotificationMarkAllResponse": {
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "type": "object",
+            "required": [
+              "updated"
+            ],
+            "properties": {
+              "updated": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "NotificationReadResponse": {
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "type": "object",
+            "required": [
+              "id",
+              "readAt"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "readAt": {
+                "type": "string",
+                "format": "date-time"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
       "PhoneCodeRequest": {
         "type": "object",
         "required": [

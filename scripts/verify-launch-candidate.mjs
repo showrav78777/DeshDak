@@ -21,7 +21,8 @@ const checks = [
   "test:restricted-goods", "test:compliance-portal", "test:finance-portal", "test:sourcing-portal", "test:warehouse-portal", "test:inspector-portal", "test:logistics-portal",
   "test:ship-for-me", "test:rma-workflow", "test:support-workflow", "test:support-policy", "test:help-centre", "test:ai-chat-handoff", "test:ai-provider-response",
   "test:public-rate-limit",
-  "test:admin-shell", "test:admin-audit-log", "test:launch-readiness", "test:notification-preferences", "test:marketing-campaigns",
+  "test:admin-shell", "test:admin-audit-log", "test:launch-readiness", "test:notification-preferences",
+  ...(canInjectDatabaseFaults ? ["test:notification-read-actions"] : []), "test:marketing-campaigns",
   ...(canInjectDatabaseFaults ? ["test:private-photo-quarantine", "test:private-photo-reviews", "test:private-photo-rescans"] : []),
   ...(skipBuild ? [] : ["build"]),
 ];

@@ -1,5 +1,6 @@
 import { type NextRequest } from "next/server";
 import { z } from "zod";
+import { hasTrustedMutationOrigin } from "@/lib/mfa-session";
 import { apiError, apiSuccess } from "@/lib/api";
 import { prisma } from "@/lib/prisma";
 import { getRequestSession } from "@/lib/request-session";
@@ -28,13 +29,14 @@ export async function GET(request: NextRequest) {
 export async function PATCH(request: NextRequest) {
   const session = await getRequestSession(request);
   if (!session) return apiError("AUTHENTICATION_REQUIRED", "Please sign in to update notifications.", 401);
+  if (!hasTrustedMutationOrigin(request)) return apiError("UNTRUSTED_ORIGIN", "Update notifications from the protected application.", 403);
   const parsed = z.object({ action: z.literal("MARK_ALL_READ") }).safeParse(await request.json().catch(() => null));
   if (!parsed.success) return apiError("VALIDATION_ERROR", "Choose a valid notification action.", 422);
   const now = new Date();
   const updated = await prisma.$transaction(async (tx) => {
     const result = await tx.notification.updateMany({ where: { userId: session.userId, readAt: null }, data: { readAt: now } });
-    await tx.notificationDelivery.updateMany({ where: { notification: { userId: session.userId }, channel: "IN_APP", status: "DELIVERED" }, data: { status: "READ", readAt: now } });
+    await tx.notificationDelivery.updateMany({ where: { notification: { userId: session.userId, readAt: { not: null } }, channel: "IN_APP", status: "DELIVERED" }, data: { status: "READ", readAt: now } });
     return result.count;
   });
-  return apiSuccess({ updated });
+  return apiSuccess({ updated }, { headers: { "Cache-Control": "private, no-store, max-age=0" } });
 }

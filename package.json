@@ -124,6 +124,7 @@
     "test:admin-shell": "node --env-file-if-exists=.env scripts/verify-admin-shell.mjs",
     "test:admin-audit-log": "node --env-file-if-exists=.env scripts/verify-admin-audit-log.mjs",
     "test:launch-readiness": "node --env-file-if-exists=.env scripts/verify-launch-readiness.mjs",
+    "test:notification-read-actions": "node scripts/verify-notification-read-actions.mjs",
     "test:notification-preferences": "node --env-file-if-exists=.env scripts/verify-notification-preferences.mjs",
     "test:marketing-campaigns": "node --env-file-if-exists=.env scripts/verify-marketing-campaigns.mjs",
     "test:sslcommerz-adapter": "node --no-warnings --experimental-strip-types scripts/verify-sslcommerz-adapter.mjs",
