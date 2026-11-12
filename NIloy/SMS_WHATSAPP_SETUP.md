@@ -89,3 +89,9 @@ supersedes the earlier “no jobs are persisted” implementation note for inter
 public phone requests still do not queue SMS. Live issuance, scheduling, delivery
 receipts and operator reconciliation still require implementation and certification.
 No new production switch or provider credentials should be configured yet.
+
+Transactional queued issuance is now tested internally: a replacement code, encrypted
+job and audit record commit together; old unused codes/jobs are replaced safely.
+The service includes a resend cooldown and returns no code to the caller. The public
+request route is still gated; these tests do not activate live SMS. No manual owner
+change is required for this increment.

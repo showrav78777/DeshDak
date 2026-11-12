@@ -88,3 +88,31 @@ No public route, scheduler or Admin control connects this core to live sending.
 Production SMS remains unavailable. Protected issuance/rate-limit integration,
 reconciliation operations, authenticated delivery receipts, retention controls,
 provider/account certification and independent review remain release gates.
+
+## Transactional queued issuance — 12 November 2026
+
+`queued-phone-verification.ts` now links token issuance to encrypted enqueue inside
+one caller-owned transaction. It locks and rechecks the issuing account/session and
+expected phone, applies a 60-second account-wide cooldown, generates a secure
+six-digit code, invalidates older phone tokens and cancels only unattempted queued
+OTP jobs. It then creates the replacement token, encrypted job and minimal audit
+record together. The response contains only requested/expiry/QUEUED fields.
+
+Already attempted jobs keep their acceptance/reconciliation evidence. Failure rolls
+back both the replacement and invalidation of previous tokens/jobs. Historical code
+hash collisions are checked before creating a token; after ten collisions issuance
+fails without replacing anything. Input identity is snapshotted before asynchronous
+locks. Token timestamps reflect time after account locking, rather than the database
+transaction's potentially earlier start time.
+
+The real disposable PostgreSQL suite now covers concurrent issuance/cooldown,
+replacement, response/audit minimization, old token invalidation, preserved send
+claims, rollback, wrong-phone denial, forced historical-code collision exhaustion
+and caller mutation during lock acquisition, followed by simulated dispatch.
+
+This internal service is not connected to the public phone request route. That
+route still supports only explicit development codes and rejects production sending.
+The future connection must keep authentication, trusted-origin validation, IP/account
+abuse quotas and reviewed provider readiness. The service cooldown is additional to
+those controls. Scheduling, receipts, operator reconciliation, retention and live
+provider acceptance remain required before activation.

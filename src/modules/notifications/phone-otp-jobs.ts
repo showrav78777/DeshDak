@@ -22,21 +22,22 @@ async function context(tx: Prisma.TransactionClient, identity: JobIdentity) {
 /** Caller owns the token-issuance transaction. No route currently invokes this. */
 export async function enqueuePhoneOtp(tx: Prisma.TransactionClient, identity: JobIdentity & { code: string }) {
   if (!id(identity.userId) || !id(identity.sessionId) || !id(identity.tokenId)) throw new PhoneOtpPayloadError();
-  const current = await context(tx, identity);
+  const bound = { userId: identity.userId, sessionId: identity.sessionId, tokenId: identity.tokenId, code: identity.code };
+  const current = await context(tx, bound);
   if (current.phoneVerified || current.tokenUsed) throw new PhoneOtpPayloadError();
-  const encrypted = sealPhoneOtpPayload(current, identity.code);
-  const key = `phone-otp:${identity.tokenId}`;
+  const encrypted = sealPhoneOtpPayload(current, bound.code);
+  const key = `phone-otp:${bound.tokenId}`;
   // Account + token locks serialize concurrent producers; never recreate a consumed job.
   const existing = await tx.notificationDelivery.findUnique({ where: { idempotencyKey: `${key}:sms` }, select: { id: true, notification: { select: { userId: true, entityId: true, eventType: true } } } });
   if (existing) {
-    if (existing.notification.userId !== identity.userId || existing.notification.entityId !== identity.tokenId || existing.notification.eventType !== EVENT) throw new PhoneOtpPayloadError();
+    if (existing.notification.userId !== bound.userId || existing.notification.entityId !== bound.tokenId || existing.notification.eventType !== EVENT) throw new PhoneOtpPayloadError();
     return { id: existing.id, created: false };
   }
   const notification = await tx.notification.create({ data: {
-    userId: identity.userId, eventType: EVENT, category: "SECURITY", priority: "HIGH",
+    userId: bound.userId, eventType: EVENT, category: "SECURITY", priority: "HIGH",
     title: "Phone verification requested", body: "A phone verification request is awaiting processing.",
     titleBn: "ফোন যাচাইকরণ অনুরোধ", bodyBn: "ফোন যাচাইকরণের অনুরোধ প্রক্রিয়াকরণের অপেক্ষায় আছে।",
-    entityType: "SecurityToken", entityId: identity.tokenId, idempotencyKey: key,
+    entityType: "SecurityToken", entityId: bound.tokenId, idempotencyKey: key,
     deliveries: { create: { channel: "SMS", status: "QUEUED", idempotencyKey: `${key}:sms`, nextAttemptAt: new Date(), ...encrypted } },
   }, select: { deliveries: { select: { id: true } } } });
   return { id: notification.deliveries[0].id, created: true };

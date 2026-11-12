@@ -170,3 +170,10 @@ reclaim after uncertain sends. Claim purges encrypted OTP, audit retains opaque
 client reference. Decryption failures preserve queued evidence for operator review.
 Not connected to routes or scheduling; live SMS stays disabled. Remaining protected
 issuance, receipts, reconciliation workflow, retention and provider certification.
+
+12 Nov 2026 — transactional queued phone-code issuance implemented and tested in
+real disposable PostgreSQL: atomic token replacement/enqueue/audit, 60-second
+account cooldown, historical code collision handling, input snapshot, rollback and
+simulated dispatch. Public production route remains unavailable; future connection
+must preserve auth/origin/IP+account quotas and provider-readiness checks. Receipts,
+reconciliation, scheduling, retention and certification remain release gates.

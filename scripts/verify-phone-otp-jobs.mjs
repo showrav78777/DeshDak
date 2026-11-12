@@ -12,6 +12,8 @@ const accountUrl = moduleUrl(await source('modules/auth/account-mutation.ts'));
 const payloadUrl = moduleUrl((await source('modules/notifications/phone-otp-payload.ts')).replace('from "@/lib/security-secrets"',`from "${securityUrl}"`));
 const jobsUrl = moduleUrl((await source('modules/notifications/phone-otp-jobs.ts')).replace('from "@/lib/security-secrets"',`from "${securityUrl}"`).replace('from "@/modules/auth/account-mutation"',`from "${accountUrl}"`).replace('from "@/modules/notifications/phone-otp-payload"',`from "${payloadUrl}"`));
 const {enqueuePhoneOtp: enqueue,runPhoneOtpJobs: run} = await import(jobsUrl);
+const issuanceSource = (await source('modules/auth/queued-phone-verification.ts')).replace('from "@/lib/security-secrets"',`from "${securityUrl}"`).replace('from "@/modules/auth/account-mutation"',`from "${accountUrl}"`).replace('from "@/modules/notifications/phone-otp-jobs"',`from "${jobsUrl}"`);
+const {issueQueuedPhoneVerification: issue} = await import(moduleUrl(issuanceSource));
 const {hashPhoneVerificationCode} = await import(securityUrl);
 const db = new PrismaClient(), marker=randomBytes(8).toString('hex'), users=[];
 let calls=0;
@@ -75,5 +77,46 @@ try {
  const hold=new Promise(r=>unlock=r),hasLock=new Promise(r=>locked=r);
  const blocker=db.$transaction(async tx=>{await tx.$queryRaw`SELECT "id" FROM "User" WHERE "id" = ${racing.user.id} FOR NO KEY UPDATE`;locked();await hold;await tx.authSession.update({where:{id:racing.session.id},data:{revokedAt:new Date()}});});
  await hasLock;const racingWorker=worker();await new Promise(r=>setTimeout(r,40));unlock();await blocker;assert.equal((await racingWorker).cancelled,1);
- console.log('Durable OTP jobs passed: atomic enqueue/rollback, concurrent one-attempt claims, stale account/session/token rejection, ciphertext purge, uncertain-send no-retry and acceptance distinct from delivery. Real disposable PostgreSQL; simulated sender only.');
+ // Issuance, replacement and encrypted enqueue are one transaction.
+ const issuing=await fixture();await db.securityToken.update({where:{id:issuing.token.id},data:{createdAt:new Date(Date.now()-120000)}});
+ const oldq=await queue(issuing);
+ const request={userId:issuing.user.id,sessionId:issuing.session.id,expectedPhone:issuing.user.phone};
+ const issued=await db.$transaction(tx=>issue(tx,request));
+ assert.deepEqual(Object.keys(issued).sort(),['deliveryStatus','expiresAt','requested']);assert.equal(issued.deliveryStatus,'QUEUED');assert.equal(issued.requested,true);
+ const oldjob=await db.notificationDelivery.findUniqueOrThrow({where:{id:oldq.id}});assert.equal(oldjob.status,'FAILED');assert.equal(oldjob.securePayloadCiphertext,null);
+ assert.ok((await db.securityToken.findUniqueOrThrow({where:{id:issuing.token.id}})).usedAt);
+ const latest=await db.securityToken.findFirstOrThrow({where:{userId:issuing.user.id,purpose:'PHONE_VERIFICATION',usedAt:null}});
+ assert.equal(+latest.expiresAt,+issued.expiresAt);
+ assert.equal(await db.notificationDelivery.count({where:{notification:{userId:issuing.user.id},status:'QUEUED'}}),1);
+ await assert.rejects(db.$transaction(tx=>issue(tx,request)),/PHONE_CODE_COOLDOWN/);
+ let sentCode;const issuedResult=await worker({submitOtp:async input=>{sentCode=input.code;return {state:'ACCEPTED',clientReference:input.clientReference,providerReference:'synthetic-issued'};}});assert.equal(issuedResult.accepted,1);
+ assert.equal(hashPhoneVerificationCode(issuing.user.id,issuing.user.phone,sentCode),latest.tokenHash);
+ const claim=await db.notificationDelivery.findUniqueOrThrow({where:{idempotencyKey:`phone-otp:${latest.id}:sms`}});
+ await db.securityToken.update({where:{id:latest.id},data:{createdAt:new Date(Date.now()-120000)}});
+ await db.$transaction(tx=>issue(tx,request));
+ const preserved=await db.notificationDelivery.findUniqueOrThrow({where:{id:claim.id}});assert.equal(preserved.status,'SENT');assert.equal(preserved.providerReference,claim.providerReference);assert.equal(preserved.attempts,1);
+ // Rollback restores the previous valid token and queue, not just the new row.
+ const atomic=await fixture();await db.securityToken.update({where:{id:atomic.token.id},data:{createdAt:new Date(Date.now()-120000)}});const aq=await queue(atomic);
+ const atomicInput={userId:atomic.user.id,sessionId:atomic.session.id,expectedPhone:atomic.user.phone};
+ await assert.rejects(db.$transaction(async tx=>{await issue(tx,atomicInput);throw new Error('synthetic issuance rollback');}),/synthetic issuance rollback/);
+ assert.equal((await db.securityToken.findUniqueOrThrow({where:{id:atomic.token.id}})).usedAt,null);
+ assert.equal((await db.notificationDelivery.findUniqueOrThrow({where:{id:aq.id}})).status,'QUEUED');
+ await assert.rejects(db.$transaction(tx=>issue(tx,{...atomicInput,expectedPhone:'+8801900000000'})),/PHONE_ACCOUNT_CHANGED/);
+ assert.equal(await db.securityToken.count({where:{userId:atomic.user.id}}),1);
+ const concurrent=await Promise.allSettled([db.$transaction(tx=>issue(tx,atomicInput)),db.$transaction(tx=>issue(tx,atomicInput))]);
+ assert.equal(concurrent.filter(x=>x.status==='fulfilled').length,1);assert.equal(concurrent.filter(x=>x.status==='rejected' && /PHONE_CODE_COOLDOWN/.test(x.reason.message)).length,1);
+ assert.equal(await db.securityToken.count({where:{userId:atomic.user.id,usedAt:null}}),1);
+ const collision=await fixture();await db.securityToken.update({where:{id:collision.token.id},data:{createdAt:new Date(Date.now()-120000)}});
+ await db.securityToken.create({data:{userId:collision.user.id,purpose:'PHONE_VERIFICATION',tokenHash:hashPhoneVerificationCode(collision.user.id,collision.user.phone,'000000'),expiresAt:new Date(Date.now()+60000),createdAt:new Date(Date.now()-120000)}});
+ const fixedSource=issuanceSource.replace('import { randomInt } from "node:crypto";', 'const randomInt = () => 0;');
+ const fixed=await import(moduleUrl(fixedSource));
+ await assert.rejects(db.$transaction(tx=>fixed.issueQueuedPhoneVerification(tx,{userId:collision.user.id,sessionId:collision.session.id,expectedPhone:collision.user.phone})),/PHONE_CODE_GENERATION_FAILED/);
+ assert.equal(await db.securityToken.count({where:{userId:collision.user.id,usedAt:null}}),2);
+ // Input identity is snapshotted before asynchronous lock acquisition.
+ const snapshotActor=await fixture();await db.securityToken.update({where:{id:snapshotActor.token.id},data:{createdAt:new Date(Date.now()-120000)}});
+ const mutableRequest={userId:snapshotActor.user.id,sessionId:snapshotActor.session.id,expectedPhone:snapshotActor.user.phone};
+ await db.$transaction(tx=>{const pending=issue(tx,mutableRequest);mutableRequest.userId=collision.user.id;mutableRequest.sessionId=collision.session.id;mutableRequest.expectedPhone=collision.user.phone;return pending;});
+ assert.equal(await db.securityToken.count({where:{userId:snapshotActor.user.id,usedAt:null}}),1);
+ const authAudit=await db.auditLog.findFirstOrThrow({where:{actorId:snapshotActor.user.id,action:'auth.phone_otp_queued'}});assert.deepEqual(Object.keys(authAudit.metadata).sort(),['deliveryStatus','expiresAt']);
+ console.log('Durable OTP jobs and queued issuance passed: atomic enqueue/rollback, concurrent one-attempt claims, stale account/session/token rejection, ciphertext purge, uncertain-send no-retry and acceptance distinct from delivery. Real disposable PostgreSQL; simulated sender only.');
 } finally {await db.user.deleteMany({where:{id:{in:users}}});await db.$disconnect();}
