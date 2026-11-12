@@ -186,3 +186,12 @@ attempted claims and active tokens are preserved. Browser+database tests use onl
 synthetic data. Public provider docs did not establish receipt endpoint/signatures;
 obtain account contract before implementing callbacks. See NIloy/SMS_OPERATIONS.md.
 Cleanup scheduling and reconciliation mutation workflows remain engineering work.
+
+12 Nov 2026 — OTP retention connected to the existing transactional security-cleanup
+job, Admin run control and authenticated maintenance endpoint. Counts appear in
+whitelisted human-readable run summaries. Admin maintenance now explicitly requires
+Admin portal/role/MFA. Client controls recover from network, invalid JSON and invalid
+success payloads without falsely claiming completion. Real disposable browser/API/DB
+tests passed for scheduler/manual cleanup, auth denials, preserved send attempts and
+cleanup regressions. No SMS sent. Cloud schedule remains owner deployment work;
+NIloy/SMS_OPERATIONS.md contains the handoff. Delivery/receipt activation remains gated.

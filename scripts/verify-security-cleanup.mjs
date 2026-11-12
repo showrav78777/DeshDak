@@ -1,6 +1,8 @@
 import { randomBytes } from "node:crypto";
 import { Prisma, PrismaClient } from "@prisma/client";
 
+const database = new URL(process.env.DATABASE_URL ?? "postgresql://invalid/invalid");
+if (!["localhost", "127.0.0.1", "[::1]"].includes(database.hostname) || !/^crossly_launch_verify_[a-f0-9]{16}$/.test(database.searchParams.get("schema") ?? "")) throw new Error("Security cleanup tests require a generated disposable local schema.");
 const prisma = new PrismaClient();
 const SECURITY_CLEANUP_KEY = "security_cleanup";
 const baseUrl = process.env.TEST_BASE_URL ?? process.env.APP_BASE_URL ?? process.env.AUTH_ISSUER ?? "http://localhost:3000";

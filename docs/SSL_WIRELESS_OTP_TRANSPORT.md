@@ -136,3 +136,23 @@ The public [provider documentation](https://ismsplus.sslwireless.com/api-documen
 review did not establish a receipt authentication contract or final-event mapping.
 No callback parser, speculative endpoint or manual delivery override was added.
 The owner handoff is NIloy/SMS_OPERATIONS.md. Live provider certification remains open.
+
+
+## Connected retention maintenance — 12 November 2026
+
+OTP cleanup now runs inside the existing security-cleanup transaction before old
+tokens are deleted. It shares that job's bounded work, overlap lock, audit behavior,
+Admin run history and authenticated scheduler endpoint. No sending switch or new API
+route was added. The public and Admin API paths retain their existing response
+envelopes; run summaries add OTP inspected/purged counts.
+
+Admin maintenance page, configuration reads/writes and manual runs explicitly require
+the Admin portal, Admin role and completed MFA. Controls handle transport/JSON failures
+with a clear uncertain-outcome message and reset their busy state. Run history formats
+only whitelisted nonnegative counts instead of rendering arbitrary JSON fields.
+The cleanup regression script now rejects non-disposable database schemas.
+
+The earlier note about cleanup lacking a maintenance endpoint is superseded by this
+integration. SMS delivery and its scheduler remain disconnected; cloud scheduling of
+the existing cleanup endpoint remains deployment setup. NIloy/SMS_OPERATIONS.md gives
+the manual and scheduler handoff without exposing any credentials.

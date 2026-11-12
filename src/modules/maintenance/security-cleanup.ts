@@ -3,6 +3,8 @@ import "server-only";
 import { prisma } from "@/lib/prisma";
 import { releaseExpiredInventoryReservations } from "@/modules/inventory/reservations";
 
+import { purgeObsoletePhoneOtpJobs } from "@/modules/notifications/phone-otp-operations";
+
 export const SECURITY_CLEANUP_KEY = "security_cleanup";
 
 export async function getSecurityCleanupConfiguration() {
@@ -31,6 +33,7 @@ export async function runSecurityCleanup(input: { triggerSource: "ADMIN" | "SCHE
       const deliveryKeys = inactiveTokens.map((token) => `security-token:${token.id}:email`);
       const expiredEmailDeliveriesFailed = deliveryKeys.length ? await tx.notificationDelivery.updateMany({ where: { idempotencyKey: { in: deliveryKeys }, status: "QUEUED" }, data: { status: "FAILED", failedAt: now, nextAttemptAt: null, lastError: "Security link expired or was already consumed." } }) : { count: 0 };
       const protectedPayloadsPurged = deliveryKeys.length ? await tx.notificationDelivery.updateMany({ where: { idempotencyKey: { in: deliveryKeys }, securePayloadCiphertext: { not: null } }, data: { securePayloadCiphertext: null, securePayloadIv: null, securePayloadTag: null } }) : { count: 0 };
+      const smsCleanup = await purgeObsoletePhoneOtpJobs(tx, 100);
       const deletableTokenIds = inactiveTokens.filter((token) => token.expiresAt <= tokenRetentionCutoff || Boolean(token.usedAt && token.usedAt <= tokenRetentionCutoff)).map((token) => token.id);
       const securityTokensDeleted = deletableTokenIds.length ? await tx.securityToken.deleteMany({ where: { id: { in: deletableTokenIds } } }) : { count: 0 };
       const staleRateLimitIds = await tx.securityRateLimit.findMany({ where: { updatedAt: { lte: rateLimitCutoff }, OR: [{ blockedUntil: null }, { blockedUntil: { lte: now } }] }, select: { id: true }, orderBy: { updatedAt: "asc" }, take: 1_000 });
@@ -40,7 +43,7 @@ export async function runSecurityCleanup(input: { triggerSource: "ADMIN" | "SCHE
       const inventoryReservationsReleased = await releaseExpiredInventoryReservations(tx, now, configuration.inventoryBatchSize);
       const expiredAiConversationIds = await tx.aiConversation.findMany({ where: { expiresAt: { lte: now } }, select: { id: true }, orderBy: { expiresAt: "asc" }, take: 500 });
       const aiConversationsDeleted = expiredAiConversationIds.length ? await tx.aiConversation.deleteMany({ where: { id: { in: expiredAiConversationIds.map((conversation) => conversation.id) } } }) : { count: 0 };
-      const summary = { expiredEmailDeliveriesFailed: expiredEmailDeliveriesFailed.count, protectedPayloadsPurged: protectedPayloadsPurged.count, securityTokensDeleted: securityTokensDeleted.count, rateLimitsDeleted: rateLimitsDeleted.count, mfaEnrollmentsDeleted: mfaEnrollmentsDeleted.count, inventoryReservationsReleased, aiConversationsDeleted: aiConversationsDeleted.count };
+      const summary = { phoneOtpJobsInspected: smsCleanup.inspected, phoneOtpPayloadsPurged: smsCleanup.purged, expiredEmailDeliveriesFailed: expiredEmailDeliveriesFailed.count, protectedPayloadsPurged: protectedPayloadsPurged.count, securityTokensDeleted: securityTokensDeleted.count, rateLimitsDeleted: rateLimitsDeleted.count, mfaEnrollmentsDeleted: mfaEnrollmentsDeleted.count, inventoryReservationsReleased, aiConversationsDeleted: aiConversationsDeleted.count };
       await tx.maintenanceJobRun.update({ where: { id: run.id }, data: { status: "SUCCEEDED", finishedAt: new Date(), summary } });
       await tx.maintenanceJobState.update({ where: { jobKey: SECURITY_CLEANUP_KEY }, data: { lockedUntil: null, lastFinishedAt: new Date(), lastStatus: "SUCCEEDED", lastSummary: summary, lastErrorCode: null } });
       if (input.triggeredById) await tx.auditLog.create({ data: { actorId: input.triggeredById, action: "maintenance.security_cleanup_completed", entityType: "MaintenanceJobRun", entityId: run.id, metadata: { triggerSource: input.triggerSource, ...summary } } });

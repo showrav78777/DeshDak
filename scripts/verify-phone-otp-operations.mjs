@@ -10,6 +10,10 @@ if(!['localhost','127.0.0.1','[::1]'].includes(url.hostname)||!/^crossly_launch_
 const origin=process.env.TEST_BASE_URL;if(!origin||!['localhost','127.0.0.1'].includes(new URL(origin).hostname))throw new Error('Requires a disposable local app.');
 const source=(await readFile(new URL('../src/modules/notifications/phone-otp-operations.ts',import.meta.url),'utf8')).replace('import "server-only";','').replace('from "zod"',`from "${pathToFileURL(createRequire(import.meta.url).resolve('zod')).href}"`);
 const {purgeObsoletePhoneOtpJobs:purge,phoneOtpJobLabel:label}=await import(`data:text/javascript;base64,${Buffer.from(stripTypeScriptTypes(source)).toString('base64')}`);
+const summarySource=(await readFile(new URL('../src/modules/maintenance/security-cleanup-summary.ts',import.meta.url),'utf8')).replace('import "server-only";','');
+const {formatSecurityCleanupSummary:formatSummary}=await import(`data:text/javascript;base64,${Buffer.from(stripTypeScriptTypes(summarySource)).toString('base64')}`);
+assert.equal(formatSummary({phoneOtpPayloadsPurged:2,privateNote:'never render'}),'SMS payloads removed: 2');
+assert.equal(formatSummary({phoneOtpPayloadsPurged:-1}),'No recognized cleanup counts recorded.');
 const db=new PrismaClient(),marker=randomBytes(8).toString('hex'),sensitive=`PRIVATE_OTP_${marker}`;let admin,customer,browser;
 const path='/admin/notifications/sms';
 async function jwt(user,portal,mfa){const session=await db.authSession.create({data:{userId:user.id,portal,expiresAt:new Date(Date.now()+3600000),mfaVerifiedAt:mfa?new Date():null,clientType:'WEB',clientName:'SMS operations acceptance'}});return new SignJWT({email:user.email,name:user.fullName,roles:[portal==='admin'?'admin':'customer_personal']}).setProtectedHeader({alg:'HS256'}).setJti(session.id).setSubject(user.id).setIssuer(process.env.AUTH_ISSUER??origin).setIssuedAt().setExpirationTime('1h').sign(new TextEncoder().encode(process.env.AUTH_SECRET));}
@@ -43,5 +47,35 @@ try{
  assert.equal((await db.notificationDelivery.findUniqueOrThrow({where:{id:accepted}})).providerReference,'synthetic-provider-accepted');
  assert.equal((await db.notificationDelivery.findUniqueOrThrow({where:{id:unknown}})).status,'SENT');
  assert.equal((await purge(db,500)).purged,0);await assert.rejects(purge(db,501),/Invalid OTP cleanup batch size/);
+ // The existing authenticated maintenance paths now execute OTP retention.
+ const pendingCleanup=await job('QUEUED',0,null,expired.id);
+ const maintenancePath='/api/v1/internal/maintenance/security-cleanup';
+ for(const secret of [undefined,'wrong-maintenance-key']) {
+  const result=await fetch(`${origin}${maintenancePath}`,{method:'POST',headers:secret?{Authorization:`Bearer ${secret}`}:{}});assert.equal(result.status,401);
+  assert.equal((await db.notificationDelivery.findUniqueOrThrow({where:{id:pendingCleanup}})).status,'QUEUED');
+ }
+ for(const deniedToken of [unverified,wrongPortal,forgedRole]) {
+  const rejected=await fetch(`${origin}/api/v1/admin/maintenance/run`,{method:'POST',headers:{Cookie:`crossly_session=${deniedToken}`,Origin:origin}});assert.equal(rejected.status,403);
+  const rejectedConfiguration=await fetch(`${origin}/api/v1/admin/maintenance/configuration`,{headers:{Cookie:`crossly_session=${deniedToken}`}});assert.equal(rejectedConfiguration.status,403);
+ }
+ const wrongOrigin=await fetch(`${origin}/api/v1/admin/maintenance/run`,{method:'POST',headers:{Cookie:`crossly_session=${token}`,Origin:'https://untrusted.example'}});assert.equal(wrongOrigin.status,403);
+ const cleanupResponse=await fetch(`${origin}${maintenancePath}`,{method:'POST',headers:{Authorization:`Bearer ${process.env.MAINTENANCE_JOB_SECRET}`}});assert.equal(cleanupResponse.status,200);
+ const cleanupResult=await cleanupResponse.json();assert.equal(cleanupResult.data.summary.phoneOtpPayloadsPurged,1);
+ assert.equal((await db.notificationDelivery.findUniqueOrThrow({where:{id:pendingCleanup}})).securePayloadCiphertext,null);
+ const runHistory=await db.maintenanceJobRun.findUniqueOrThrow({where:{id:cleanupResult.data.runId}});assert.equal(runHistory.status,'SUCCEEDED');assert.equal(runHistory.summary.phoneOtpPayloadsPurged,1);
+ assert.equal((await db.notificationDelivery.findUniqueOrThrow({where:{id:unknown}})).status,'SENT');
+ const manualPayload=await job('QUEUED',0,null,expired.id);
+ const manualResponse=await fetch(`${origin}/api/v1/admin/maintenance/run`,{method:'POST',headers:{Cookie:`crossly_session=${token}`,Origin:origin}});assert.equal(manualResponse.status,200);assert.equal((await manualResponse.json()).data.summary.phoneOtpPayloadsPurged,1);
+ assert.equal((await db.notificationDelivery.findUniqueOrThrow({where:{id:manualPayload}})).status,'FAILED');
+ const maintenanceContext=await browser.newContext({viewport:{width:390,height:1000}});await maintenanceContext.addCookies([{name:'crossly_session',value:token,url:origin}]);
+ const maintenancePage=await maintenanceContext.newPage();await maintenancePage.goto(`${origin}/admin/system-maintenance`);await maintenancePage.getByRole('heading',{name:'Protected cleanup operations.'}).waitFor();
+ assert.match(await maintenancePage.content(),/SMS payloads removed: 1/);
+ await maintenancePage.route('**/api/v1/admin/maintenance/run',route=>route.abort());
+ maintenancePage.once('dialog',dialog=>dialog.accept());await maintenancePage.getByRole('button',{name:'Run cleanup now'}).click();await maintenancePage.getByText('The cleanup request could not be confirmed. Check recent run history before retrying.').waitFor();assert.ok(await maintenancePage.getByRole('button',{name:'Run cleanup now'}).isEnabled());
+ await maintenancePage.route('**/api/v1/admin/maintenance/configuration',route=>route.fulfill({status:502,contentType:'text/html',body:'upstream unavailable'}));
+ await maintenancePage.getByRole('button',{name:'Save policy'}).click();await maintenancePage.getByText('The settings request could not be confirmed. Reload the saved policy before retrying.').waitFor();assert.ok(await maintenancePage.getByRole('button',{name:'Save policy'}).isEnabled());
+ await maintenancePage.route('**/api/v1/admin/maintenance/run',route=>route.fulfill({status:200,contentType:'application/json',body:'{}'}));
+ maintenancePage.once('dialog',dialog=>dialog.accept());await maintenancePage.getByRole('button',{name:'Run cleanup now'}).click();await maintenancePage.getByText('The cleanup request could not be confirmed. Check recent run history before retrying.').waitFor();assert.ok(await maintenancePage.getByRole('button',{name:'Run cleanup now'}).isEnabled());
+ await maintenanceContext.close();
  console.log('SMS operations passed: Admin/MFA/portal gates, safe projections, filters/pagination/empty states, 390/1440px browser overflow checks and concurrent obsolete-payload cleanup. No SMS sent.');
 }finally{await browser?.close();if(customer)await db.user.delete({where:{id:customer.id}});if(admin)await db.user.delete({where:{id:admin.id}});await db.$disconnect();}

@@ -24,11 +24,35 @@ receipt endpoint, authentication/signature contract or final-delivery event mapp
 Obtain these account-specific details from SSL Wireless before implementing or
 registering a callback. Do not invent a callback URL. No provider was contacted.
 
-The internal cleanup service can remove expired, used or missing-token payloads
-from unattempted jobs, recording the change in audit history. It preserves active
-queued jobs and attempted/reconciliation records and uses no decryption key or
-sender. Scheduling this cleanup through authenticated maintenance remains engineering
-work; there is no owner CLI, Admin mutation button or live cleanup endpoint yet.
+## Run or schedule expired-payload cleanup
+
+Open **Admin → System → System maintenance**, sign in through the Admin portal
+and complete MFA. Review the saved policy, choose **Run cleanup now**, and inspect
+**Recent cleanup runs** for “SMS jobs inspected” and “SMS payloads removed”. This
+existing job also cleans other documented technical artifacts and releases expired
+inventory reservations. The SMS review page links directly to this control.
+
+Cleanup removes obsolete OTP ciphertext only from jobs that have never been
+attempted. Active tokens and attempted/reconciliation evidence remain intact. Each
+purge is audited. It does not send SMS or mark messages delivered. Each run inspects
+a bounded batch of 100 SMS jobs; repeat scheduled runs drain larger backlogs.
+
+The deployment operator can use the existing authenticated scheduler route:
+`POST /api/v1/internal/maintenance/security-cleanup`. Resolve the bearer value from
+`MAINTENANCE_JOB_SECRET` in the secret manager; it must be at least 32 characters.
+Use HTTPS in production. Do not put a secret in a URL, source file, shell history,
+public CI logs or browser code. No SMS-provider secret is needed for cleanup.
+
+A conservative starting schedule is every five minutes, adjusted after observing
+backlog and run duration. Monitor completed runs and failures; overlapping runs are
+blocked. Configure and verify the scheduler in your chosen hosting account—no cloud
+schedule was created here. Rotate the maintenance secret through the approved
+process and test unauthorized requests fail. Follow the wider deployment runbook.
+
+If a run request times out or loses its response, check recent run history before
+retrying. The controls recover from failed requests and permit another attempt once
+the actual run state is known. Cleanup uses the saved retention policy; never reduce
+business or audit retention as a workaround.
 
 Production SMS remains disabled. Public issuance, scheduling, secret resolution,
 receipt processing, operator reconciliation mutations and live provider acceptance

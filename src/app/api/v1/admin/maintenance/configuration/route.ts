@@ -11,7 +11,7 @@ const schema = z.object({ securityTokenRetentionDays: z.coerce.number().int().mi
 
 export async function GET(request: NextRequest) {
   const session = await getRequestSession(request);
-  if (!session?.roles.includes(ROLE.ADMIN)) return apiError("ADMIN_ACCESS_REQUIRED", "Administrator access is required.", 403);
+  if (!session?.roles.includes(ROLE.ADMIN) || session.portal !== "admin" || !session.mfaVerifiedAt) return apiError("ADMIN_ACCESS_REQUIRED", "Administrator access is required.", 403);
   const configuration = await getSecurityCleanupConfiguration();
   return apiSuccess({ configuration }, { headers: { "Cache-Control": "private, no-store, max-age=0" } });
 }
@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
 export async function PATCH(request: NextRequest) {
   if (!hasTrustedMutationOrigin(request)) return apiError("INVALID_ORIGIN", "The request origin could not be verified.", 403);
   const session = await getRequestSession(request);
-  if (!session?.roles.includes(ROLE.ADMIN)) return apiError("ADMIN_ACCESS_REQUIRED", "Administrator access is required.", 403);
+  if (!session?.roles.includes(ROLE.ADMIN) || session.portal !== "admin" || !session.mfaVerifiedAt) return apiError("ADMIN_ACCESS_REQUIRED", "Administrator access is required.", 403);
   const parsed = schema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return apiError("VALIDATION_ERROR", "Check the cleanup retention and batch settings.", 422, z.treeifyError(parsed.error));
   const configuration = await prisma.$transaction(async (tx) => {
