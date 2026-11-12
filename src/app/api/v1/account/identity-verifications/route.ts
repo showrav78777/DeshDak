@@ -1,3 +1,4 @@
+import { authorizePrivateUpload } from "@/modules/private-storage/upload-authorization";
 import { MultipartUploadError, readBoundedMultipart } from "@/lib/uploads/bounded-multipart";
 import { type NextRequest } from "next/server";
 import { z } from "zod";
@@ -53,7 +54,7 @@ export async function POST(request: NextRequest) {
   try { encryptedPhoto = await encryptUploadedIdentityDocument(documentPhoto); }
   catch (error) { return apiError("INVALID_DOCUMENT_PHOTO", error instanceof Error ? error.message : "Unable to process this document photo.", 422); }
   const submission = await prisma.$transaction(async (tx) => {
-    await tx.$queryRaw`SELECT "id" FROM "User" WHERE "id" = ${session.userId} FOR UPDATE`;
+    if (!await authorizePrivateUpload(tx, { userId: session.userId, sessionId: session.sessionId, kind: "identity" })) return "ACCESS_CHANGED" as const;
     const current = await tx.user.findUnique({ where: { id: session.userId }, select: { kycStatus: true } });
     if (!current) return null;
     if (current.kycStatus === "VERIFIED") return "VERIFIED" as const;
@@ -63,6 +64,7 @@ export async function POST(request: NextRequest) {
     await tx.auditLog.create({ data: { actorId: session.userId, action: "identity_verification.submitted", entityType: "IdentityVerification", entityId: created.id, metadata: { documentType: created.documentType, issuingCountryCode: created.issuingCountryCode, documentNumberLast4: created.documentNumberLast4, photoReceived: true, photoMimeType: created.documentPhotoMimeType, photoBytes: created.documentPhotoSizeBytes } } });
     return created;
   });
+  if (submission === "ACCESS_CHANGED") return apiError("CUSTOMER_ACCESS_REQUIRED", "Your account access changed during upload. Sign in again before submitting a document.", 403);
   if (!submission) return apiError("ACCOUNT_NOT_FOUND", "Your customer account was not found.", 404);
   if (submission === "VERIFIED") return apiError("IDENTITY_ALREADY_VERIFIED", "Your identity is already verified. Contact support if your document details need to change.", 409);
   return apiSuccess({ submission }, { status: 201, headers: { "Cache-Control": "private, no-store, max-age=0" } });

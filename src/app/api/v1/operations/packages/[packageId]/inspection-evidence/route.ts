@@ -1,3 +1,4 @@
+import { authorizePrivateUpload } from "@/modules/private-storage/upload-authorization";
 import { MultipartUploadError, readBoundedMultipart } from "@/lib/uploads/bounded-multipart";
 import { type NextRequest } from "next/server";
 import { apiError, apiSuccess } from "@/lib/api";
@@ -52,9 +53,12 @@ export async function POST(request: NextRequest, context: RouteContext<"/api/v1/
   try { encrypted = await encryptInspectionEvidence(media); }
   catch (error) { return apiError("INVALID_EVIDENCE", error instanceof Error ? error.message : "Unable to process this evidence.", 422); }
   const evidence = await prisma.$transaction(async (tx) => {
+    const current = await authorizePrivateUpload(tx, { userId: session.userId, sessionId: session.sessionId, kind: "inspection", packageId });
+    if (!current) return null;
     const created = await tx.inspectionEvidence.create({ data: { packageId, uploadedById: session.userId, ...encrypted } });
-    await tx.auditLog.create({ data: { actorId: session.userId, action: "inspection.evidence_uploaded", entityType: "Package", entityId: packageId, metadata: { evidenceId: created.id, mediaKind: created.mediaKind, mimeType: created.mimeType, sizeBytes: created.sizeBytes, packageCode: pkg.packageCode } } });
+    await tx.auditLog.create({ data: { actorId: session.userId, action: "inspection.evidence_uploaded", entityType: "Package", entityId: packageId, metadata: { evidenceId: created.id, mediaKind: created.mediaKind, mimeType: created.mimeType, sizeBytes: created.sizeBytes, packageCode: current.packageCode } } });
     return created;
   });
+  if (!evidence) return apiError("EVIDENCE_UPLOAD_ACCESS_REQUIRED", "Your package or assignment access changed during upload. Reload before trying again.", 403);
   return apiSuccess({ evidence: { id: evidence.id, mediaKind: evidence.mediaKind, mimeType: evidence.mimeType, sizeBytes: evidence.sizeBytes, reference: `inspection-evidence/${evidence.id}` } }, { status: 201, headers: { "Cache-Control": "private, no-store, max-age=0" } });
 }

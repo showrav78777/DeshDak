@@ -219,3 +219,11 @@ refresh; deterministic held-refresh tests pass. SMS browser review selector now
 waits for visible Admin workspace after Suspense. All 36 selected suites passed
 together, plus lint/type/API/build/security/integrity checks. No owner DB/provider
 used or cookie secrets changed. Dependency/live-service release gates remain open.
+
+13 Nov 2026 — private upload commit authorization now locks/rechecks account,
+session, portal/grants and inspection package/warehouse assignment after media
+processing. Nine real multipart race cases reject changed access without file
+records/success audits; minimal commit-denied audit retained. Three targeted
+disposable suites, lint/type/build/API/security/integrity checks passed. Selected
+runner now 37 suites, not a new full37 acceptance. Production private storage,
+scanning and lifecycle integration remain gated; no owner DB/provider activated.
