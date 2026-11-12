@@ -67,3 +67,11 @@ messages. Do not enable a service simply to clear a readiness item.
 Phone-code account/number binding and concurrent profile/revocation checks are
 implemented. See [the API guide](API_CONNECTION_GUIDE.md) and
 [the SQA runbook](SQA_RUNBOOK.md) for the current boundaries and tests.
+
+### Secure OTP protocol progress — 12 November 2026
+
+An isolated server-side SSL Wireless secure OTP transport now has simulated
+protocol, validation and timeout tests. It is not connected to phone requests or
+a worker and has sent no SMS. No new live environment variables are available.
+The encrypted queue, receipt/reconciliation path and controlled account acceptance
+remain required. See [transport boundaries](../docs/SSL_WIRELESS_OTP_TRANSPORT.md).

@@ -135,7 +135,8 @@
     "test:payment-reconciliation": "node --env-file-if-exists=.env scripts/verify-payment-reconciliation.mjs",
     "test:payment-reconciliation-resolution": "node --env-file-if-exists=.env scripts/verify-payment-reconciliation-resolution.mjs",
     "test:chargeback-posting": "node --no-warnings --experimental-strip-types --env-file-if-exists=.env scripts/verify-chargeback-posting.mjs",
-    "test:payment-operations-monitor": "node --env-file-if-exists=.env scripts/verify-payment-operations-monitor.mjs"
+    "test:payment-operations-monitor": "node --env-file-if-exists=.env scripts/verify-payment-operations-monitor.mjs",
+    "test:ssl-wireless-otp": "node --no-warnings scripts/verify-ssl-wireless-otp.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "3.1163.0",

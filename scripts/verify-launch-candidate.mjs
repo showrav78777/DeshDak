@@ -11,7 +11,7 @@ const checks = [
   "test:website-media-safety", "test:private-upload-safety", "test:private-photo-storage", "test:private-photo-scanner", "test:media-scanner",
   "test:isolated-route-retention", "test:identifier-layout", "test:catalog-sorting",
   "test:source-settings-request", "test:source-readiness", "test:otapi-client", "test:supplier-candidate",
-  "api:generate", "api:contract", "typecheck", "lint", "test:production-config", "test:operations-safety", "test:performance-policy", "test:security-regressions", "test:phone-verification-availability", "test:verification-cookie-portability", "test:dependency-integrity", "test:dependency-audit", "test:container-security", "db:migration:verify",
+  "api:generate", "api:contract", "typecheck", "lint", "test:production-config", "test:operations-safety", "test:performance-policy", "test:security-regressions", "test:phone-verification-availability", "test:ssl-wireless-otp", "test:verification-cookie-portability", "test:dependency-integrity", "test:dependency-audit", "test:container-security", "db:migration:verify",
   "test:csrf-rules", "test:csrf-boundary", "test:admin-mfa", "test:auth-recovery", "test:session-management", "test:observability",
   ...(canInjectDatabaseFaults ? ["test:logout-atomicity", "test:website-media", "test:notification-delivery", "test:email-receipts", "test:private-upload-workflow", "test:private-upload-ledger", "test:private-photo-links", "test:scanned-private-intake", "test:private-photo-delivery"] : []),
   "test:identifier-rules", "test:identifier-database", "test:identifier-assets", "test:identifier-workflow",
