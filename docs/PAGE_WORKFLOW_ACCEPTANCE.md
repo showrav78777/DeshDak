@@ -1244,3 +1244,10 @@ disposable container was removed; no owner database was accessed.
 - Identity and inspection evidence intake now recheck account/session/portal/grants and relevant package/warehouse assignment inside the save transaction. Concurrent revocation, role/assignment changes or ineligible package state prevent file/domain writes and produce a minimal denial audit.
 - Three targeted disposable workflow suites passed together, including actual multipart race tests and existing positive identity/capture/viewing workflows. Lint/type/build, API contract (306 operations), security regressions and dependency integrity passed. No owner DB/live provider was used; owned schema/container cleanup passed.
 - The selected SQA runner now includes 37 suites; the latest complete selected acceptance remains the preceding 36-suite run. Production uploads remain gated. See docs/PRIVATE_UPLOAD_COMMIT_AUTHORIZATION.md for evidence and limits.
+
+## 2026-11-13 — existing private download authorization
+
+- Added a final transactional authorization check to existing identity-document and inspection-evidence downloads. Fresh account/session/portal/role/MFA and inspection warehouse/order ownership checks prevent stale-access delivery; final successes/denials are audited without file contents. Inspection response now includes same-origin resource policy.
+- Three targeted disposable suites passed together: private-download-authorization, private-upload-workflow and inspector-portal. Nine controlled HTTP races verify denial after access changes; positive encrypted viewing/capture workflows pass. Generated schema/container cleanup completed, with synthetic photos only and no owner DB/live provider.
+- Runner now selects 38 suites; no new full38 acceptance is claimed. See docs/LEGACY_PRIVATE_DOWNLOAD_AUTHORIZATION.md for scope and evidence. Production private uploads and remaining release gates stay closed.
+- Lint, typecheck, production build, 306-operation contract, security regressions and dependency integrity passed. No dependency, schema or credential change. Build evidence: /tmp/deshdak-private-download-build-20261113.log.

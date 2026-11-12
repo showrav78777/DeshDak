@@ -141,7 +141,8 @@
     "test:phone-otp-jobs": "node --no-warnings scripts/verify-phone-otp-jobs.mjs",
     "test:phone-otp-operations": "node --no-warnings scripts/verify-phone-otp-operations.mjs",
     "test:session-authorization": "node --no-warnings scripts/verify-session-authorization.mjs",
-    "test:private-upload-authorization": "node scripts/verify-private-upload-authorization.mjs"
+    "test:private-upload-authorization": "node scripts/verify-private-upload-authorization.mjs",
+    "test:private-download-authorization": "node scripts/verify-private-download-authorization.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "3.1163.0",

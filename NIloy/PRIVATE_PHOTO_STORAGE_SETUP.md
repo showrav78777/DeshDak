@@ -5,6 +5,10 @@ recheck session, role and package/warehouse access when saving. No owner setting
 change is needed for this fix. Production uploads remain disabled; the
 infrastructure and lifecycle work below is still required.
 
+Existing private-photo downloads now also recheck current authorization before
+returning bytes and record successful/denied final checks. This needs no owner
+configuration and does not enable production intake or cloud storage.
+
 Do not enable private identity or inspection uploads yet. The S3 adapter core is
 implemented and locally tested, but route/lifecycle integration remains engineering
 work recorded in docs/PRIVATE_PHOTO_STORAGE_ADAPTER.md. No production bucket or
