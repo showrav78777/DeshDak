@@ -58,7 +58,8 @@ try{
  await hasJobLock;const staleReview=review(racingJob);await new Promise(r=>setTimeout(r,30));unlockReview();await acceptance;assert.equal((await staleReview).status,409);assert.equal(await db.auditLog.count({where:{entityId:racingJob,action:'auth.phone_otp_investigation_acknowledged'}}),0);
  const uiJob=await job('SENT',1),reviewContext=await browser.newContext({viewport:{width:390,height:1000}});await reviewContext.addCookies([{name:'crossly_session',value:token,url:origin}]);
  const reviewPage=await reviewContext.newPage();await reviewPage.goto(`${origin}${path}?state=unconfirmed`);
- const card=reviewPage.locator('article').filter({hasText:uiJob});await card.getByRole('checkbox').check();await card.screenshot({path:'/tmp/deshdak-sms-investigation-390.png'});
+ await reviewPage.getByRole('navigation',{name:'Administrator navigation'}).waitFor({state:'attached'});
+ const card=reviewPage.locator('#admin-main-content .sms-otp-list > article:visible').filter({hasText:uiJob});await card.getByRole('checkbox').check();await card.screenshot({path:'/tmp/deshdak-sms-investigation-390.png'});
  await reviewPage.route('**/api/v1/admin/notifications/sms/*/investigation',route=>route.abort());await card.getByRole('button',{name:'Acknowledge investigation'}).click();await card.getByRole('alert').waitFor();assert.ok(await card.getByRole('button',{name:'Acknowledge investigation'}).isEnabled());
  await reviewPage.unroute('**/api/v1/admin/notifications/sms/*/investigation');await card.getByRole('button',{name:'Acknowledge investigation'}).click();await card.getByText('Investigation acknowledged',{exact:true}).waitFor();
  assert.equal(await db.auditLog.count({where:{entityId:uiJob,action:'auth.phone_otp_investigation_acknowledged'}}),1);

@@ -11,7 +11,7 @@ npm run test:sqa:isolated
 
 This command creates its own randomly named PostgreSQL container, random test
 credentials and a generated isolated schema. It selects a local application port,
-runs 35 customer/seller/employee/Admin/authentication/notification workflow suites,
+runs 36 customer/seller/employee/Admin/authentication/notification workflow suites,
 then removes its schema/container on normal success or failure. It rejects remote
 Docker daemons and accepts no database/container/script arguments. It does not
 migrate, seed or target your application database. Live provider switches and
@@ -70,13 +70,13 @@ results in Admin launch readiness. Do not clear a readiness item without evidenc
 No live service, cloud resource or production release was certified by this run.
 
 
-## Latest full selected-suite run — 12 November 2026
+## Latest full selected-suite run — 13 November 2026
 
-All 35 declared workflow suites passed in one owned disposable Docker/PostgreSQL
-run against application source commit `163a837`. This includes customer/seller flows,
+All 36 declared workflow suites passed in one owned disposable Docker/PostgreSQL
+run after the session authorization and notification refresh hardening. This includes customer/seller flows,
 employee role isolation, ordered logistics tracking, claims/refunds, Admin navigation,
-notification controls and the new OTP issuance/operations/maintenance investigation
-checks. The declared suite order/count and final cleanup markers were verified.
+notification controls, OTP issuance/operations/maintenance investigation and the
+new session authorization race checks. The declared suite order/count and final cleanup markers were verified.
 No owner database or real provider was used. Generated schema/container and temporary
 Next.js configuration entries were removed.
 
@@ -86,3 +86,11 @@ findings rooted in the recorded minimatch advisory; production-only audit report
 zero. The compatible-fix dry run does not clear the seven findings. Dependencies and
 the release gate were not changed. Live provider, cloud, load/security and physical
 scanner/phone/printer acceptance remain separate requirements.
+
+
+The session change rejects existing cookies for pending/inactive accounts and
+rechecks authorization after a last-seen update waits on other session changes.
+Unknown role codes do not become effective roles implicitly. Notification controls
+stay pending until server-rendered read state refreshes. No owner configuration or
+secret rotation is required for these code changes. Existing ACTIVE users retain
+normal sessions; pending customers should complete the email verification workflow.

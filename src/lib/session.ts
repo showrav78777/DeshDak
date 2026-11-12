@@ -22,9 +22,16 @@ export async function verifySession(token: string): Promise<SessionPayload | nul
   try {
     const { payload } = await jwtVerify(token, getSecret(), { issuer: process.env.AUTH_ISSUER ?? "http://localhost:3000" });
     if (!payload.sub || !payload.jti) return null;
-    const authSession = await prisma.authSession.findUnique({ where: { id: payload.jti }, include: { user: { include: { roles: { include: { role: true } } } } } });
-    if (!authSession || authSession.userId !== payload.sub || authSession.revokedAt || authSession.expiresAt <= new Date() || authSession.user.deletedAt || authSession.user.status === "SUSPENDED") return null;
-    if (authSession.lastSeenAt < new Date(Date.now() - 60_000)) await prisma.authSession.updateMany({ where: { id: authSession.id, lastSeenAt: { lt: new Date(Date.now() - 60_000) } }, data: { lastSeenAt: new Date() } });
+    const lookup = () => prisma.authSession.findUnique({ where: { id: payload.jti! }, include: { user: { include: { roles: { include: { role: true } } } } } });
+    let authSession = await lookup();
+    if (!authSession || authSession.userId !== payload.sub || authSession.revokedAt || authSession.expiresAt <= new Date() || authSession.user.deletedAt || authSession.user.status !== "ACTIVE") return null;
+    if (authSession.lastSeenAt < new Date(Date.now() - 60_000)) {
+      await prisma.authSession.updateMany({ where: { id: authSession.id, revokedAt: null, expiresAt: { gt: new Date() }, user: { status: "ACTIVE", deletedAt: null }, lastSeenAt: { lt: new Date(Date.now() - 60_000) } }, data: { lastSeenAt: new Date() } });
+      // Heartbeat writes can wait behind logout/revocation. Re-read identity,
+      // roles and MFA after that wait; never authorize from the old snapshot.
+      authSession = await lookup();
+      if (!authSession || authSession.userId !== payload.sub || authSession.revokedAt || authSession.expiresAt <= new Date() || authSession.user.deletedAt || authSession.user.status !== "ACTIVE") return null;
+    }
     const identityRoles = authSession.user.roles.map(({ role }) => role.code);
     const mfaRequired = (authSession.portal === "admin" && identityRoles.includes(ROLE.ADMIN)) || (authSession.portal === "compliance" && identityRoles.includes(ROLE.COMPLIANCE)) || (authSession.portal === "finance" && identityRoles.includes(ROLE.FINANCE));
     const roles = identityRoles.filter((role) => {
@@ -39,7 +46,7 @@ export async function verifySession(token: string): Promise<SessionPayload | nul
       if (role === ROLE.FINANCE) return authSession.portal === "finance" && (!mfaRequired || Boolean(authSession.mfaVerifiedAt));
       if (role === ROLE.SOURCING_AGENT) return authSession.portal === "sourcing";
       if (role === ROLE.KAM) return authSession.portal === "sales";
-      return true;
+      return false;
     });
     return { sessionId: authSession.id, userId: authSession.user.id, fullName: authSession.user.fullName, email: authSession.user.email, residenceCountryCode: authSession.user.residenceCountryCode, portal: authSession.portal, roles, identityRoles, mfaRequired, mfaVerifiedAt: authSession.mfaVerifiedAt };
   } catch { return null; }

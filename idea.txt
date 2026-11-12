@@ -210,3 +210,12 @@ audit zero. TS ESLint 8.72.2 still requires minimatch ^10.2.2; the compatible dr
 changes only brace-expansion and leaves seven findings. No dependencies/lockfile or
 audit gates changed. Release still needs a compatible/reviewed toolchain fix and
 recorded external/production acceptance.
+
+13 Nov 2026 — session resolver now requires ACTIVE accounts, excludes unknown
+effective roles and rechecks authorization after heartbeat waits. Pending-account
+cookie access and stale revocation/MFA/role/expiry snapshots are covered by real
+PostgreSQL regressions. Notification read controls remain busy through server
+refresh; deterministic held-refresh tests pass. SMS browser review selector now
+waits for visible Admin workspace after Suspense. All 36 selected suites passed
+together, plus lint/type/API/build/security/integrity checks. No owner DB/provider
+used or cookie secrets changed. Dependency/live-service release gates remain open.

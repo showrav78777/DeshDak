@@ -57,7 +57,7 @@ export async function GET(request: NextRequest) {
         return created;
       });
     }
-    if (user.status === "SUSPENDED" || user.deletedAt) return clearState(NextResponse.redirect(destination(request, state.mode, "account_unavailable"), 303));
+    if (user.status !== "ACTIVE" || user.deletedAt) return clearState(NextResponse.redirect(destination(request, state.mode, "account_unavailable"), 303));
     const roles = user.roles.map(({ role }) => role.code);
     if (!roles.includes(ROLE.CUSTOMER_PERSONAL)) return clearState(NextResponse.redirect(destination(request, state.mode, "customer_required"), 303));
     const expiresAt = new Date(Date.now() + SESSION_MAX_AGE_SECONDS * 1000);

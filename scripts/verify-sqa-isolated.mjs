@@ -6,7 +6,7 @@ import { createServer } from "node:net";
 // Workflow acceptance only. Production build, full dependency audit and live
 // provider/device acceptance remain separate required release gates.
 const checks = [
-  "test:admin-mfa", "test:auth-recovery", "test:session-management", "test:logout-atomicity",
+  "test:admin-mfa", "test:auth-recovery", "test:session-management", "test:session-authorization", "test:logout-atomicity",
   "test:customer-account", "test:customer-markets", "test:wishlist", "test:cart", "test:coupon-workflow",
   "test:seller-product-revisions", "test:seller-store-revisions", "test:seller-catalog-imports", "test:seller-catalog-connections",
   "test:compliance-portal", "test:finance-portal", "test:sourcing-portal", "test:warehouse-portal", "test:inspector-portal", "test:logistics-portal",

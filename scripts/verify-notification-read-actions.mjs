@@ -61,12 +61,12 @@ try {
  try {for(const [path,body] of [[readPath(rollback.id),undefined],["/api/v1/notifications",{action:"MARK_ALL_READ"}]]){assert.equal((await call(path,owner.token,body)).response.status,500);assert.equal((await db.notification.findUniqueOrThrow({where:{id:rollback.id}})).readAt,null);}}
  finally{await db.$executeRawUnsafe(`DROP TRIGGER "${fault}" ON "NotificationDelivery"`);await db.$executeRawUnsafe(`DROP FUNCTION "${fault}"()`);}
  await call(readPath(rollback.id),owner.token);
- const browser=await chromium.launch({headless:true});
+ const browser=await chromium.launch({headless:true});let diagnosticPage;
  try {
   for(const width of [1440,390]){
    const target=await notice(owner.user.id,`Read browser ${width}`);await notice(owner.user.id,`Read bulk browser ${width}`);
    const context=await browser.newContext({viewport:{width,height:1000}});await context.addCookies([{name:"crossly_session",value:owner.token,url:origin}]);
-   const page=await context.newPage();await page.goto(`${origin}/notifications`);
+   const page=await context.newPage();diagnosticPage=page;await page.goto(`${origin}/notifications`);
    const card=page.locator(".notification-card").filter({hasText:`Read browser ${width}`});const single=card.locator(".notification-read-button");await expect(single).toBeEnabled();
    const head=page.locator(".notification-page-head .notification-action"), all=head.getByRole("button");
    for(const [button,scope,endpoint,bad] of [[single,card,`**${readPath(target.id)}`,{id:foreign.id,readAt:new Date().toISOString()}],[all,head,"**/api/v1/notifications",{updated:-1}]]){
@@ -77,13 +77,24 @@ try {
    }
    for(const [button,endpoint] of [[single,`**${readPath(target.id)}`],[all,"**/api/v1/notifications"]]){
     let release;let count=0;const held=new Promise(resolve=>{release=resolve;});await page.route(endpoint,async route=>{count++;await held;await route.continue();});
+    let releaseRefresh,continuedRefresh;let refreshCount=0;const refreshHeld=new Promise(resolve=>{releaseRefresh=resolve;});const refreshContinued=new Promise(resolve=>{continuedRefresh=resolve;});
+    const refreshPattern=`${origin}/notifications**`;
+    const holdRefresh=async route=>{if(route.request().method()==="GET" && route.request().headers()["rsc"]==="1"){refreshCount++;await refreshHeld;await route.continue();continuedRefresh();return;}await route.continue();};
+    await page.route(refreshPattern,holdRefresh);
     const path=button===single?readPath(target.id):"/api/v1/notifications";const completed=page.waitForResponse(r=>r.url()===`${origin}${path}`&&r.request().method()==="PATCH");void completed.catch(()=>{});
     await button.click();await expect(button).toBeDisabled();await expect.poll(()=>count).toBe(1);release();assert.equal((await completed).status(),200);await page.unroute(endpoint);
+    await expect.poll(()=>refreshCount).toBe(1);await expect(button).toBeDisabled();releaseRefresh();await refreshContinued;await page.unroute(refreshPattern,holdRefresh);
     if(button===single){await expect(card.getByText("Read",{exact:true})).toBeVisible();}else{await expect(page.locator(".notification-summary b")).toHaveText("0");await expect(all).toBeDisabled();}
    }
    assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));await page.evaluate(()=>{document.activeElement?.blur();window.scrollTo(0,0);});await page.screenshot({path:`/tmp/deshdak-read-actions-${width}-20261111.png`});await context.close();
   }
   await notice(owner.user.id,"No JavaScript read fixture");const context=await browser.newContext({javaScriptEnabled:false});await context.addCookies([{name:"crossly_session",value:owner.token,url:origin}]);const page=await context.newPage();await page.goto(`${origin}/notifications`);await expect(page.getByRole("button",{name:"Mark all as read",exact:true})).toBeDisabled();await expect(page.getByRole("button",{name:"Mark read",exact:true})).toBeDisabled();await context.close();
+ }catch(error){
+  if(diagnosticPage && !diagnosticPage.isClosed()){
+   console.error("Read-action failure diagnostics",JSON.stringify({unreadInDatabase:await db.notification.count({where:{userId:owner.user.id,readAt:null}}),actions:await diagnosticPage.locator(".notification-action").allTextContents(),counter:await diagnosticPage.locator(".notification-summary").textContent()}));
+   await diagnosticPage.screenshot({path:"/tmp/deshdak-read-action-failure.png"});
+  }
+  throw error;
  }finally{await browser.close();}
  console.log("Notification read actions passed: ownership/origin/authentication, stable concurrent/retry timestamps, bulk arrival isolation, delivery-channel scope and transaction rollback; desktop/mobile error recovery, pending duplicate guards, real successful reads, no-JavaScript disabled controls and no horizontal overflow. PostgreSQL/API were real; browser failure responses were simulated. No external provider was used.");
 }finally{await db.$disconnect();}

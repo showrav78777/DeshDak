@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useRef, useState } from "react";
+import { useId, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { useClientReady } from "@/components/use-client-ready";
 
@@ -9,11 +9,12 @@ function useNotificationReadAction() {
   const ready = useClientReady();
   const pending = useRef(false);
   const [saving, setSaving] = useState(false);
+  const [refreshing, startRefresh] = useTransition();
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const errorId = useId();
   async function update(path: string, body: object | undefined, confirmed: (data: Record<string, unknown>) => boolean) {
-    if (!ready || pending.current) return;
+    if (!ready || pending.current || refreshing) return;
     pending.current = true; setSaving(true); setError(""); setMessage("");
     try {
       const response = await fetch(path, {
@@ -23,12 +24,12 @@ function useNotificationReadAction() {
       const result = await response.json();
       if (!response.ok) { setError(typeof result?.error?.message === "string" ? result.error.message : "Could not update notification read status."); return; }
       if (!result?.data || !confirmed(result.data)) throw new Error("Unconfirmed notification response");
-      setMessage("Read status updated."); router.refresh();
+      setMessage("Read status updated."); startRefresh(() => router.refresh());
     } catch {
       setError("Could not confirm the update. Reload to check read status before retrying.");
     } finally { pending.current = false; setSaving(false); }
   }
-  return { ready, saving, error, message, errorId, update };
+  return { ready, saving: saving || refreshing, error, message, errorId, update };
 }
 
 export function MarkAllNotificationsRead({ disabled }: { disabled: boolean }) {
