@@ -68,3 +68,21 @@ settlement evidence, authorized private-file access, approved retention/holds,
 backup restoration, monitoring/alerts, load/security review and physical-device
 results in Admin launch readiness. Do not clear a readiness item without evidence.
 No live service, cloud resource or production release was certified by this run.
+
+
+## Latest full selected-suite run — 12 November 2026
+
+All 35 declared workflow suites passed in one owned disposable Docker/PostgreSQL
+run against application source commit `163a837`. This includes customer/seller flows,
+employee role isolation, ordered logistics tracking, claims/refunds, Admin navigation,
+notification controls and the new OTP issuance/operations/maintenance investigation
+checks. The declared suite order/count and final cleanup markers were verified.
+No owner database or real provider was used. Generated schema/container and temporary
+Next.js configuration entries were removed.
+
+This is acceptance of the selected automated workflows, not every page/device or
+production integration. The full npm audit still reports seven moderate package-chain
+findings rooted in the recorded minimatch advisory; production-only audit reports
+zero. The compatible-fix dry run does not clear the seven findings. Dependencies and
+the release gate were not changed. Live provider, cloud, load/security and physical
+scanner/phone/printer acceptance remain separate requirements.

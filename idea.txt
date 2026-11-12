@@ -202,3 +202,11 @@ are idempotent and racing provider acceptance is rechecked under the job lock.
 Strict body has no free-text evidence. Mobile recovery and real disposable DB/API
 tests passed; job sending/delivery fields remain untouched. No SMS sent. Receipt
 contracts, evidence-backed reconciliation and production activation remain open.
+
+12 Nov 2026 — all 35 selected isolated suites passed against source 163a837.
+Ordered completion and owned schema/container cleanup verified; no owner DB/live
+providers. Full audit still has seven moderate minimatch-chain findings; production
+audit zero. TS ESLint 8.72.2 still requires minimatch ^10.2.2; the compatible dry run
+changes only brace-expansion and leaves seven findings. No dependencies/lockfile or
+audit gates changed. Release still needs a compatible/reviewed toolchain fix and
+recorded external/production acceptance.

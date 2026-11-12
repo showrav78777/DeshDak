@@ -74,14 +74,14 @@ This folder is not a completion certificate. Production storage/scanning,
 outstanding provider adapters, wider release acceptance and dependency security clearance remain engineering
 work. Do not classify these as owner-only tasks or deploy as production-ready.
 
-Dependency recheck on 11 November 2026: Next.js and its matching lint configuration
+Dependency recheck on 12 November 2026: Next.js and its matching lint configuration
 remain pinned to 16.4.5. The production-only audit reports zero vulnerabilities;
 the full audit reports seven moderate package-chain findings rooted in
 [minimatch GHSA-g3hv-75wg-m249](https://github.com/advisories/GHSA-g3hv-75wg-m249).
 Official npm metadata and the
 [TypeScript ESLint 8.72.2 manifest](https://github.com/typescript-eslint/typescript-eslint/blob/v8.72.2/packages/typescript-estree/package.json)
-still require minimatch ^10.2.2. The compatible update proposed by npm's dry run
-does not provide the patched minimatch 11 line. No package versions were changed
+still require minimatch ^10.2.2. The current npm dry run proposes only brace-expansion 5.0.12 → 5.0.13 and
+still reports seven moderate findings; it does not provide the patched minimatch 11 line. No package versions were changed
 and no audit gate was bypassed. A compatible upstream fix or separately reviewed
 tooling migration remains engineering follow-up, not an owner credential task.
 Production release/security clearance remains blocked by the full audit gate.
