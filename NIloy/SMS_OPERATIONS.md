@@ -1,7 +1,7 @@
 # SMS operations handoff — 12 November 2026
 
 Open **Admin → Notifications → Review SMS verification jobs**. An Admin portal
-session with MFA is required. The page is read-only and works without enabling SMS.
+session with MFA is required. The page supports investigation acknowledgements without enabling SMS.
 Use its filters, page links and expandable review instructions. It intentionally
 shows no phone numbers, codes, encrypted payloads or customer contact details.
 
@@ -15,7 +15,11 @@ shows no phone numbers, codes, encrypted payloads or customer contact details.
 For an uncertain attempt, search its client reference in the controlled messaging
 account. Compare the send reference and account evidence; preserve the original
 claim and escalate conflicting/missing evidence. The UI has no manual “delivered”
-override. A new code must come from a fresh protected request after its cooldown.
+override. For an unconfirmed attempt, tick the review confirmation and choose
+**Acknowledge investigation**. This records the first reviewing administrator and
+time only; it does not resolve delivery, reserve exclusive ownership or authorize
+a resend. Concurrent/repeated acknowledgements keep the original audit record.
+Do not interpret an acknowledgement as verified provider evidence. A new code must come from a fresh protected request after its cooldown.
 Do not copy OTPs, recipient information or credentials into notes/screenshots.
 
 The [public provider documentation](https://ismsplus.sslwireless.com/api-documentation)

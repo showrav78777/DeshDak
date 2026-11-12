@@ -156,3 +156,28 @@ The earlier note about cleanup lacking a maintenance endpoint is superseded by t
 integration. SMS delivery and its scheduler remain disconnected; cloud scheduling of
 the existing cleanup endpoint remains deployment setup. NIloy/SMS_OPERATIONS.md gives
 the manual and scheduler handoff without exposing any credentials.
+
+
+## Investigation acknowledgement — 12 November 2026
+
+An Admin can now acknowledge an uncertain OTP attempt after reviewing available
+references. A strict confirmation-only API accepts no free-text evidence, codes,
+recipient details, provider payloads or delivery overrides. Role, portal, MFA and
+trusted-origin gates precede an account/session/role recheck inside the transaction.
+The job row is locked; session expiry is checked again after that wait.
+
+The first acknowledgement creates one immutable audit record with administrator
+and timestamp. Concurrent calls serialize on the job, and retries return the existing
+acknowledgement. UI shows the original reviewer or “Former administrator” if the
+account no longer exists. This is an investigation acknowledgement, not an assignment,
+resolution or provider attestation. New acceptance before the locked review causes a
+conflict rather than a stale acknowledgement. Existing acknowledgements remain history.
+
+Job status, attempt count, provider reference, encrypted payload and sending behavior
+are never modified. The action cannot requeue, resend, mark delivered, change the
+recipient or activate a provider. The client recovers from network failure and validates
+the success response; a disabled/no-JavaScript form cannot silently mutate through GET.
+The versioned contract now documents the acknowledgement operation and strict body.
+
+Receipt ingestion, evidence-backed reconciliation and live SMS remain release gates.
+The earlier read-only-page notes are superseded only for this audit action.

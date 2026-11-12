@@ -195,3 +195,10 @@ success payloads without falsely claiming completion. Real disposable browser/AP
 tests passed for scheduler/manual cleanup, auth denials, preserved send attempts and
 cleanup regressions. No SMS sent. Cloud schedule remains owner deployment work;
 NIloy/SMS_OPERATIONS.md contains the handoff. Delivery/receipt activation remains gated.
+
+12 Nov 2026 — protected investigation acknowledgement added for uncertain SMS jobs.
+One immutable audit records first Admin reviewer/time; concurrent/repeated calls
+are idempotent and racing provider acceptance is rechecked under the job lock.
+Strict body has no free-text evidence. Mobile recovery and real disposable DB/API
+tests passed; job sending/delivery fields remain untouched. No SMS sent. Receipt
+contracts, evidence-backed reconciliation and production activation remain open.

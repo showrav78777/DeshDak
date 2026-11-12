@@ -13,6 +13,11 @@
 .sms-otp-list dt{font-weight:700;color:#4f6777;margin-top:12px}
 .sms-otp-list dd{margin:0;min-width:0}
 .sms-otp-list code{overflow-wrap:anywhere;word-break:break-word}
-.sms-otp-operations :is(a,button,select,summary):focus-visible{outline:3px solid #167e95;outline-offset:3px}
+.sms-otp-operations :is(a,button,select,summary,input):focus-visible{outline:3px solid #167e95;outline-offset:3px}
 @media(max-width:900px){.sms-otp-list{grid-template-columns:minmax(0,1fr)}}
 @media(max-width:600px){.sms-otp-filter :is(select,button){width:100%}.sms-otp-list article,.sms-otp-instructions{padding:18px}}
+
+.sms-otp-review,.sms-otp-acknowledged{border-top:1px solid #d9e6ed;margin-top:20px;padding-top:16px}
+.sms-otp-review label{display:flex;align-items:flex-start;gap:12px}
+.sms-otp-review input{flex:0 0 auto;width:22px;height:22px;margin-top:3px}
+.sms-otp-review button{min-height:48px;max-width:100%;white-space:normal}

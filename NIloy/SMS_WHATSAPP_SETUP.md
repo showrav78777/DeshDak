@@ -96,6 +96,6 @@ The service includes a resend cooldown and returns no code to the caller. The pu
 request route is still gated; these tests do not activate live SMS. No manual owner
 change is required for this increment.
 
-Admin now has an MFA-protected, read-only SMS job review page under Notifications.
+Admin now has an MFA-protected SMS job review page under Notifications, including an investigation acknowledgement that never changes sending or delivery status.
 See [SMS operations](SMS_OPERATIONS.md) for investigation steps, state meanings and
 remaining receipt/cleanup-scheduling requirements. It does not activate sending.

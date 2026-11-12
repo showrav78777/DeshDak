@@ -37,6 +37,32 @@ try{
  assert.equal(label({status:'DELIVERED',attempts:1,providerReference:'x'}),'Unexpected state — review required');
  const {chromium}=await import('@playwright/test');browser=await chromium.launch({headless:true});
  for(const width of [390,1440]){const context=await browser.newContext({viewport:{width,height:1000}});await context.addCookies([{name:'crossly_session',value:token,url:origin}]);const page=await context.newPage();await page.goto(`${origin}${path}?state=all`);await page.getByRole('heading',{name:'SMS verification review.'}).waitFor();await page.getByRole('navigation',{name:'Administrator navigation'}).waitFor({state:'attached'});await page.evaluate(()=>document.fonts.ready);assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));await page.screenshot({path:`/tmp/deshdak-sms-operations-${width}.png`,fullPage:false});await context.close();}
+ // Investigation acknowledgements are immutable and never alter send state.
+ const reviewPath=id=>`${origin}/api/v1/admin/notifications/sms/${id}/investigation`;
+ const review=(id,credential=token,body={reviewed:true},sourceOrigin=origin)=>fetch(reviewPath(id),{method:'POST',headers:{Cookie:`crossly_session=${credential}`,Origin:sourceOrigin,'Content-Type':'application/json'},body:JSON.stringify(body)});
+ for(const credential of [unverified,wrongPortal,forgedRole])assert.equal((await review(unknown,credential)).status,403);
+ assert.equal((await review(unknown,token,{reviewed:true},'https://untrusted.example')).status,403);
+ assert.equal((await review(unknown,token,{reviewed:false})).status,422);
+ assert.equal((await review(unknown,token,{reviewed:true,delivered:true})).status,422);
+ assert.equal((await review(accepted)).status,409);
+ const beforeReview=await db.notificationDelivery.findUniqueOrThrow({where:{id:unknown}});
+ const reviews=await Promise.all([review(unknown),review(unknown),review(unknown)]);for(const r of reviews)assert.equal(r.status,200);
+ const results=await Promise.all(reviews.map(r=>r.json()));assert.equal(results.filter(r=>r.data.replayed===false).length,1);
+ assert.equal(await db.auditLog.count({where:{entityId:unknown,action:'auth.phone_otp_investigation_acknowledged'}}),1);
+ assert.deepEqual(await db.notificationDelivery.findUniqueOrThrow({where:{id:unknown}}),beforeReview);
+ const ack=await db.auditLog.findFirstOrThrow({where:{entityId:unknown,action:'auth.phone_otp_investigation_acknowledged'}});assert.equal(ack.actorId,admin.id);assert.deepEqual(ack.metadata,{reviewed:true,outcome:'INVESTIGATION_ONLY'});
+ // Acceptance committed while a review waits must win over a stale page.
+ const racingJob=await job('SENT',1);let unlockReview,jobLocked;
+ const heldReview=new Promise(r=>unlockReview=r),hasJobLock=new Promise(r=>jobLocked=r);
+ const acceptance=db.$transaction(async tx=>{await tx.notificationDelivery.update({where:{id:racingJob},data:{providerReference:'synthetic-racing-acceptance'}});jobLocked();await heldReview;});
+ await hasJobLock;const staleReview=review(racingJob);await new Promise(r=>setTimeout(r,30));unlockReview();await acceptance;assert.equal((await staleReview).status,409);assert.equal(await db.auditLog.count({where:{entityId:racingJob,action:'auth.phone_otp_investigation_acknowledged'}}),0);
+ const uiJob=await job('SENT',1),reviewContext=await browser.newContext({viewport:{width:390,height:1000}});await reviewContext.addCookies([{name:'crossly_session',value:token,url:origin}]);
+ const reviewPage=await reviewContext.newPage();await reviewPage.goto(`${origin}${path}?state=unconfirmed`);
+ const card=reviewPage.locator('article').filter({hasText:uiJob});await card.getByRole('checkbox').check();await card.screenshot({path:'/tmp/deshdak-sms-investigation-390.png'});
+ await reviewPage.route('**/api/v1/admin/notifications/sms/*/investigation',route=>route.abort());await card.getByRole('button',{name:'Acknowledge investigation'}).click();await card.getByRole('alert').waitFor();assert.ok(await card.getByRole('button',{name:'Acknowledge investigation'}).isEnabled());
+ await reviewPage.unroute('**/api/v1/admin/notifications/sms/*/investigation');await card.getByRole('button',{name:'Acknowledge investigation'}).click();await card.getByText('Investigation acknowledged',{exact:true}).waitFor();
+ assert.equal(await db.auditLog.count({where:{entityId:uiJob,action:'auth.phone_otp_investigation_acknowledged'}}),1);
+ assert.equal((await db.notificationDelivery.findUniqueOrThrow({where:{id:uiJob}})).status,'SENT');await reviewContext.close();
  const active=await db.securityToken.create({data:{userId:customer.id,purpose:'PHONE_VERIFICATION',tokenHash:randomBytes(32).toString('hex'),expiresAt:new Date(Date.now()+300000)}});
  const expired=await db.securityToken.create({data:{userId:customer.id,purpose:'PHONE_VERIFICATION',tokenHash:randomBytes(32).toString('hex'),expiresAt:new Date(0)}});
  const used=await db.securityToken.create({data:{userId:customer.id,purpose:'PHONE_VERIFICATION',tokenHash:randomBytes(32).toString('hex'),expiresAt:new Date(Date.now()+300000),usedAt:new Date()}});

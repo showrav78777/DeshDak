@@ -3492,6 +3492,89 @@
         }
       }
     },
+    "/admin/notifications/sms/{deliveryId}/investigation": {
+      "post": {
+        "operationId": "post_admin_notifications_sms_deliveryId_investigation",
+        "tags": [
+          "admin"
+        ],
+        "summary": "Idempotently acknowledge one uncertain SMS investigation with Admin MFA; never resend or confirm delivery",
+        "security": [
+          {
+            "cookieSession": []
+          }
+        ],
+        "x-crossly-access": "authenticated",
+        "x-crossly-error-codes": [
+          "ADMIN_MFA_REQUIRED",
+          "UNTRUSTED_ORIGIN",
+          "VALIDATION_ERROR",
+          "SMS_REVIEW_CONFLICT",
+          "SMS_REVIEW_UNAVAILABLE"
+        ],
+        "parameters": [
+          {
+            "name": "deliveryId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SmsOtpInvestigationRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response.",
+            "headers": {
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SmsOtpInvestigationResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "#/components/responses/Unprocessable"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
     "/admin/orders/{orderId}/purchase-review": {
       "patch": {
         "operationId": "patch_admin_orders_orderId_purchase_review",
@@ -19127,6 +19210,45 @@
           "confirmed": {
             "type": "boolean",
             "const": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "SmsOtpInvestigationRequest": {
+        "type": "object",
+        "required": [
+          "reviewed"
+        ],
+        "properties": {
+          "reviewed": {
+            "type": "boolean",
+            "const": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "SmsOtpInvestigationResponse": {
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "type": "object",
+            "required": [
+              "acknowledged",
+              "replayed"
+            ],
+            "properties": {
+              "acknowledged": {
+                "type": "boolean",
+                "const": true
+              },
+              "replayed": {
+                "type": "boolean"
+              }
+            },
+            "additionalProperties": false
           }
         },
         "additionalProperties": false
