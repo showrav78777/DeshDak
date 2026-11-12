@@ -81,3 +81,11 @@ tested with synthetic secrets. They remain disconnected: no jobs are persisted o
 sent. The worker still needs atomic job claims, locked account/session/token
 revalidation, reconciliation and receipt handling before controlled provider tests.
 Do not enable production SMS yet.
+
+The disconnected durable queue/worker core now has real disposable PostgreSQL tests.
+It prevents automatic resend after uncertain outcomes, validates fresh locked account
+and token state, and removes OTP ciphertext when claiming/cancelling a job. This
+supersedes the earlier “no jobs are persisted” implementation note for internal tests;
+public phone requests still do not queue SMS. Live issuance, scheduling, delivery
+receipts and operator reconciliation still require implementation and certification.
+No new production switch or provider credentials should be configured yet.

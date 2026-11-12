@@ -11,7 +11,7 @@ npm run test:sqa:isolated
 
 This command creates its own randomly named PostgreSQL container, random test
 credentials and a generated isolated schema. It selects a local application port,
-runs 33 customer/seller/employee/Admin/authentication/notification workflow suites,
+runs 34 customer/seller/employee/Admin/authentication/notification workflow suites,
 then removes its schema/container on normal success or failure. It rejects remote
 Docker daemons and accepts no database/container/script arguments. It does not
 migrate, seed or target your application database. Live provider switches and

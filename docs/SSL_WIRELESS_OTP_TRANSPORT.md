@@ -20,8 +20,8 @@ response is unconfirmed and must be reconciled rather than automatically retried
 The caller must allocate unique client references; this component does not persist
 idempotency records. The vendor's CBC protocol is not a general encryption utility.
 
-Remaining engineering: encrypted outbox, transactional token dispatch, account and
-phone revalidation before sending, expiry handling, quota controls, secret resolution,
+Remaining live integration: protected transactional token dispatch, scheduling,
+quota controls, secret resolution,
 authenticated delivery receipts and uncertain-send reconciliation. Controlled provider
 acceptance must confirm recipient format, credential constraints, approved sender,
 IP allowlisting, error/receipt contracts and international coverage. Independent
@@ -52,3 +52,39 @@ tampering, key mismatch/missing production key, stable references and randomized
 ciphertexts using synthetic secrets. Transport tests additionally cover caller
 reference mutation during in-flight I/O. Database race and live dispatch acceptance
 remain outstanding until the worker exists.
+
+## Durable job core — 12 November 2026
+
+`phone-otp-jobs.ts` now provides transactional enqueue and an internal worker core
+using the existing notification delivery table. Enqueue validates the locked user,
+session and phone token, stores only the encrypted payload and serializes duplicate
+producers by token. Rollback removes the whole enqueue. No schema migration is needed.
+
+The worker revalidates authoritative account/session/token state under database
+locks. Its committed claim sets attempts to one and removes the encrypted OTP before
+provider I/O. A minimal audit record preserves the random client reference for
+reconciliation. A timeout, process death or failed acknowledgement persistence leaves
+an unconfirmed claim; it is never reclaimed or automatically retried, even if its
+status is accidentally reset. This prioritizes avoiding duplicate sends over guaranteed
+delivery after a crash. Requesting a fresh code requires the protected issuance flow.
+
+Provider acceptance stores an opaque reference and does not mark DELIVERED. Stale
+account/session/phone/token evidence cancels the queued job and purges its payload.
+A decryption failure stops processing with a redacted operator error and preserves
+the record for key/corruption review. Do not blindly reset claims or replace keys.
+
+Account changes that commit before the claim are honored. A change after the claim
+commits may race with the already authorized send; the existing phone-bound token
+confirmation rules must still reject invalidated/expired codes. No database locks are
+held across network calls. The worker expects the reviewed sender's bounded deadline.
+
+Real disposable PostgreSQL tests passed for duplicate producers, concurrent workers,
+rollback, stale/used/expired/verified/disabled/revoked states, revocation during lock
+wait, corruption, unknown outcomes, ciphertext purge and persistence failure after
+acceptance. Transport calls were simulated. The broader SQA runner now includes this
+suite (34 selected suites); only this new suite was run in this increment.
+
+No public route, scheduler or Admin control connects this core to live sending.
+Production SMS remains unavailable. Protected issuance/rate-limit integration,
+reconciliation operations, authenticated delivery receipts, retention controls,
+provider/account certification and independent review remain release gates.

@@ -163,3 +163,10 @@ provider acceptance and independent review remain release gates. See
 including account/session/token/phone binding, expiry and tamper checks. No durable
 worker or live path yet. Remaining worker must use fresh locked context and durable
 one-attempt claims; reopening a payload is not authorization to send. No SMS sent.
+
+12 Nov 2026 — durable OTP enqueue/worker core added, tested in owned disposable
+PostgreSQL. Atomic duplicate enqueue/claim, token/account/session checks and no
+reclaim after uncertain sends. Claim purges encrypted OTP, audit retains opaque
+client reference. Decryption failures preserve queued evidence for operator review.
+Not connected to routes or scheduling; live SMS stays disabled. Remaining protected
+issuance, receipts, reconciliation workflow, retention and provider certification.

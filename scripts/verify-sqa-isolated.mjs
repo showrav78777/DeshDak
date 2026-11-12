@@ -12,7 +12,7 @@ const checks = [
   "test:compliance-portal", "test:finance-portal", "test:sourcing-portal", "test:warehouse-portal", "test:inspector-portal", "test:logistics-portal",
   "test:ship-for-me", "test:rma-workflow", "test:support-workflow", "test:support-policy", "test:ai-chat-handoff", "test:sales-kam", "test:identifier-workflow",
   "test:admin-shell", "test:admin-audit-log", "test:launch-readiness", "test:notification-preferences", "test:notification-read-actions",
-  "test:phone-code-binding", "test:phone-verification-availability",
+  "test:phone-code-binding", "test:phone-verification-availability", "test:phone-otp-jobs",
 ];
 if (process.argv.length > 2) throw new Error("This SQA runner accepts no external database, container or script arguments.");
 let docker = "docker";

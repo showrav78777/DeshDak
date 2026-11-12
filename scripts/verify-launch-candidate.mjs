@@ -22,7 +22,7 @@ const checks = [
   "test:ship-for-me", "test:rma-workflow", "test:support-workflow", "test:support-policy", "test:help-centre", "test:ai-chat-handoff", "test:ai-provider-response",
   "test:public-rate-limit",
   "test:admin-shell", "test:admin-audit-log", "test:launch-readiness", "test:notification-preferences",
-  ...(canInjectDatabaseFaults ? ["test:notification-read-actions", "test:phone-code-binding"] : []), "test:marketing-campaigns",
+  ...(canInjectDatabaseFaults ? ["test:notification-read-actions", "test:phone-code-binding", "test:phone-otp-jobs"] : []), "test:marketing-campaigns",
   ...(canInjectDatabaseFaults ? ["test:private-photo-quarantine", "test:private-photo-reviews", "test:private-photo-rescans"] : []),
   ...(skipBuild ? [] : ["build"]),
 ];
