@@ -1251,3 +1251,10 @@ disposable container was removed; no owner database was accessed.
 - Three targeted disposable suites passed together: private-download-authorization, private-upload-workflow and inspector-portal. Nine controlled HTTP races verify denial after access changes; positive encrypted viewing/capture workflows pass. Generated schema/container cleanup completed, with synthetic photos only and no owner DB/live provider.
 - Runner now selects 38 suites; no new full38 acceptance is claimed. See docs/LEGACY_PRIVATE_DOWNLOAD_AUTHORIZATION.md for scope and evidence. Production private uploads and remaining release gates stay closed.
 - Lint, typecheck, production build, 306-operation contract, security regressions and dependency integrity passed. No dependency, schema or credential change. Build evidence: /tmp/deshdak-private-download-build-20261113.log.
+
+## 2026-11-13 — transactional identity review authorization
+
+- Compliance identity decisions now recheck ACTIVE account/session/portal/role/MFA in the save transaction. Reviewer/customer accounts are locked in identifier order before submission updates, aligning with customer-first replacement. Denials audit ACCESS_CHANGED without private evidence and leave identity/customer state untouched; existing version/status conflicts remain 409.
+- Three targeted disposable suites passed together: identity-review-authorization, private-upload-workflow and compliance-portal. Controlled authorization races, concurrent opposing reviewers (one success/one conflict), replacement conflict, valid rejection, origin/role/MFA and real identity-upload regressions passed. Schema/container cleanup completed; no owner DB/live provider used.
+- Runner now selects 39 suites; no complete39 acceptance claimed. Scope and evidence: docs/IDENTITY_REVIEW_AUTHORIZATION.md. No new manual setting or production activation.
+- Lint/type/build, 306-operation API contract, security regressions and dependency integrity passed. Build evidence: /tmp/deshdak-identity-review-build-20261113.log. Existing dependency/provider/cloud/device release gates remain unresolved.

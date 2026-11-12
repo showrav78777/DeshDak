@@ -234,3 +234,9 @@ Nine controlled HTTP races and positive private upload/inspection suites passed
 together in disposable storage; no owner database or provider used. Runner now
 selects 38 suites, not a new full38 acceptance. Production object-storage/scan
 intake and lifecycle integration remain unfinished and disabled.
+
+13 Nov 2026 — Compliance identity decisions now reauthorize account/session/role/
+portal/MFA when saved and serialize with customer replacement using account-first
+locks. Four access-change races, opposing reviews and replacement conflict pass
+in three disposable workflow suites. Runner39 is selected coverage, not full39
+acceptance. Production identity storage/scanning integration remains disabled.

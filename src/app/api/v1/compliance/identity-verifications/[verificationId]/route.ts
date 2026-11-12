@@ -1,3 +1,4 @@
+import { reviewIdentityVerification } from "@/modules/compliance/identity-review";
 import { type NextRequest } from "next/server";
 import { z } from "zod";
 import { apiError, apiSuccess } from "@/lib/api";
@@ -15,14 +16,8 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ v
   const parsed = schema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return apiError("VALIDATION_ERROR", "Choose a decision and document the review reason.", 422, z.treeifyError(parsed.error));
   const { verificationId } = await context.params;
-  const result = await prisma.$transaction(async (tx) => {
-    const updated = await tx.identityVerification.updateMany({ where: { id: verificationId, status: "PENDING", version: parsed.data.version }, data: { status: parsed.data.decision, reviewNote: parsed.data.note, reviewedAt: new Date(), reviewedById: session.userId, version: { increment: 1 } } });
-    if (updated.count !== 1) return null;
-    const verification = await tx.identityVerification.findUniqueOrThrow({ where: { id: verificationId }, select: { id: true, userId: true, documentType: true, status: true } });
-    await tx.user.update({ where: { id: verification.userId }, data: { kycStatus: verification.status } });
-    await tx.auditLog.create({ data: { actorId: session.userId, action: `identity_verification.${parsed.data.decision.toLowerCase()}`, entityType: "IdentityVerification", entityId: verification.id, metadata: { customerId: verification.userId, documentType: verification.documentType } } });
-    return verification;
-  });
-  if (!result) return apiError("IDENTITY_REVIEW_CONFLICT", "This submission is no longer pending or changed in another session. Refresh and try again.", 409);
-  return apiSuccess({ verification: result }, { headers: { "Cache-Control": "private, no-store, max-age=0" } });
+  const result = await reviewIdentityVerification(prisma, { userId: session.userId, sessionId: session.sessionId, verificationId, ...parsed.data });
+  if (result.outcome === "denied") return apiError("COMPLIANCE_ACCESS_REQUIRED", "Your review access changed. Sign in again before reviewing this submission.", 403);
+  if (result.outcome === "conflict") return apiError("IDENTITY_REVIEW_CONFLICT", "This submission is no longer pending or changed in another session. Refresh and try again.", 409);
+  return apiSuccess({ verification: result.verification }, { headers: { "Cache-Control": "private, no-store, max-age=0" } });
 }

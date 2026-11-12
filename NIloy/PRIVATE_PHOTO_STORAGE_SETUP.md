@@ -9,6 +9,11 @@ Existing private-photo downloads now also recheck current authorization before
 returning bytes and record successful/denied final checks. This needs no owner
 configuration and does not enable production intake or cloud storage.
 
+Compliance identity decisions also recheck current reviewer access/MFA when saved.
+If a submission changed or was replaced, refresh the Compliance queue and review
+the current pending submission; after an access denial, sign in again with the
+authorized Compliance account. No new owner configuration is required.
+
 Do not enable private identity or inspection uploads yet. The S3 adapter core is
 implemented and locally tested, but route/lifecycle integration remains engineering
 work recorded in docs/PRIVATE_PHOTO_STORAGE_ADAPTER.md. No production bucket or
