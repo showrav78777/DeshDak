@@ -177,3 +177,12 @@ account cooldown, historical code collision handling, input snapshot, rollback a
 simulated dispatch. Public production route remains unavailable; future connection
 must preserve auth/origin/IP+account quotas and provider-readiness checks. Receipts,
 reconciliation, scheduling, retention and certification remain release gates.
+
+12 Nov 2026 — Admin SMS operations page added with MFA/portal/role gates, bounded
+safe projections, filters/pagination, mobile cards and expandable instructions.
+Read-only: no resend/status-reset/delivered override. Internal obsolete-payload cleanup
+handles expired/used/missing-token unattempted jobs with atomic audit records;
+attempted claims and active tokens are preserved. Browser+database tests use only
+synthetic data. Public provider docs did not establish receipt endpoint/signatures;
+obtain account contract before implementing callbacks. See NIloy/SMS_OPERATIONS.md.
+Cleanup scheduling and reconciliation mutation workflows remain engineering work.

@@ -116,3 +116,23 @@ The future connection must keep authentication, trusted-origin validation, IP/ac
 abuse quotas and reviewed provider readiness. The service cooldown is additional to
 those controls. Scheduling, receipts, operator reconciliation, retention and live
 provider acceptance remain required before activation.
+
+## Read-only operations and obsolete-payload cleanup — 12 November 2026
+
+Admin Notifications now links to an MFA-protected SMS review page. Queries explicitly
+select job metadata, without recipient/contact details, message bodies or encryption
+fields. Bounded filter/pagination queries and a restricted audit projection expose
+only the opaque references needed to investigate uncertain attempts. Labels distinguish
+queued, unconfirmed and accepted states; unsupported states never become “delivered”.
+
+The internal cleanup service purges obsolete encrypted payloads only from unattempted
+queued jobs, matching token identity, account ownership and PHONE_VERIFICATION purpose.
+Expiry, use/invalidation or missing token makes the payload obsolete. Conditional
+updates serialize competing cleaners and claim races. Each purge and its minimal
+system audit record commit together. Active queued tokens and all attempted claims
+are preserved. This helper has no public/maintenance endpoint or automatic schedule yet.
+
+The public [provider documentation](https://ismsplus.sslwireless.com/api-documentation)
+review did not establish a receipt authentication contract or final-event mapping.
+No callback parser, speculative endpoint or manual delivery override was added.
+The owner handoff is NIloy/SMS_OPERATIONS.md. Live provider certification remains open.

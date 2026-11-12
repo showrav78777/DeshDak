@@ -30,6 +30,7 @@ Pinduoduo, Google login/Gmail, OpenAI, email verification, SMS and WhatsApp.
 It lists account steps, existing environment names and unfinished adapters.
 Your selected messaging approach and researched SMS recommendation are in
 [Bangladesh SMS and Meta WhatsApp setup](SMS_WHATSAPP_SETUP.md).
+Use [SMS operations](SMS_OPERATIONS.md) for the read-only Admin review and remaining receipt requirements.
 
 Open Admin → System → Live setup guide for the required variables, setup steps and
 readiness status. Supply credentials through the deployment secret manager:

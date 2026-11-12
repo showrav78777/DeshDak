@@ -95,3 +95,7 @@ job and audit record commit together; old unused codes/jobs are replaced safely.
 The service includes a resend cooldown and returns no code to the caller. The public
 request route is still gated; these tests do not activate live SMS. No manual owner
 change is required for this increment.
+
+Admin now has an MFA-protected, read-only SMS job review page under Notifications.
+See [SMS operations](SMS_OPERATIONS.md) for investigation steps, state meanings and
+remaining receipt/cleanup-scheduling requirements. It does not activate sending.

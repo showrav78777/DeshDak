@@ -138,7 +138,8 @@
     "test:payment-operations-monitor": "node --env-file-if-exists=.env scripts/verify-payment-operations-monitor.mjs",
     "test:ssl-wireless-otp": "node --no-warnings scripts/verify-ssl-wireless-otp.mjs",
     "test:phone-otp-payload": "node --no-warnings scripts/verify-phone-otp-payload.mjs",
-    "test:phone-otp-jobs": "node --no-warnings scripts/verify-phone-otp-jobs.mjs"
+    "test:phone-otp-jobs": "node --no-warnings scripts/verify-phone-otp-jobs.mjs",
+    "test:phone-otp-operations": "node --no-warnings scripts/verify-phone-otp-operations.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "3.1163.0",

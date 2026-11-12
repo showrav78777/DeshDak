@@ -34,6 +34,7 @@ export default async function AdminNotificationsPage() {
       <article className="admin-hub-card"><span>✓</span><div><h2>Receipt-confirmed email</h2><p>Signed receipt confirms recipient-server delivery, not reading.</p></div><b>{confirmedEmail}</b></article>
       <article className="admin-hub-card"><span>!</span><div><h2>Failed delivery</h2><p>Requires provider or worker attention.</p></div><b>{failed}</b></article>
     </div>
+    <p><Link className="button secondary" href="/admin/notifications/sms">Review SMS verification jobs</Link></p>
     <p><Link className="button secondary" href="/admin/notifications/email-suppressions">Review blocked email addresses ({blockedEmail}) →</Link></p>
     {pendingReceipts ? <p className="form-help">{pendingReceipts} signed receipt(s) await a matching send record or legacy recipient evidence. Check worker/provider evidence; never infer delivery from an unmatched receipt.</p> : null}
     <AdminMarketingCampaignForm customers={optedInCustomers} />

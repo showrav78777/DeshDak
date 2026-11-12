@@ -1,0 +1,18 @@
+.sms-otp-operations{width:100%;max-width:none;box-sizing:border-box}
+.sms-otp-operations :is(p,li,label,select,button,a,dt,dd){font-size:16px;line-height:1.6;overflow-wrap:anywhere}
+.sms-otp-instructions{padding:20px 24px;background:#edf7fa;border:1px solid #c5e2eb;border-radius:16px;margin:24px 0}
+.sms-otp-operations h1{font-size:clamp(28px,3vw,40px);line-height:1.2;margin:12px 0 20px}
+.sms-otp-instructions summary{font-size:18px;font-weight:700;min-height:48px;cursor:pointer;display:list-item;align-content:center}
+.sms-otp-readiness{padding:14px 18px;border-left:4px solid #19718c;background:#edf7fa}
+.sms-otp-instructions ol{padding-left:24px}
+.sms-otp-filter,.sms-otp-pagination{display:flex;flex-wrap:wrap;align-items:center;gap:16px;margin:24px 0}
+.sms-otp-filter select{min-height:48px;padding:8px 12px;border:1px solid #adc6d3;border-radius:8px;background:white}
+.sms-otp-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;align-items:start}
+.sms-otp-list article{min-width:0;padding:24px;background:white;border:1px solid #d9e6ed;border-radius:16px}
+.sms-otp-list h2{font-size:20px;line-height:1.4;margin-top:0}
+.sms-otp-list dt{font-weight:700;color:#4f6777;margin-top:12px}
+.sms-otp-list dd{margin:0;min-width:0}
+.sms-otp-list code{overflow-wrap:anywhere;word-break:break-word}
+.sms-otp-operations :is(a,button,select,summary):focus-visible{outline:3px solid #167e95;outline-offset:3px}
+@media(max-width:900px){.sms-otp-list{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:600px){.sms-otp-filter :is(select,button){width:100%}.sms-otp-list article,.sms-otp-instructions{padding:18px}}
