@@ -75,3 +75,9 @@ protocol, validation and timeout tests. It is not connected to phone requests or
 a worker and has sent no SMS. No new live environment variables are available.
 The encrypted queue, receipt/reconciliation path and controlled account acceptance
 remain required. See [transport boundaries](../docs/SSL_WIRELESS_OTP_TRANSPORT.md).
+
+Encrypted OTP job payloads and dispatch preflight checks are now implemented and
+tested with synthetic secrets. They remain disconnected: no jobs are persisted or
+sent. The worker still needs atomic job claims, locked account/session/token
+revalidation, reconciliation and receipt handling before controlled provider tests.
+Do not enable production SMS yet.

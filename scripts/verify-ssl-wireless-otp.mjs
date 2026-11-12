@@ -45,6 +45,13 @@ await denied(() => new Response(new ReadableStream({ cancel() { rejectedBodyCanc
 const bodies = [];
 const random = create(config, { transport: async (_, options) => { bodies.push(JSON.parse(options.body).sms); return response(payload()); } });
 await random.submitOtp(input()); await random.submitOtp(input()); assert.notEqual(bodies[0], bodies[1]);
+// The caller cannot change the reference being checked while I/O is in flight.
+let release;
+const pending = new Promise(resolve => { release = resolve; });
+const mutable = input();
+const snapshot = create(config, { transport: async () => { await pending; return response(payload()); } });
+const submitted = snapshot.submitOtp(mutable); mutable.clientReference = 'changed'; release();
+assert.equal((await submitted).clientReference, input().clientReference);
 const originalTimeout = globalThis.setTimeout;
 try {
   globalThis.setTimeout = (callback, ms, ...args) => originalTimeout(callback, ms === 12000 ? 10 : ms, ...args);

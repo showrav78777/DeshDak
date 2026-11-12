@@ -39,6 +39,7 @@ export function createSslWirelessOtpTransport(config: Configuration, dependencie
     const recipient = gatewayNumber(input.recipient);
     // Require the application's canonical country format; accept alternate forms only in gateway echoes.
     if (!recipient || input.recipient !== `+${recipient}` || typeof input.code !== "string" || !/^\d{6}$/.test(input.code) || typeof input.clientReference !== "string" || !/^[A-Za-z0-9]{1,20}$/.test(input.clientReference) || !(input.expiresAt instanceof Date) || !Number.isFinite(input.expiresAt.getTime()) || input.expiresAt.getTime() <= Date.now() + 15_000 || input.expiresAt.getTime() > Date.now() + 605_000) throw new SmsTransportError("SMS_INPUT_INVALID");
+    const clientReference = input.clientReference;
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), DEADLINE_MS);
     let reader: ReadableStreamDefaultReader<Uint8Array> | undefined;
@@ -54,7 +55,7 @@ export function createSslWirelessOtpTransport(config: Configuration, dependencie
       const text = `Your DeshDak verification code is ${input.code}. Do not share this code.`;
       const encrypted = Buffer.concat([cipher.update(text, "utf8"), cipher.final()]).toString("base64");
       const sms = Buffer.concat([iv, Buffer.from(encrypted, "ascii")]).toString("base64");
-      const fields = { sid: senderId, msisdn: recipient, sms, csms_id: input.clientReference };
+      const fields = { sid: senderId, msisdn: recipient, sms, csms_id: clientReference };
       const signature = createHmac("sha256", secretKey).update(canonical(fields)).digest("hex");
       const aborted = new Promise<never>((_, reject) => {
         const abort = () => reject(new Error("Aborted"));
@@ -81,8 +82,8 @@ export function createSslWirelessOtpTransport(config: Configuration, dependencie
       }
       const payload = JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(Buffer.concat(chunks)));
       const item = Array.isArray(payload?.smsinfo) && payload.smsinfo.length === 1 ? payload.smsinfo[0] : null;
-      if (payload?.status !== "SUCCESS" || payload.status_code !== 200 || item?.sms_status !== "SUCCESS" || gatewayNumber(item.msisdn) !== recipient || item.csms_id !== input.clientReference || typeof item.reference_id !== "string" || !/^[A-Za-z0-9._:-]{1,255}$/.test(item.reference_id)) throw new Error("Unconfirmed acknowledgement");
-      return { state: "ACCEPTED" as const, clientReference: input.clientReference, providerReference: item.reference_id };
+      if (payload?.status !== "SUCCESS" || payload.status_code !== 200 || item?.sms_status !== "SUCCESS" || gatewayNumber(item.msisdn) !== recipient || item.csms_id !== clientReference || typeof item.reference_id !== "string" || !/^[A-Za-z0-9._:-]{1,255}$/.test(item.reference_id)) throw new Error("Unconfirmed acknowledgement");
+      return { state: "ACCEPTED" as const, clientReference, providerReference: item.reference_id };
     } catch { throw new SmsTransportError("SMS_SUBMISSION_UNCONFIRMED"); }
     finally {
       clearTimeout(timeout); removeAbort?.(); controller.abort();

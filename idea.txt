@@ -158,3 +158,8 @@ fixed endpoint, encryption/signature fixture and simulated failure/deadline test
 No SMS sent or live activation. Queue, token dispatch, receipts/reconciliation,
 provider acceptance and independent review remain release gates. See
  docs/SSL_WIRELESS_OTP_TRANSPORT.md and NIloy/SMS_WHATSAPP_SETUP.md.
+
+12 Nov 2026 — encrypted OTP dispatch payload and preflight implemented/tested,
+including account/session/token/phone binding, expiry and tamper checks. No durable
+worker or live path yet. Remaining worker must use fresh locked context and durable
+one-attempt claims; reopening a payload is not authorization to send. No SMS sent.
