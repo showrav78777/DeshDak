@@ -70,7 +70,21 @@ results in Admin launch readiness. Do not clear a readiness item without evidenc
 No live service, cloud resource or production release was certified by this run.
 
 
-## Latest full selected-suite run — 13 November 2026
+## Latest full selected-suite run — 13 November 2026 (39 suites)
+
+All 39 declared suites passed together in one owned disposable PostgreSQL/Docker
+run after the private upload/download/review authorization fixes and maintenance
+button readiness fix. Count, order and schema/container cleanup were verified.
+The buttons now remain disabled until their JavaScript handlers are ready; a
+mobile test deliberately delays scripts and verifies error recovery afterward.
+No owner database, real identity documents or live provider was used.
+
+This does not certify every page/device, live services or production readiness.
+Existing dependency-audit, storage/scanning integration, provider, cloud, load and
+physical-device/security acceptance gates remain. No manual setting change is
+needed for the button fix. Follow the setup index for the unfinished integrations.
+
+## Previous full selected-suite run — 13 November 2026 (36 suites)
 
 All 36 declared workflow suites passed in one owned disposable Docker/PostgreSQL
 run after the session authorization and notification refresh hardening. This includes customer/seller flows,

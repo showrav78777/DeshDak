@@ -95,10 +95,20 @@ try{
  const manualResponse=await fetch(`${origin}/api/v1/admin/maintenance/run`,{method:'POST',headers:{Cookie:`crossly_session=${token}`,Origin:origin}});assert.equal(manualResponse.status,200);assert.equal((await manualResponse.json()).data.summary.phoneOtpPayloadsPurged,1);
  assert.equal((await db.notificationDelivery.findUniqueOrThrow({where:{id:manualPayload}})).status,'FAILED');
  const maintenanceContext=await browser.newContext({viewport:{width:390,height:1000}});await maintenanceContext.addCookies([{name:'crossly_session',value:token,url:origin}]);
- const maintenancePage=await maintenanceContext.newPage();await maintenancePage.goto(`${origin}/admin/system-maintenance`);await maintenancePage.getByRole('heading',{name:'Protected cleanup operations.'}).waitFor();
+ const maintenancePage=await maintenanceContext.newPage();
+ let releaseScripts;const scriptsReady=new Promise(resolve=>releaseScripts=resolve);
+ const holdScripts=async route=>{if(route.request().resourceType()==='script')await scriptsReady;await route.continue();};
+ await maintenancePage.route('**/_next/**',holdScripts);
+ try {
+  await maintenancePage.goto(`${origin}/admin/system-maintenance`,{waitUntil:'commit'});await maintenancePage.getByRole('heading',{name:'Protected cleanup operations.'}).waitFor();
+  assert.ok(await maintenancePage.getByRole('button',{name:'Run cleanup now'}).isDisabled(),'Cleanup was clickable before hydration.');
+  assert.ok(await maintenancePage.getByRole('button',{name:'Save policy'}).isDisabled(),'Policy save was clickable before hydration.');
+ }finally{releaseScripts();}
+ await maintenancePage.getByRole('button',{name:'Run cleanup now'}).waitFor();
+
  assert.match(await maintenancePage.content(),/SMS payloads removed: 1/);
  await maintenancePage.route('**/api/v1/admin/maintenance/run',route=>route.abort());
- maintenancePage.once('dialog',dialog=>dialog.accept());await maintenancePage.getByRole('button',{name:'Run cleanup now'}).click();await maintenancePage.getByText('The cleanup request could not be confirmed. Check recent run history before retrying.').waitFor();assert.ok(await maintenancePage.getByRole('button',{name:'Run cleanup now'}).isEnabled());
+ maintenancePage.once('dialog',dialog=>dialog.accept());const failedCleanupRequest=maintenancePage.waitForRequest(request=>request.url()===`${origin}/api/v1/admin/maintenance/run`&&request.method()==='POST');await maintenancePage.getByRole('button',{name:'Run cleanup now'}).click();await failedCleanupRequest;await maintenancePage.getByText('The cleanup request could not be confirmed. Check recent run history before retrying.').waitFor();assert.ok(await maintenancePage.getByRole('button',{name:'Run cleanup now'}).isEnabled());
  await maintenancePage.route('**/api/v1/admin/maintenance/configuration',route=>route.fulfill({status:502,contentType:'text/html',body:'upstream unavailable'}));
  await maintenancePage.getByRole('button',{name:'Save policy'}).click();await maintenancePage.getByText('The settings request could not be confirmed. Reload the saved policy before retrying.').waitFor();assert.ok(await maintenancePage.getByRole('button',{name:'Save policy'}).isEnabled());
  await maintenancePage.route('**/api/v1/admin/maintenance/run',route=>route.fulfill({status:200,contentType:'application/json',body:'{}'}));
