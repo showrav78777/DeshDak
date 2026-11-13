@@ -262,3 +262,9 @@ mobile/desktop failures/refresh, portal/identity regressions and existing restri
 goods exact-retry/catalog/checkout checks passed in disposable runs. Runner40 is
 selected coverage, not a new full40 run. No owner DB/provider or policy change.
 Operator steps added in NIloy/COMPLIANCE_REVIEW.md; release gates remain open.
+
+13 Nov 2026 — Admin compliance rule creation/status now reauthorize at save,
+including post-rule-lock session expiry; terminal/effective-window checks are
+fresh. Create/reset and status UI recover safely with mobile/desktop regression
+coverage. Three targeted disposable suites passed; runner41 is not full41
+acceptance. No owner DB, provider, schema or policy change. Production gates remain.

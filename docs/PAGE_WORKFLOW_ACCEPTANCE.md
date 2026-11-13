@@ -1292,3 +1292,15 @@ Lint, TypeScript, production build, 306-operation API contract, security regress
 and dependency integrity passed. Build evidence:
 /tmp/deshdak-screening-review-build-20261113.log. No dependency or release gate
 was weakened.
+
+## 2026-11-13 — Admin compliance rule controls
+
+- Draft creation and status changes now reauthorize Admin account/session/portal/grant/MFA/expiry inside the mutation transaction, with minimal denial audit. Status/effective-window checks now use a locked current rule. Authorization is checked again after rule-lock waits to reject natural session expiry; archived rules cannot be revived with a guessed newer version during an archive race.
+- Create/status UI now handles network/non-JSON/malformed responses, preserves unconfirmed create values, validates returned identity/status/version, gates pre-hydration controls and stays pending through refresh. Successful create reset uses a captured form element, fixing an asynchronous event reference bug.
+- Final isolated run passed rule-control, restricted-goods and screening-review suites together. Includes ten create/status access-change races, archive/expiry/session-expiry waits, 390/1440px failure recovery, no-JavaScript disabled controls, real create/reset/held-refresh and activation/pause/archive. Existing public-catalog withdrawal/restoration, scheduling/expiry, hard-block checkout and exact approved retry regressions passed. Owned cleanup verified; no owner DB/providers or real policy used.
+- Evidence: /tmp/deshdak-rule-controls-final-20261113.log (initial targeted run before natural-expiry addition: /tmp/deshdak-rule-controls-20261113.log). Runner now selects 41 suites; no full41 acceptance is claimed. Engineering: docs/COMPLIANCE_RULE_CONTROLS.md; operator instructions: NIloy/COMPLIANCE_REVIEW.md. No manual setting needed; release gates remain open.
+
+Final lint, TypeScript and production build passed. The 306-operation API contract,
+security regressions and dependency integrity also passed for this increment.
+Build evidence: /tmp/deshdak-rule-controls-build-final-20261113.log. No release
+gate was waived.

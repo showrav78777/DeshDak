@@ -1,3 +1,4 @@
+import { authorizeComplianceRuleAdmin } from "@/modules/compliance/rule-authorization";
 import { type NextRequest } from "next/server";
 import { apiError, apiSuccess } from "@/lib/api";
 import { hasTrustedMutationOrigin } from "@/lib/mfa-session";
@@ -31,6 +32,7 @@ export async function POST(request: NextRequest) {
   }
   try {
     const rule = await prisma.$transaction(async (tx) => {
+      if (!await authorizeComplianceRuleAdmin(tx, session.userId, session.sessionId)) return null;
       const created = await tx.restrictedGoodsRule.create({ data: {
         ruleCode: data.ruleCode,
         name: data.name,
@@ -50,6 +52,7 @@ export async function POST(request: NextRequest) {
       await tx.auditLog.create({ data: { actorId: session.userId, action: "compliance.rule_created", entityType: "RestrictedGoodsRule", entityId: created.id, metadata: { ruleCode: created.ruleCode, action: created.action, status: created.status } } });
       return created;
     });
+    if (!rule) return apiError("ADMIN_ACCESS_REQUIRED", "Your rule-management access changed. Sign in again before changing rules.", 403);
     return apiSuccess({ rule }, { status: 201, headers: { "Cache-Control": "private, no-store, max-age=0" } });
   } catch (error) {
     if ((error as { code?: string }).code === "P2002") return apiError("COMPLIANCE_RULE_CODE_EXISTS", "A compliance rule already uses this code.", 409);

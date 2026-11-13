@@ -9,26 +9,46 @@ function lines(value: FormDataEntryValue | null) {
 }
 
 export function ComplianceRuleCreateForm({ countries }: { countries: Array<{ isoCode: string; name: string }> }) {
-  const router = useRouter();
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState("");
+  const router = useRouter(), ready = useClientReady(), inFlight = useRef(false);
+  const [saving, setSaving] = useState(false), [refreshing, startRefresh] = useTransition(), [error, setError] = useState("");
+  const busy = saving || refreshing;
   async function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault(); setSaving(true); setError("");
-    const form = new FormData(event.currentTarget);
-    const response = await fetch("/api/v1/admin/compliance/rules", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ruleCode: form.get("ruleCode"), name: form.get("name"), internalDescription: form.get("internalDescription"), customerMessage: form.get("customerMessage"), action: form.get("action"), keywords: lines(form.get("keywords")), hsCodePrefixes: lines(form.get("hsCodePrefixes")), originCountryCode: form.get("originCountryCode"), destinationCountryCode: form.get("destinationCountryCode"), effectiveFrom: form.get("effectiveFrom"), effectiveTo: form.get("effectiveTo"), legalReference: form.get("legalReference") }) });
-    const result = await response.json(); setSaving(false);
-    if (!response.ok) return setError(result.error?.message ?? "Unable to create this compliance rule.");
-    event.currentTarget.reset(); router.refresh();
+    event.preventDefault();
+    if (!ready || busy || inFlight.current) return;
+    const element = event.currentTarget, form = new FormData(element);
+    inFlight.current = true; setSaving(true); setError("");
+    try {
+      const response = await fetch("/api/v1/admin/compliance/rules", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ruleCode: form.get("ruleCode"), name: form.get("name"), internalDescription: form.get("internalDescription"), customerMessage: form.get("customerMessage"), action: form.get("action"), keywords: lines(form.get("keywords")), hsCodePrefixes: lines(form.get("hsCodePrefixes")), originCountryCode: form.get("originCountryCode"), destinationCountryCode: form.get("destinationCountryCode"), effectiveFrom: form.get("effectiveFrom"), effectiveTo: form.get("effectiveTo"), legalReference: form.get("legalReference") }), signal: AbortSignal.timeout(30_000) });
+      const result = await response.json();
+      if (!response.ok) { setError(typeof result?.error?.message === "string" ? result.error.message : "Unable to create this compliance rule."); return; }
+      if (typeof result?.data?.rule?.id !== "string" || !result.data.rule.id || result.data.rule.ruleCode !== String(form.get("ruleCode")).trim().toUpperCase() || result.data.rule.status !== "DRAFT") throw new Error("Invalid created rule response");
+      element.reset(); startRefresh(() => router.refresh());
+    } catch { setError("The new rule could not be confirmed. Refresh the rules and check its code before retrying."); }
+    finally { inFlight.current = false; setSaving(false); }
   }
-  return <form className="compliance-form" onSubmit={submit}><label>Rule code<input name="ruleCode" placeholder="BD-IMPORT-001" required /></label><label>Rule name<input name="name" placeholder="Controlled product category" required /></label><label>Action<select name="action"><option value="BLOCK">Block immediately</option><option value="MANUAL_REVIEW">Require manual review</option></select></label><label>Origin scope<select name="originCountryCode"><option value="">Any origin</option>{countries.map((country) => <option key={country.isoCode} value={country.isoCode}>{country.name}</option>)}</select></label><label>Destination scope<select name="destinationCountryCode"><option value="">Any destination</option>{countries.map((country) => <option key={country.isoCode} value={country.isoCode}>{country.name}</option>)}</select></label><label className="wide">Keywords or phrases <span>(one per line)</span><textarea name="keywords" placeholder="Exact product phrase" /></label><label className="wide">HS-code prefixes <span>(one per line, digits only)</span><textarea name="hsCodePrefixes" placeholder="1234" /></label><label className="wide">Customer-safe message<textarea name="customerMessage" required defaultValue="This product cannot continue under the current destination rules. Please contact support if you need clarification." /></label><label className="wide">Internal description<textarea name="internalDescription" /></label><label>Effective from <span>(optional)</span><input name="effectiveFrom" type="datetime-local" /></label><label>Effective to <span>(optional)</span><input name="effectiveTo" type="datetime-local" /></label><label className="wide">Legal reference <span>(internal)</span><input name="legalReference" /></label>{error ? <p className="form-error wide" role="alert">{error}</p> : null}<button className="button primary wide" disabled={saving} type="submit">{saving ? "Creating…" : "Create draft rule"}</button></form>;
+  return <form className="compliance-form" onSubmit={submit} aria-busy={busy}><label>Rule code<input disabled={!ready || busy} name="ruleCode" placeholder="BD-IMPORT-001" required /></label><label>Rule name<input disabled={!ready || busy} name="name" placeholder="Controlled product category" required /></label><label>Action<select disabled={!ready || busy} name="action"><option value="BLOCK">Block immediately</option><option value="MANUAL_REVIEW">Require manual review</option></select></label><label>Origin scope<select disabled={!ready || busy} name="originCountryCode"><option value="">Any origin</option>{countries.map((country) => <option key={country.isoCode} value={country.isoCode}>{country.name}</option>)}</select></label><label>Destination scope<select disabled={!ready || busy} name="destinationCountryCode"><option value="">Any destination</option>{countries.map((country) => <option key={country.isoCode} value={country.isoCode}>{country.name}</option>)}</select></label><label className="wide">Keywords or phrases <span>(one per line)</span><textarea disabled={!ready || busy} name="keywords" placeholder="Exact product phrase" /></label><label className="wide">HS-code prefixes <span>(one per line, digits only)</span><textarea disabled={!ready || busy} name="hsCodePrefixes" placeholder="1234" /></label><label className="wide">Customer-safe message<textarea disabled={!ready || busy} name="customerMessage" required defaultValue="This product cannot continue under the current destination rules. Please contact support if you need clarification." /></label><label className="wide">Internal description<textarea disabled={!ready || busy} name="internalDescription" /></label><label>Effective from <span>(optional)</span><input disabled={!ready || busy} name="effectiveFrom" type="datetime-local" /></label><label>Effective to <span>(optional)</span><input disabled={!ready || busy} name="effectiveTo" type="datetime-local" /></label><label className="wide">Legal reference <span>(internal)</span><input disabled={!ready || busy} name="legalReference" /></label>{error ? <p className="form-error wide" role="alert">{error}</p> : null}<button className="button primary wide" disabled={!ready || busy} type="submit">{busy ? "Creating…" : "Create draft rule"}</button></form>;
 }
 
 export function ComplianceRuleStatusControl({ ruleId, status, version }: { ruleId: string; status: string; version: number }) {
-  const router = useRouter(); const [saving, setSaving] = useState(false); const [error, setError] = useState("");
-  async function change(nextStatus: "ACTIVE" | "PAUSED" | "ARCHIVED") { setSaving(true); setError(""); const response = await fetch(`/api/v1/admin/compliance/rules/${ruleId}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status: nextStatus, version }) }); const result = await response.json(); setSaving(false); if (!response.ok) return setError(result.error?.message ?? "Unable to update this rule."); router.refresh(); }
+  const router = useRouter(), ready = useClientReady(), inFlight = useRef(false);
+  const [saving, setSaving] = useState(false), [refreshing, startRefresh] = useTransition(), [error, setError] = useState("");
+  const busy = saving || refreshing;
+  async function change(nextStatus: "ACTIVE" | "PAUSED" | "ARCHIVED") {
+    if (!ready || busy || inFlight.current) return;
+    inFlight.current = true; setSaving(true); setError("");
+    try {
+      const response = await fetch(`/api/v1/admin/compliance/rules/${ruleId}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status: nextStatus, version }), signal: AbortSignal.timeout(30_000) });
+      const result = await response.json();
+      if (!response.ok) { setError(typeof result?.error?.message === "string" ? result.error.message : "Unable to update this rule."); return; }
+      const allowed = nextStatus === "ACTIVE" ? ["ACTIVE", "SCHEDULED"] : [nextStatus];
+      if (result?.data?.rule?.id !== ruleId || result.data.rule.version !== version + 1 || !allowed.includes(result.data.rule.status)) throw new Error("Invalid rule status response");
+      startRefresh(() => router.refresh());
+    } catch { setError("The rule change could not be confirmed. Refresh the current rule before retrying."); }
+    finally { inFlight.current = false; setSaving(false); }
+  }
   if (status === "ARCHIVED") return null;
   const enabled = status === "ACTIVE" || status === "SCHEDULED";
-  return <div className="compliance-actions"><button disabled={saving} onClick={() => change(enabled ? "PAUSED" : "ACTIVE")} type="button">{enabled ? "Pause" : "Activate or schedule"}</button><button disabled={saving} onClick={() => change("ARCHIVED")} type="button">Archive</button>{error ? <small className="form-error">{error}</small> : null}</div>;
+  return <div className="compliance-actions" aria-busy={busy}><button disabled={!ready || busy} onClick={() => change(enabled ? "PAUSED" : "ACTIVE")} type="button">{enabled ? "Pause" : "Activate or schedule"}</button><button disabled={!ready || busy} onClick={() => change("ARCHIVED")} type="button">Archive</button>{error ? <small className="form-error" role="alert">{error}</small> : null}</div>;
 }
 
 export function ComplianceDecisionForm({ screeningId, version, endpointPrefix = "/api/v1/admin/compliance/screenings" }: { screeningId: string; version: number; endpointPrefix?: string }) {
