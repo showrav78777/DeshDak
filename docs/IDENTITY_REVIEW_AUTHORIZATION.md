@@ -45,3 +45,33 @@ separate gates. Production identity intake stays disabled pending integration.
 Lint, TypeScript, production build, the 306-operation API contract, security
 regressions and dependency integrity passed. Build evidence:
 `/tmp/deshdak-identity-review-build-20261113.log`. No dependency gate was waived.
+
+## UI recovery follow-up — 13 November 2026
+
+The identity decision form now catches network, non-JSON and malformed-success
+responses, restores usable controls and tells the reviewer to refresh before
+retrying an unconfirmed decision. Success must identify the requested record and
+selected status. A synchronous in-flight guard prevents duplicate submissions;
+inputs/buttons stay disabled while saving and until server queue refresh finishes.
+The shared client-ready hook disables this API-only form before hydration or when
+JavaScript is unavailable. Errors are exposed as accessible alerts. No backend
+review rule, schema or API response shape changed.
+
+The extended review suite passed at 390px and 1440px with simulated aborted/HTML/
+empty-success/wrong-record responses, exact database state checks, and real
+successful reviews. A held RSC refresh verifies the control remains busy after
+commit until its completed card leaves the queue. A no-JavaScript context verifies
+the decision control is disabled. Existing authorization/concurrency cases pass.
+The Compliance portal regression also passed in the initial two-suite run. The
+final focused run uses a bounded browser request wait for refresh start; no
+workflow deadline was increased. Disposable cleanup completed with synthetic files
+only and no owner DB/provider.
+
+Evidence: /tmp/deshdak-identity-decision-ui-20261113.log and
+/tmp/deshdak-identity-decision-ui-final-20261113.log. The full 39-suite acceptance
+recorded at commit 3400fe4 precedes this UI follow-up; it was not rerun here.
+
+Lint, TypeScript, production build, 306-operation API contract, security regressions
+and dependency integrity passed for this UI follow-up. Build evidence:
+/tmp/deshdak-identity-decision-ui-build-20261113.log. Full dependency audit remains
+blocked; no production integration was enabled.

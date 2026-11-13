@@ -1268,3 +1268,15 @@ disposable container was removed; no owner database was accessed.
 - Evidence: /tmp/deshdak-sqa39-final-20261113.log, SHA-256 913dd3b81ae6394bc2431c3aa1bc95ed39685f831200c341492160a1b56f6c09. Initial complete-run failure: /tmp/deshdak-sqa39-20261113.log. Focused evidence: /tmp/deshdak-maintenance-ready-final-20261113.log; initial harness diagnostic: /tmp/deshdak-maintenance-ready-20261113.log. These temporary local logs are not long-term certified release reports.
 - This is selected automated workflow acceptance, not full page/device/provider/security certification. Remaining dependency, production storage/scanning/lifecycle, provider, cloud/load and physical-device acceptance gates are unchanged. Owner runbook updated.
 - Final lint, TypeScript, production build, 306-operation API contract, security regressions and dependency integrity passed. Build evidence: /tmp/deshdak-sqa39-build-20261113.log. No schema, dependency, credential, rate-limit or cleanup-policy change was made.
+
+## 2026-11-13 — identity decision UI recovery and dependency recheck
+
+- The identity decision control could remain stuck on Saving after network/JSON failures. Added bounded request handling, safe result validation, accessible failure text, finally-based control recovery, hydration gating and transition-aware queue refresh. Backend version/status/authorization controls are unchanged.
+- Extended identity review verification passed 390/1440px network/non-JSON/malformed-success failures, no-JavaScript disabled state and a real successful decision held pending through RSC refresh. Existing authorization/concurrent-decision/replacement cases remain passing. Initial two-suite run also passed Compliance portal; final focused suite uses a bounded request wait for refresh readiness. Owned schema/container cleanup passed; synthetic media only, no owner DB/provider.
+- Evidence: /tmp/deshdak-identity-decision-ui-20261113.log and /tmp/deshdak-identity-decision-ui-final-20261113.log. The preceding full 39-suite acceptance is unchanged historical evidence and was not repeated for this increment.
+- Full npm audit recheck still reports seven moderate findings, zero high/critical. Registry metadata shows latest TypeScript ESLint 8.72.2 still requires minimatch ^10.2.2, while the advisory patch begins at 11.0.1. No dependency, lockfile, override or audit gate changed. Sources: https://github.com/advisories/GHSA-g3hv-75wg-m249 and https://github.com/typescript-eslint/typescript-eslint/releases. Local evidence: /tmp/deshdak-audit-20261113.json and /tmp/deshdak-estree-latest-20261113.json. Production audit was not repeated in this increment.
+
+Lint, TypeScript, production build, 306-operation API contract, security regressions
+and dependency integrity passed for this UI follow-up. Build evidence:
+/tmp/deshdak-identity-decision-ui-build-20261113.log. Full dependency audit remains
+blocked; no production integration was enabled.

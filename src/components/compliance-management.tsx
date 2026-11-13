@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useRef, useState, useTransition, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
+import { useClientReady } from "@/components/use-client-ready";
 
 function lines(value: FormDataEntryValue | null) {
   return String(value ?? "").split(/[\n,]+/).map((item) => item.trim()).filter(Boolean);
@@ -37,9 +38,26 @@ export function ComplianceDecisionForm({ screeningId, version, endpointPrefix = 
 }
 
 export function IdentityVerificationDecisionForm({ verificationId, version }: { verificationId: string; version: number }) {
-  const router = useRouter(); const [saving, setSaving] = useState(false); const [error, setError] = useState("");
-  async function submit(event: FormEvent<HTMLFormElement>) { event.preventDefault(); setSaving(true); setError(""); const form = new FormData(event.currentTarget); const response = await fetch(`/api/v1/compliance/identity-verifications/${verificationId}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ decision: form.get("decision"), note: form.get("note"), version }) }); const result = await response.json(); setSaving(false); if (!response.ok) return setError(result.error?.message ?? "Unable to record this identity decision."); router.refresh(); }
-  return <form className="compliance-decision" onSubmit={submit}><select aria-label="Identity decision" name="decision"><option value="VERIFIED">Verify identity</option><option value="REJECTED">Reject and request resubmission</option></select><textarea aria-label="Review note" name="note" placeholder="Record the approved evidence and reason. Never enter a full document number." required /><button disabled={saving} type="submit">{saving ? "Saving…" : "Record identity decision"}</button>{error ? <small className="form-error">{error}</small> : null}</form>;
+  const router = useRouter();
+  const ready = useClientReady(), inFlight = useRef(false);
+  const [saving, setSaving] = useState(false), [refreshing, startRefresh] = useTransition();
+  const [error, setError] = useState("");
+  const busy = saving || refreshing;
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!ready || inFlight.current || busy) return;
+    const form = new FormData(event.currentTarget), decision = form.get("decision");
+    inFlight.current = true; setSaving(true); setError("");
+    try {
+      const response = await fetch(`/api/v1/compliance/identity-verifications/${verificationId}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ decision, note: form.get("note"), version }), signal: AbortSignal.timeout(30_000) });
+      const result = await response.json();
+      if (!response.ok) { setError(typeof result?.error?.message === "string" ? result.error.message : "Unable to record this identity decision. Refresh the queue before retrying."); return; }
+      if (result?.data?.verification?.id !== verificationId || result.data.verification.status !== decision) throw new Error("Invalid identity decision response");
+      startRefresh(() => router.refresh());
+    } catch { setError("The identity decision could not be confirmed. Refresh the queue before retrying."); }
+    finally { inFlight.current = false; setSaving(false); }
+  }
+  return <form className="compliance-decision" onSubmit={submit} aria-busy={busy}><select aria-label="Identity decision" name="decision" disabled={!ready || busy}><option value="VERIFIED">Verify identity</option><option value="REJECTED">Reject and request resubmission</option></select><textarea aria-label="Review note" name="note" placeholder="Record the approved evidence and reason. Never enter a full document number." required disabled={!ready || busy} /><button disabled={!ready || busy} type="submit">{busy ? "Saving…" : "Record identity decision"}</button>{error ? <small className="form-error" role="alert">{error}</small> : null}</form>;
 }
 
 export function ComplianceCatalogMaintenanceControl({ lastStatus, lastFinishedAt }: { lastStatus?: string | null; lastFinishedAt?: string | null }) {

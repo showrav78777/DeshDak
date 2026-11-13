@@ -248,3 +248,10 @@ run failure and focused test-route lifecycle diagnostic retained separately.
 No assertions, retries or deadlines weakened. Count/order and owned cleanup
 verified; owner DB/providers untouched. Production and dependency release gates
 remain; this is not complete page/device/live integration certification.
+
+13 Nov 2026 — identity decision UI now handles failed/unconfirmed requests, rejects
+malformed success, stays busy through queue refresh and disables pre-hydration.
+Mobile/desktop and real authorization regressions passed in disposable tests.
+Full dependency audit still seven moderate findings; latest estree remains on
+minimatch10. No forced override or gate change. Full39 acceptance predates this UI
+follow-up; production integrations/security/device gates remain open.

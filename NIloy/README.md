@@ -86,6 +86,13 @@ and no audit gate was bypassed. A compatible upstream fix or separately reviewed
 tooling migration remains engineering follow-up, not an owner credential task.
 Production release/security clearance remains blocked by the full audit gate.
 
+13 November follow-up: the full audit was rechecked and still reports seven
+moderate findings (zero high/critical). Current registry metadata still gives
+TypeScript ESLint 8.72.2 a minimatch ^10.2.2 requirement; the newer matching lint
+configuration does not establish a compatible fix. No dependency/lockfile,
+override or audit threshold was changed. This is engineering follow-up, not a
+credential the owner can supply.
+
 ### Website image scanner
 
 A deployable authenticated ClamAV gateway and engine-startup wrapper are supplied.

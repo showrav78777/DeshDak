@@ -108,3 +108,9 @@ Unknown role codes do not become effective roles implicitly. Notification contro
 stay pending until server-rendered read state refreshes. No owner configuration or
 secret rotation is required for these code changes. Existing ACTIVE users retain
 normal sessions; pending customers should complete the email verification workflow.
+
+13 November UI follow-up: identity review now recovers from network/malformed
+responses and remains busy through queue refresh. Targeted authorization/browser
+and Compliance portal checks passed; the complete 39-suite run above precedes
+this UI change. Use the evidence in docs/IDENTITY_REVIEW_AUTHORIZATION.md for the
+current targeted scope. No owner setting is required for the UI fix.

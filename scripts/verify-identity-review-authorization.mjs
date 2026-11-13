@@ -5,7 +5,7 @@ import { SignJWT } from 'jose';
 import sharp from 'sharp';
 const database=new URL(process.env.DATABASE_URL??'postgresql://invalid/invalid'),origin=process.env.TEST_BASE_URL;
 if(!['localhost','127.0.0.1','[::1]'].includes(database.hostname)||!/^crossly_launch_verify_[a-f0-9]{16}$/.test(database.searchParams.get('schema')??'')||!origin||!['localhost','127.0.0.1'].includes(new URL(origin).hostname))throw new Error('Requires a disposable local schema/application.');
-const db=new PrismaClient(),users=[],marker=randomBytes(8).toString('hex');
+const db=new PrismaClient(),users=[],marker=randomBytes(8).toString('hex');let browser;
 const photo=await sharp({create:{width:8,height:8,channels:3,background:'#176780'}}).jpeg().toBuffer();
 const iv=randomBytes(12),cipher=createCipheriv('aes-256-gcm',Buffer.from(process.env.KYC_DOCUMENT_ENCRYPTION_KEY,'base64'),iv);
 const document={documentPhotoCiphertext:Buffer.concat([cipher.update(photo),cipher.final()]).toString('base64'),documentPhotoIv:iv.toString('base64'),documentPhotoTag:cipher.getAuthTag().toString('base64'),documentPhotoMimeType:'image/jpeg',documentPhotoSha256:createHash('sha256').update(photo).digest('hex'),documentPhotoSizeBytes:photo.length};
@@ -41,7 +41,44 @@ try {
  assert.equal(stale.status,409,'Review of replaced submission succeeded.');assert.equal((await db.user.findUniqueOrThrow({where:{id:customer.user.id}})).kycStatus,'PENDING');assert.equal((await db.identityVerification.findUniqueOrThrow({where:{id:replacement.id}})).status,'PENDING');assert.equal(await db.auditLog.count({where:{entityId:record.id,action:'identity_verification.verified'}}),0);
  // A normal rejection remains available after the conflict.
  assert.equal((await review(first,replacement.id,'REJECTED')).status,200);assert.equal((await db.user.findUniqueOrThrow({where:{id:customer.user.id}})).kycStatus,'REJECTED');
+
+ const {chromium}=await import('@playwright/test');browser=await chromium.launch({headless:true});
+ const cookie={name:'crossly_session',value:first.token,url:origin};
+ const noJsCustomer=await actor('customer_personal','customer');await submission(db,noJsCustomer.user.id);
+ const noJs=await browser.newContext({javaScriptEnabled:false});await noJs.addCookies([cookie]);
+ const noJsPage=await noJs.newPage();await noJsPage.goto(`${origin}/compliance`);
+ assert.ok(await noJsPage.locator('article').filter({hasText:noJsCustomer.user.personCode}).getByRole('button',{name:'Record identity decision'}).isDisabled(),'Identity decision enabled without JavaScript.');await noJs.close();
+ for(const width of [390,1440]){
+  const uiCustomer=await actor('customer_personal','customer'),uiRecord=await submission(db,uiCustomer.user.id);
+  const context=await browser.newContext({viewport:{width,height:1000}});await context.addCookies([cookie]);
+  const page=await context.newPage();await page.goto(`${origin}/compliance`);await page.getByRole('heading',{name:'Compliance review queue.'}).waitFor();
+  const card=page.locator('article').filter({hasText:uiCustomer.user.personCode}),form=card.locator('form');
+  await form.getByRole('textbox',{name:'Review note'}).fill('Synthetic browser review evidence');
+  const endpoint=`${origin}/api/v1/compliance/identity-verifications/${uiRecord.id}`;
+  for(const mode of ['abort','html','empty','wrong-id']){
+   const handler=route=>mode==='abort'?route.abort():route.fulfill({status:mode==='html'?502:200,contentType:mode==='html'?'text/html':'application/json',body:mode==='html'?'upstream unavailable':mode==='empty'?'{}':JSON.stringify({data:{verification:{id:'another-record',status:'VERIFIED'}}})});
+   await page.route(endpoint,handler);
+   await form.getByRole('button',{name:'Record identity decision'}).click();
+   await form.getByRole('alert').filter({hasText:'The identity decision could not be confirmed. Refresh the queue before retrying.'}).waitFor();
+   assert.ok(await form.getByRole('button',{name:'Record identity decision'}).isEnabled());
+   assert.equal((await db.identityVerification.findUniqueOrThrow({where:{id:uiRecord.id}})).status,'PENDING');
+   await page.unroute(endpoint,handler);
+  }
+  let releaseRefresh;const held=new Promise(resolve=>releaseRefresh=resolve);
+  const holdRefresh=async route=>{if(route.request().headers().rsc==='1')await held;await route.continue();};
+  await page.route('**/compliance?**',holdRefresh);
+  try{
+   const refreshed=page.waitForRequest(request=>new URL(request.url()).pathname==='/compliance'&&request.headers().rsc==='1');
+   await form.getByRole('button',{name:'Record identity decision'}).click();await refreshed;
+   assert.ok(await form.getByRole('button',{name:'Saving…'}).isDisabled(),'Review became clickable before queue refresh.');
+   assert.equal((await db.identityVerification.findUniqueOrThrow({where:{id:uiRecord.id}})).status,'VERIFIED');
+   assert.equal(await db.auditLog.count({where:{entityId:uiRecord.id,action:'identity_verification.verified'}}),1);
+  }finally{releaseRefresh();}
+  await card.waitFor({state:'detached'});await context.close();
+ }
+ console.log('Identity decision UI passed: 390/1440px failure recovery, malformed-success rejection, disabled no-JavaScript controls and pending state held until real queue refresh. HTTP/database mutations were real; failure responses were simulated.');
  console.log('Identity review authorization passed: in-flight revocation/role/MFA/account changes deny atomically; concurrent decisions have one winner; replacement conflicts preserve pending customer state; trusted valid review and origin/role boundaries remain intact. Synthetic documents only.');
 }finally{
+ await browser?.close();
  await db.auditLog.deleteMany({where:{actorId:{in:users}}});await db.identityVerification.deleteMany({where:{userId:{in:users}}});await db.user.deleteMany({where:{id:{in:users}}});await db.$disconnect();
 }
