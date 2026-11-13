@@ -145,7 +145,8 @@
     "test:private-download-authorization": "node scripts/verify-private-download-authorization.mjs",
     "test:identity-review-authorization": "node scripts/verify-identity-review-authorization.mjs",
     "test:screening-review-authorization": "node scripts/verify-screening-review-authorization.mjs",
-    "test:compliance-rule-controls": "node scripts/verify-compliance-rule-controls.mjs"
+    "test:compliance-rule-controls": "node scripts/verify-compliance-rule-controls.mjs",
+    "test:compliance-catalog-controls": "node scripts/verify-compliance-catalog-controls.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "3.1163.0",

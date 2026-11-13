@@ -1,24 +1,38 @@
 import "server-only";
 
+import { authorizeComplianceCatalogAdmin } from "@/modules/compliance/catalog-authorization";
 import { prisma } from "@/lib/prisma";
 import { rescreenPublicCatalog } from "@/modules/compliance/restricted-goods";
 
 export const COMPLIANCE_CATALOG_JOB_KEY = "compliance_catalog_rescreen";
 
-export async function runComplianceCatalogMaintenance(input: { triggerSource: "ADMIN" | "SCHEDULER" | "TEST"; triggeredById?: string | null }) {
-  const now = new Date();
-  await prisma.maintenanceJobState.upsert({ where: { jobKey: COMPLIANCE_CATALOG_JOB_KEY }, update: {}, create: { jobKey: COMPLIANCE_CATALOG_JOB_KEY } });
-  const claimed = await prisma.maintenanceJobState.updateMany({
-    where: { jobKey: COMPLIANCE_CATALOG_JOB_KEY, OR: [{ lockedUntil: null }, { lockedUntil: { lte: now } }] },
-    data: { lockedUntil: new Date(now.getTime() + 10 * 60_000), lastStartedAt: now, lastStatus: "RUNNING", lastErrorCode: null },
+export class ComplianceCatalogAccessError extends Error {
+  constructor() { super("COMPLIANCE_CATALOG_ACCESS_CHANGED"); }
+}
+type MaintenanceInput = { triggerSource: "ADMIN"; triggeredById: string; sessionId: string } | { triggerSource: "SCHEDULER" | "TEST"; triggeredById?: null };
+
+export async function runComplianceCatalogMaintenance(input: MaintenanceInput) {
+  const claim = await prisma.$transaction(async tx => {
+    if (input.triggerSource === "ADMIN" && !await authorizeComplianceCatalogAdmin(tx, input.triggeredById, input.sessionId)) return { outcome: "DENIED" } as const;
+    await tx.maintenanceJobState.upsert({ where: { jobKey: COMPLIANCE_CATALOG_JOB_KEY }, update: {}, create: { jobKey: COMPLIANCE_CATALOG_JOB_KEY } });
+    await tx.$queryRaw`SELECT "jobKey" FROM "MaintenanceJobState" WHERE "jobKey" = ${COMPLIANCE_CATALOG_JOB_KEY} FOR UPDATE`;
+    // Acquiring the job row can wait; authorization must still be current afterward.
+    if (input.triggerSource === "ADMIN" && !await authorizeComplianceCatalogAdmin(tx, input.triggeredById, input.sessionId)) return { outcome: "DENIED" } as const;
+    const now = new Date();
+    const claimed = await tx.maintenanceJobState.updateMany({
+      where: { jobKey: COMPLIANCE_CATALOG_JOB_KEY, OR: [{ lockedUntil: null }, { lockedUntil: { lte: now } }] },
+      data: { lockedUntil: new Date(now.getTime() + 10 * 60_000), lastStartedAt: now, lastStatus: "RUNNING", lastErrorCode: null },
+    });
+    const run = await tx.maintenanceJobRun.create({ data: { jobKey: COMPLIANCE_CATALOG_JOB_KEY, triggerSource: input.triggerSource, triggeredById: input.triggeredById ?? null, status: claimed.count ? "RUNNING" : "SKIPPED", startedAt: now, ...(!claimed.count ? { finishedAt: now, summary: { reason: "already_running" } } : {}) } });
+    return { outcome: "CLAIMED", run, skipped: !claimed.count } as const;
   });
-  if (!claimed.count) {
-    const run = await prisma.maintenanceJobRun.create({ data: { jobKey: COMPLIANCE_CATALOG_JOB_KEY, triggerSource: input.triggerSource, triggeredById: input.triggeredById ?? null, status: "SKIPPED", startedAt: now, finishedAt: now, summary: { reason: "already_running" } } });
-    return { run, skipped: true };
-  }
-  const run = await prisma.maintenanceJobRun.create({ data: { jobKey: COMPLIANCE_CATALOG_JOB_KEY, triggerSource: input.triggerSource, triggeredById: input.triggeredById ?? null, startedAt: now } });
+  if (claim.outcome === "DENIED") throw new ComplianceCatalogAccessError();
+  const { run } = claim;
+  if (claim.skipped) return { run, skipped: true };
   try {
     const summary = await prisma.$transaction(async (tx) => {
+      if (input.triggerSource === "ADMIN" && !await authorizeComplianceCatalogAdmin(tx, input.triggeredById, input.sessionId)) return null;
+      const now = new Date();
       const [dueRules, expiredRules, missedScheduledRules] = await Promise.all([
         tx.restrictedGoodsRule.findMany({ where: { status: "SCHEDULED", effectiveFrom: { lte: now }, OR: [{ effectiveTo: null }, { effectiveTo: { gt: now } }] }, select: { id: true, ruleCode: true } }),
         tx.restrictedGoodsRule.findMany({ where: { status: "ACTIVE", effectiveTo: { lte: now } }, select: { id: true, ruleCode: true } }),
@@ -40,13 +54,16 @@ export async function runComplianceCatalogMaintenance(input: { triggerSource: "A
       await tx.auditLog.create({ data: { actorId: input.triggeredById ?? null, action: "compliance.catalog_rescreen_completed", entityType: "MaintenanceJobRun", entityId: run.id, metadata: { triggerSource: input.triggerSource, ...result } } });
       return result;
     }, { maxWait: 5_000, timeout: 30_000 });
+    if (!summary) throw new ComplianceCatalogAccessError();
     return { run: { ...run, status: "SUCCEEDED" as const, finishedAt: new Date(), summary }, skipped: false };
-  } catch {
+  } catch (error) {
+    const errorCode = error instanceof ComplianceCatalogAccessError ? error.message : "COMPLIANCE_CATALOG_RESCREEN_FAILED";
     const failedAt = new Date();
     await prisma.$transaction([
-      prisma.maintenanceJobRun.update({ where: { id: run.id }, data: { status: "FAILED", finishedAt: failedAt, errorCode: "COMPLIANCE_CATALOG_RESCREEN_FAILED" } }),
-      prisma.maintenanceJobState.update({ where: { jobKey: COMPLIANCE_CATALOG_JOB_KEY }, data: { lockedUntil: null, lastFinishedAt: failedAt, lastStatus: "FAILED", lastErrorCode: "COMPLIANCE_CATALOG_RESCREEN_FAILED" } }),
+      prisma.maintenanceJobRun.update({ where: { id: run.id }, data: { status: "FAILED", finishedAt: failedAt, errorCode } }),
+      prisma.maintenanceJobState.update({ where: { jobKey: COMPLIANCE_CATALOG_JOB_KEY }, data: { lockedUntil: null, lastFinishedAt: failedAt, lastStatus: "FAILED", lastErrorCode: errorCode } }),
     ]);
+    if (error instanceof ComplianceCatalogAccessError) throw error;
     throw new Error("COMPLIANCE_CATALOG_RESCREEN_FAILED");
   }
 }

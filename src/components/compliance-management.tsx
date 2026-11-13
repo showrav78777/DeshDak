@@ -96,14 +96,23 @@ export function IdentityVerificationDecisionForm({ verificationId, version }: { 
 }
 
 export function ComplianceCatalogMaintenanceControl({ lastStatus, lastFinishedAt }: { lastStatus?: string | null; lastFinishedAt?: string | null }) {
-  const router = useRouter(); const [running, setRunning] = useState(false); const [error, setError] = useState(""); const [message, setMessage] = useState("");
+  const router = useRouter(), ready = useClientReady(), inFlight = useRef(false);
+  const [running, setRunning] = useState(false), [refreshing, startRefresh] = useTransition(), [error, setError] = useState(""), [message, setMessage] = useState("");
+  const busy = running || refreshing;
   async function run() {
+    if (!ready || busy || inFlight.current) return;
     if (!window.confirm("Rescreen every active product and pause rules whose effective window has ended?")) return;
-    setRunning(true); setError(""); setMessage("");
-    const response = await fetch("/api/v1/admin/compliance/rescreen", { method: "POST", headers: { "Content-Type": "application/json" } });
-    const result = await response.json(); setRunning(false);
-    if (!response.ok) return setError(result.error?.message ?? "Unable to run catalog compliance maintenance.");
-    setMessage(result.data.skipped ? "A catalog rescreen is already running." : `Catalog rescreen complete: ${result.data.summary.publicCatalog.clear} clear, ${result.data.summary.publicCatalog.blocked} blocked, ${result.data.summary.publicCatalog.reviewRequired} awaiting review.`); router.refresh();
+    inFlight.current = true; setRunning(true); setError(""); setMessage("");
+    try {
+      const response = await fetch("/api/v1/admin/compliance/rescreen", { method: "POST", headers: { "Content-Type": "application/json" }, signal: AbortSignal.timeout(45_000) });
+      const result = await response.json();
+      if (!response.ok) { setError(typeof result?.error?.message === "string" ? result.error.message : "Unable to run catalog compliance maintenance."); return; }
+      const data = result?.data, counts = data?.summary?.publicCatalog;
+      if (typeof data?.runId !== "string" || !data.runId || typeof data.skipped !== "boolean" || data.status !== (data.skipped ? "SKIPPED" : "SUCCEEDED") || !data.skipped && !["clear", "blocked", "reviewRequired"].every(key => Number.isSafeInteger(counts?.[key]) && counts[key] >= 0)) throw new Error("Invalid catalog maintenance response");
+      setMessage(data.skipped ? "A catalog rescreen is already running." : `Catalog rescreen complete: ${counts.clear} clear, ${counts.blocked} blocked, ${counts.reviewRequired} awaiting review.`);
+      startRefresh(() => router.refresh());
+    } catch { setError("The catalog rescreen could not be confirmed. Refresh the latest run status before retrying."); }
+    finally { inFlight.current = false; setRunning(false); }
   }
-  return <section className="country-list-card"><p className="eyebrow">CATALOG MAINTENANCE</p><h2>Apply current effective rules</h2><p>The production scheduler should run this regularly. It activates due scheduled rules, pauses expired rules, and atomically recalculates public product visibility.</p><p><b>{lastStatus ?? "NOT RUN"}</b>{lastFinishedAt ? ` · ${lastFinishedAt}` : " · No completed run"}</p><button className="button secondary" disabled={running} onClick={run} type="button">{running ? "Rescreening…" : "Run catalog rescreen now"}</button>{error ? <p className="form-error" role="alert">{error}</p> : null}{message ? <p className="form-success" role="status">{message}</p> : null}</section>;
+  return <section className="country-list-card"><p className="eyebrow">CATALOG MAINTENANCE</p><h2>Apply current effective rules</h2><p>The production scheduler should run this regularly. It activates due scheduled rules, pauses expired rules, and atomically recalculates public product visibility.</p><p><b>{lastStatus ?? "NOT RUN"}</b>{lastFinishedAt ? ` · ${lastFinishedAt}` : " · No completed run"}</p><button className="button secondary" disabled={!ready || busy} onClick={run} type="button">{busy ? "Rescreening…" : "Run catalog rescreen now"}</button>{error ? <p className="form-error" role="alert">{error}</p> : null}{message ? <p className="form-success" role="status">{message}</p> : null}</section>;
 }

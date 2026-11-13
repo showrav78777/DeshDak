@@ -9,7 +9,7 @@ const checks = [
   "test:admin-mfa", "test:auth-recovery", "test:session-management", "test:session-authorization", "test:logout-atomicity",
   "test:customer-account", "test:customer-markets", "test:wishlist", "test:cart", "test:coupon-workflow",
   "test:seller-product-revisions", "test:seller-store-revisions", "test:seller-catalog-imports", "test:seller-catalog-connections",
-  "test:compliance-portal", "test:finance-portal", "test:sourcing-portal", "test:warehouse-portal", "test:inspector-portal", "test:private-upload-authorization", "test:private-download-authorization", "test:identity-review-authorization", "test:screening-review-authorization", "test:compliance-rule-controls", "test:logistics-portal",
+  "test:compliance-portal", "test:finance-portal", "test:sourcing-portal", "test:warehouse-portal", "test:inspector-portal", "test:private-upload-authorization", "test:private-download-authorization", "test:identity-review-authorization", "test:screening-review-authorization", "test:compliance-rule-controls", "test:compliance-catalog-controls", "test:logistics-portal",
   "test:ship-for-me", "test:rma-workflow", "test:support-workflow", "test:support-policy", "test:ai-chat-handoff", "test:sales-kam", "test:identifier-workflow",
   "test:admin-shell", "test:admin-audit-log", "test:launch-readiness", "test:notification-preferences", "test:notification-read-actions",
   "test:phone-code-binding", "test:phone-verification-availability", "test:phone-otp-jobs", "test:phone-otp-operations",

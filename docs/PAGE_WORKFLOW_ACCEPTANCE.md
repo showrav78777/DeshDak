@@ -1304,3 +1304,15 @@ Final lint, TypeScript and production build passed. The 306-operation API contra
 security regressions and dependency integrity also passed for this increment.
 Build evidence: /tmp/deshdak-rule-controls-build-final-20261113.log. No release
 gate was waived.
+
+## 2026-11-13 — catalog maintenance authorization and UI recovery
+
+- Manual catalog maintenance rechecks Admin account/session/portal/grant/MFA/expiry before claim, after job-row lock wait and before catalog effects. Lease/run creation is atomic. Pre-work access loss records denial and a failed claimed run without catalog changes; insertion failure rolls back the lease, and success-audit failure rolls back work and records failure/release. Scheduler secret and rule policy remain unchanged.
+- Control now validates completion payload/counts, recovers from network/JSON failures, gates pre-hydration and remains busy through refresh. Final isolated run passed catalog-control, restricted-goods and rule-control suites together, with five access races, natural expiry during job-row wait, injected post-claim revocation/run/audit failures, lease skip, scheduler auth and mobile/desktop recovery/real completion.
+- Initial combined run stopped on an Admin fallback duplicate locator in the rule test after the first two suites passed. Scoped to visible hydrated workspace after navigation readiness; no assertion/deadline weakened. Final generated schema/container cleanup completed; no owner DB/provider or real policy used.
+- Evidence: /tmp/deshdak-catalog-controls-final-20261113.log; initial diagnostic: /tmp/deshdak-catalog-controls-20261113.log. Scope/limits: docs/COMPLIANCE_CATALOG_CONTROLS.md; owner steps: NIloy/COMPLIANCE_REVIEW.md. Runner now selects42; no new full42 run claimed. Prior full39 acceptance is historical; production release gates remain open.
+
+Lint, TypeScript, production build, 306-operation API contract, security regressions
+and dependency integrity passed. Build evidence:
+/tmp/deshdak-catalog-controls-build-20261113.log. No dependency/release gate was
+waived and no production service enabled.

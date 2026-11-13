@@ -32,3 +32,15 @@ business/compliance policy and production acceptance remain separate requirement
    before retrying. Resolve version conflicts using the current saved record.
 
 No new owner configuration is required for these control/security fixes.
+
+## Admin: refresh catalog screening
+
+Use **Run catalog rescreen now** to apply current effective rules and refresh
+catalog visibility. Confirm once and wait for the saved run result. An
+already-running message means another job owns the lease; avoid repeated clicks.
+If the request could not be confirmed, refresh and inspect the latest saved status
+before retrying. A timeout alone does not prove that the job failed.
+
+Manual execution does not configure an automatic scheduler. Your deployment
+operator must configure the protected scheduler and monitor recorded failures as
+part of production setup. These fixes require no new owner setting or API key.

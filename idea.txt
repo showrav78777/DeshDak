@@ -268,3 +268,10 @@ including post-rule-lock session expiry; terminal/effective-window checks are
 fresh. Create/reset and status UI recover safely with mobile/desktop regression
 coverage. Three targeted disposable suites passed; runner41 is not full41
 acceptance. No owner DB, provider, schema or policy change. Production gates remain.
+
+13 Nov 2026 — manual catalog rescreen now has fresh transactional Admin checks,
+atomic lease/run claim and safe recorded failure/release paths. Mobile/desktop UI
+recovers and stays pending through refresh. Three disposable suites pass, including
+lock-wait expiry and injected claim/audit failures. Admin fallback selector fixed
+in rule regression without relaxing assertions. Runner42 is not full42 acceptance.
+Cloud process-crash reconciliation/monitoring and other release gates remain.

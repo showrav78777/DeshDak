@@ -36,7 +36,7 @@ currently reside in PostgreSQL. Direct video-file uploads remain unfinished.
 
 ## Verification
 
-Run `npm run test:sqa:isolated` for 41 selected workflow suites in an automatically
+Run `npm run test:sqa:isolated` for 42 selected workflow suites in an automatically
 created disposable local PostgreSQL container. No application database is targeted.
 See [the SQA runbook](NIloy/SQA_RUNBOOK.md) for prerequisites and acceptance limits.
 This command does not replace the full dependency-audit or production-release gates.
