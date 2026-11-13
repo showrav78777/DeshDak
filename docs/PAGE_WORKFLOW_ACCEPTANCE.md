@@ -1280,3 +1280,15 @@ Lint, TypeScript, production build, 306-operation API contract, security regress
 and dependency integrity passed for this UI follow-up. Build evidence:
 /tmp/deshdak-identity-decision-ui-build-20261113.log. Full dependency audit remains
 blocked; no production integration was enabled.
+
+## 2026-11-13 — restricted-goods decision authorization and UI
+
+- Admin/Compliance screening decisions now lock and recheck account/session/portal/grant/MFA/expiry in the save transaction. Access changes leave screening state/version and catalog effects untouched, produce a minimal denial audit and return the existing 403. Existing state/version conflicts and exact-retry/publication policy remain unchanged.
+- Shared decision UI is hydration-gated, duplicate-guarded and bounded; malformed success is rejected, failures recover visibly, and pending state lasts through queue refresh. Both portals passed 390/1440px browser failure/no-JavaScript/held-refresh checks alongside ten controlled access-change races and single-winner concurrent decisions.
+- Screening authorization, Compliance portal and identity authorization suites passed together. Existing restricted-goods regression passed separately, including publication withdrawal/restoration, approved exact retry and checkout hard block. Owned cleanup completed; no owner DB/providers used. Evidence: /tmp/deshdak-screening-review-20261113.log and /tmp/deshdak-restricted-goods-regression-20261113.log.
+- SQA now selects 40 suites; this increment does not claim a full40 run. The earlier full39 acceptance remains historical. Engineering scope: docs/SCREENING_REVIEW_HARDENING.md; operator steps: NIloy/COMPLIANCE_REVIEW.md. Remaining release gates stay closed.
+
+Lint, TypeScript, production build, 306-operation API contract, security regressions
+and dependency integrity passed. Build evidence:
+/tmp/deshdak-screening-review-build-20261113.log. No dependency or release gate
+was weakened.

@@ -255,3 +255,10 @@ Mobile/desktop and real authorization regressions passed in disposable tests.
 Full dependency audit still seven moderate findings; latest estree remains on
 minimatch10. No forced override or gate change. Full39 acceptance predates this UI
 follow-up; production integrations/security/device gates remain open.
+
+13 Nov 2026 — restricted-goods review now reauthorizes Admin/Compliance inside the
+save transaction and hardens both portals' decision form. Ten access-change races,
+mobile/desktop failures/refresh, portal/identity regressions and existing restricted
+goods exact-retry/catalog/checkout checks passed in disposable runs. Runner40 is
+selected coverage, not a new full40 run. No owner DB/provider or policy change.
+Operator steps added in NIloy/COMPLIANCE_REVIEW.md; release gates remain open.

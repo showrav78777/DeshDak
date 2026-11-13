@@ -13,7 +13,8 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ s
   const parsed = complianceDecisionSchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return apiError("VALIDATION_ERROR", "Choose a decision and provide a review note.", 422, { fields: parsed.error.flatten().fieldErrors });
   const { screeningId } = await context.params;
-  const result = await decideComplianceScreening({ screeningId, reviewerId: session.userId, ...parsed.data });
+  const result = await decideComplianceScreening({ screeningId, reviewerId: session.userId, sessionId: session.sessionId, portal: "admin", ...parsed.data });
+  if (result.outcome === "ACCESS_DENIED") return apiError("ADMIN_ACCESS_REQUIRED", "Your review access changed. Sign in again before reviewing this screening.", 403);
   if (result.outcome === "NOT_FOUND") return apiError("SCREENING_NOT_FOUND", "Compliance screening not found.", 404);
   if (result.outcome === "STATE_CONFLICT") return apiError("SCREENING_STATE_CONFLICT", "Only a pending manual review can be decided.", 409);
   if (result.outcome === "VERSION_CONFLICT") return apiError("SCREENING_VERSION_CONFLICT", "This screening changed in another session. Refresh and try again.", 409);

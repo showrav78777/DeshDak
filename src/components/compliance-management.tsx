@@ -32,9 +32,24 @@ export function ComplianceRuleStatusControl({ ruleId, status, version }: { ruleI
 }
 
 export function ComplianceDecisionForm({ screeningId, version, endpointPrefix = "/api/v1/admin/compliance/screenings" }: { screeningId: string; version: number; endpointPrefix?: string }) {
-  const router = useRouter(); const [saving, setSaving] = useState(false); const [error, setError] = useState("");
-  async function submit(event: FormEvent<HTMLFormElement>) { event.preventDefault(); setSaving(true); setError(""); const form = new FormData(event.currentTarget); try { const response = await fetch(`${endpointPrefix}/${screeningId}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ decision: form.get("decision"), note: form.get("note"), version }) }); const result = await response.json(); if (!response.ok) return setError(result.error?.message ?? "Unable to record this decision."); router.refresh(); } catch { setError("Could not confirm this decision. Refresh the queue and review the case before retrying."); } finally { setSaving(false); } }
-  return <form className="compliance-decision" onSubmit={submit}><select aria-label="Decision" name="decision"><option value="APPROVED">Approve exact retry</option><option value="REJECTED">Reject</option></select><textarea aria-label="Review note" name="note" placeholder="Document the evidence and reason" required /><button disabled={saving} type="submit">{saving ? "Saving…" : "Record decision"}</button>{error ? <small className="form-error">{error}</small> : null}</form>;
+  const router = useRouter(), ready = useClientReady(), inFlight = useRef(false);
+  const [saving, setSaving] = useState(false), [refreshing, startRefresh] = useTransition(), [error, setError] = useState("");
+  const busy = saving || refreshing;
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!ready || busy || inFlight.current) return;
+    const form = new FormData(event.currentTarget), decision = form.get("decision");
+    inFlight.current = true; setSaving(true); setError("");
+    try {
+      const response = await fetch(`${endpointPrefix}/${screeningId}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ decision, note: form.get("note"), version }), signal: AbortSignal.timeout(30_000) });
+      const result = await response.json();
+      if (!response.ok) { setError(typeof result?.error?.message === "string" ? result.error.message : "Unable to record this decision. Refresh the queue before retrying."); return; }
+      if (result?.data?.screening?.id !== screeningId || result.data.screening.outcome !== decision) throw new Error("Invalid screening response");
+      startRefresh(() => router.refresh());
+    } catch { setError("Could not confirm this decision. Refresh the queue and review the case before retrying."); }
+    finally { inFlight.current = false; setSaving(false); }
+  }
+  return <form className="compliance-decision" onSubmit={submit} aria-busy={busy}><select aria-label="Decision" name="decision" disabled={!ready || busy}><option value="APPROVED">Approve exact retry</option><option value="REJECTED">Reject</option></select><textarea aria-label="Review note" name="note" placeholder="Document the evidence and reason" required disabled={!ready || busy} /><button disabled={!ready || busy} type="submit">{busy ? "Saving…" : "Record decision"}</button>{error ? <small className="form-error" role="alert">{error}</small> : null}</form>;
 }
 
 export function IdentityVerificationDecisionForm({ verificationId, version }: { verificationId: string; version: number }) {
