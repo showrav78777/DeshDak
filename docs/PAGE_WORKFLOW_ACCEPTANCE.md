@@ -1316,3 +1316,10 @@ Lint, TypeScript, production build, 306-operation API contract, security regress
 and dependency integrity passed. Build evidence:
 /tmp/deshdak-catalog-controls-build-20261113.log. No dependency/release gate was
 waived and no production service enabled.
+
+## 2026-11-13 — complete selected 42-suite acceptance
+
+- Ran test:sqa:isolated against source commit 9f17ba6. All 42 declared suites passed together, in declared order, without application/test changes during that run. Verified unique count/order, success marker, schema removal and owned-container cleanup. Removed generated Next.js includes. No owner database, real customer documents, policy deployment or live provider was used.
+- The complete selected run now includes current identity review UI/backend, restricted-goods review authorization, Admin rule controls and catalog job controls alongside authentication/recovery/sessions, customer/seller flows, all selected employee portals, ordered tracking/POD, claims/refunds, support, Sales/KAM, scanning/80 mm identifiers, Admin navigation/audit/readiness, notifications and phone/OTP operations.
+- Evidence: /tmp/deshdak-sqa42-20261113.log, SHA-256 d64c5d059fba252c881e89b31b482d65dcdfb8a952934653aa988a7e5497e1fe. The catalog build/lint/type/API/security/integrity acceptance recorded above applies to the same unchanged application source. This append changes documentation only; it does not rerun or waive the full dependency audit.
+- Owner SQA runbook updated. This is selected workflow acceptance, not all-page/physical-device/live-provider/cloud/security certification. Remaining production storage/scanning/lifecycle, provider adapters/configuration, dependency-security, cloud/load/device and independent review gates remain open. No push/deployment or live service activation was performed.
