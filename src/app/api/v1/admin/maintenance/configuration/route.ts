@@ -1,3 +1,4 @@
+import { authorizeSecurityMaintenance } from "@/modules/maintenance/authorization";
 import { type NextRequest } from "next/server";
 import { z } from "zod";
 import { apiError, apiSuccess } from "@/lib/api";
@@ -23,9 +24,14 @@ export async function PATCH(request: NextRequest) {
   const parsed = schema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return apiError("VALIDATION_ERROR", "Check the cleanup retention and batch settings.", 422, z.treeifyError(parsed.error));
   const configuration = await prisma.$transaction(async (tx) => {
-    const updated = await tx.maintenanceConfiguration.upsert({ where: { key: SECURITY_CLEANUP_KEY }, update: { ...parsed.data, updatedById: session.userId }, create: { key: SECURITY_CLEANUP_KEY, ...parsed.data, updatedById: session.userId } });
+    if (!await authorizeSecurityMaintenance(tx, session.userId, session.sessionId, "configuration")) return null;
+    await tx.maintenanceConfiguration.upsert({ where: { key: SECURITY_CLEANUP_KEY }, update: {}, create: { key: SECURITY_CLEANUP_KEY } });
+    await tx.$queryRaw`SELECT "key" FROM "MaintenanceConfiguration" WHERE "key" = ${SECURITY_CLEANUP_KEY} FOR UPDATE`;
+    if (!await authorizeSecurityMaintenance(tx, session.userId, session.sessionId, "configuration")) return null;
+    const updated = await tx.maintenanceConfiguration.update({ where: { key: SECURITY_CLEANUP_KEY }, data: { ...parsed.data, updatedById: session.userId } });
     await tx.auditLog.create({ data: { actorId: session.userId, action: "maintenance.security_cleanup_configuration_updated", entityType: "MaintenanceConfiguration", entityId: SECURITY_CLEANUP_KEY, metadata: parsed.data } });
     return updated;
   });
-  return apiSuccess({ configuration });
+  if (!configuration) return apiError("ADMIN_ACCESS_REQUIRED", "Your maintenance access changed. Sign in again before updating policy.", 403);
+  return apiSuccess({ configuration }, { headers: { "Cache-Control": "private, no-store, max-age=0" } });
 }
