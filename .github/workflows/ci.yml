@@ -89,7 +89,7 @@ jobs:
           npm run test:identifier-rules
           npm run test:identifier-assets
 
-      - name: Reject high-severity dependency vulnerabilities
+      - name: Reject moderate or higher dependency vulnerabilities
         run: npm run test:dependency-audit
 
       - name: Build production application

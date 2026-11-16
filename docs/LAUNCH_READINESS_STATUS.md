@@ -209,3 +209,25 @@ not executed or certified by recording them. See PRIVATE_PHOTO_REVIEW_WORKFLOW.m
 Actual rescan/replacement/release, retention/holds, production object routing,
 video and staging/full-system acceptance remain unfinished. No owner migration
 or provider operation was performed.
+
+## 16 November 2026 — dependency audit and recovery drill
+
+The full and production-only npm audit gates passed with zero findings. The
+lockfile uses minimatch 11.0.4 only for TypeScript ESLint's ESTree parser. This
+override crosses the parser's declared minimatch 10 range and was checked with
+repository lint and the parser's project-service glob matching. Remove the
+override when the supported upstream release includes a patched dependency.
+The CI moderate threshold remains in effect.
+
+The production build, TypeScript, dependency integrity, API contract, production
+configuration, backup/restore safety, performance policy and container safeguards
+passed. The local backup/restore drill used an empty restore target, verified the
+archive checksum, and restored 136 application tables and all 81 migrations.
+PostgreSQL 16 clients were used after the host's PostgreSQL 14 client could not
+dump from the 16 server. The disposable database and backup were removed.
+Provider, cloud and physical-device acceptance still require their own evidence.
+
+The warmed local development runtime passed a bounded read-only performance
+baseline across home, products and liveness. All 100 requests returned HTTP 200
+at concurrency five, with 611 ms p95. The initial cold warm-up exceeded its
+deadline. The rerun used preloaded pages and the canonical local hostname.

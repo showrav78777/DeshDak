@@ -114,10 +114,10 @@ No owner database or real provider was used. Generated schema/container and temp
 Next.js configuration entries were removed.
 
 This is acceptance of the selected automated workflows, not every page/device or
-production integration. The full npm audit still reports seven moderate package-chain
+production integration. At the time of that run, the full npm audit reported seven moderate package-chain
 findings rooted in the recorded minimatch advisory; production-only audit reports
 zero. The compatible-fix dry run does not clear the seven findings. Dependencies and
-the release gate were not changed. Live provider, cloud, load/security and physical
+the release gate were not changed in that run. On 16 November both dependency audits passed with zero findings. Live provider, cloud, load/security and physical
 scanner/phone/printer acceptance remain separate requirements.
 
 
