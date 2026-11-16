@@ -26,7 +26,7 @@ async function actor(label, role, portal, mfa = true) {
   const user = await db.user.create({ data: { email: `photo-review-${label}-${marker}@example.test`, fullName: "Synthetic review employee", status: "ACTIVE", passwordHash: "unused", roles: { create: { roleId: assigned.id } } } });
   const session = await db.authSession.create({ data: { userId: user.id, portal, mfaVerifiedAt: mfa ? new Date() : null, expiresAt: new Date(Date.now() + 3_600_000), clientType: "WEB", clientName: "Synthetic photo review" } });
   const token = await new SignJWT({ email: user.email, name: user.fullName, roles: [role] }).setProtectedHeader({ alg: "HS256" }).setJti(session.id).setSubject(user.id).setIssuer(process.env.AUTH_ISSUER ?? origin).setIssuedAt().setExpirationTime("1h").sign(new TextEncoder().encode(process.env.AUTH_SECRET));
-  return { user, session, cookie: `crossly_session=${token}` };
+  return { user, session, token, cookie: `crossly_session=${token}; __Host-crossly_session=${token}` };
 }
 async function fixture(owner, admin, quarantine = true) {
   const reference = { format: 1, purpose: "identity", key: `private/v1/identity/${randomBytes(32).toString("hex")}`, versionId: `synthetic-${randomBytes(8).toString("hex")}`, iv: randomBytes(12).toString("base64"), plaintextSha256: sha, ciphertextSha256: randomBytes(32).toString("base64"), sizeBytes: 22, mimeType: "image/png" };
@@ -80,7 +80,7 @@ try {
   try {
     for (const [label, width, height] of [["desktop", 1440, 1000], ["mobile", 390, 844]]) {
       const ui = await fixture(customer, admin), context = await browser.newContext({ viewport: { width, height } });
-      await context.addCookies([{ name: "crossly_session", value: admin.cookie.slice("crossly_session=".length), url: origin }]);
+      await context.addCookies([{ name: "crossly_session", value: admin.token, url: origin }]);
       const page = await context.newPage(); await page.goto(`${origin}/admin/private-photos?state=quarantined`); const panel = page.locator("#admin-main-content"); await panel.waitFor({ state: "visible" });
       const card = panel.locator("article").filter({ hasText: ui.upload.id }); await card.getByText("Record quarantine review", { exact: true }).click();
       await card.getByLabel("Review decision", { exact: true }).selectOption("REPLACEMENT_REQUIRED"); await card.getByLabel("Incident reference", { exact: true }).fill("OPS-2026-001"); await card.getByRole("checkbox").check();

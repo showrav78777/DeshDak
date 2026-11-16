@@ -33,7 +33,7 @@ async function verifyAdminControls(userId) {
     .setProtectedHeader({ alg: "HS256" }).setSubject(userId).setJti(session.id)
     .setIssuer(process.env.AUTH_ISSUER ?? baseUrl).setIssuedAt().setExpirationTime("10m")
     .sign(new TextEncoder().encode(process.env.AUTH_SECRET));
-  const headers = { Cookie: `crossly_session=${jwt}`, Origin: baseUrl, "Content-Type": "application/json" };
+  const headers = { Cookie: `crossly_session=${jwt}; __Host-crossly_session=${jwt}`, Origin: baseUrl, "Content-Type": "application/json" };
   const adminUrl = `${baseUrl}/api/v1/admin/maintenance`;
   const savePolicy = inventoryBatchSize => fetch(`${adminUrl}/configuration`, {
     method: "PATCH", headers, body: JSON.stringify({ securityTokenRetentionDays: 365, rateLimitRetentionHours: 720, mfaEnrollmentRetentionHours: 168, inventoryBatchSize }),

@@ -68,7 +68,11 @@ try {
 
   const homepage = await fetch(origin, { headers: { Cookie: cookie } });
   const homepageHtml = await homepage.text();
-  assert(homepage.status === 200 && homepageHtml.includes("BANGLADESH → CA") && homepageHtml.includes("Discover Bangladesh.") && homepageHtml.includes("Explore Bangladesh stores"), "Homepage did not switch to the international-customer experience.");
+  assert(homepage.status === 200 && homepageHtml.includes("Bangladesh products first") && homepageHtml.includes("Verified local businesses") && homepageHtml.includes("Explore Bangladesh stores"), "Homepage did not switch to the international-customer experience.");
+
+  const homeDefault = await fetch(origin);
+  const homeDefaultHtml = await homeDefault.text();
+  assert(homeDefault.status === 200 && homeDefaultHtml.includes("Global products first") && homeDefaultHtml.includes("Paste a product link") && !homeDefaultHtml.includes("Bangladesh products first"), "Default homepage did not maintain the Bangladesh-market experience.");
 
   if (unavailableCode) {
     const forged = await fetch(`${origin}/api/v1/catalog/products?pageSize=1`, { headers: { Cookie: `crossly_market_country=${unavailableCode}` } });

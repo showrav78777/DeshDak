@@ -45,7 +45,7 @@ async function actor(label, role, portal, mfa = false) {
   const user = await db.user.create({ data: { email: `quarantine-${label}-${marker}@example.test`, fullName: "Synthetic quarantine actor", status: "ACTIVE", passwordHash: "unused", roles: { create: { roleId: assigned.id } } } });
   const session = await db.authSession.create({ data: { userId: user.id, portal, mfaVerifiedAt: mfa ? new Date() : null, expiresAt: new Date(Date.now() + 3_600_000), clientType: "WEB", clientName: "Synthetic quarantine" } });
   const token = await new SignJWT({ email: user.email, name: user.fullName, roles: [role] }).setProtectedHeader({ alg: "HS256" }).setJti(session.id).setSubject(user.id).setIssuer(process.env.AUTH_ISSUER ?? origin).setIssuedAt().setExpirationTime("1h").sign(new TextEncoder().encode(process.env.AUTH_SECRET));
-  return { user, session, cookie: `crossly_session=${token}` };
+  return { user, session, token, cookie: `crossly_session=${token}; __Host-crossly_session=${token}` };
 }
 function legacy(key) { const iv = randomBytes(12), cipher = createCipheriv("aes-256-gcm", Buffer.from(key, "base64"), iv); return { ciphertext: Buffer.concat([cipher.update(image), cipher.final()]).toString("base64"), iv: iv.toString("base64"), tag: cipher.getAuthTag().toString("base64") }; }
 async function reserve(actor, purpose) {
@@ -121,7 +121,7 @@ try {
     for (const [label, width, height] of [["desktop", 1440, 1000], ["mobile", 390, 844]]) {
       const uiUpload = await reserve(owner, "identity");
       const context = await browser.newContext({ viewport: { width, height } });
-      await context.addCookies([{ name: "crossly_session", value: admin.cookie.slice("crossly_session=".length), url: origin }]);
+      await context.addCookies([{ name: "crossly_session", value: admin.token, url: origin }]);
       const page = await context.newPage(); await page.goto(`${origin}/admin/private-photos`);
       const panel = page.locator("#admin-main-content"); await panel.waitFor({ state: "visible" });
       await panel.getByRole("heading", { name: "Review private photo uploads" }).waitFor();

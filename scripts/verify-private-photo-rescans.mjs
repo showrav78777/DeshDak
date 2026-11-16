@@ -47,7 +47,7 @@ async function actor(label, role, portal, mfa = true) {
   const user = await db.user.create({ data: { email: `rescan-${label}-${marker}@example.test`, fullName: "Synthetic rescan employee", status: "ACTIVE", passwordHash: "unused", roles: { create: { roleId: assigned.id } } } });
   const session = await db.authSession.create({ data: { userId: user.id, portal, mfaVerifiedAt: mfa ? new Date() : null, expiresAt: new Date(Date.now() + 3_600_000), clientType: "WEB", clientName: "Synthetic rescan" } });
   const token = await new SignJWT({ email: user.email, name: user.fullName, roles: [role] }).setProtectedHeader({ alg: "HS256" }).setJti(session.id).setSubject(user.id).setIssuer(process.env.AUTH_ISSUER ?? origin).setIssuedAt().setExpirationTime("1h").sign(new TextEncoder().encode(process.env.AUTH_SECRET));
-  return { user, session, cookie: `crossly_session=${token}` };
+  return { user, session, token, cookie: `crossly_session=${token}; __Host-crossly_session=${token}` };
 }
 async function fixture(owner, admin, decision = "RESCAN_REQUIRED") {
   const prepared = store.prepare("identity", image, "image/png"), reference = await store.write(prepared);
@@ -125,7 +125,7 @@ try {
   const { chromium } = await import("@playwright/test"); const browser = await chromium.launch({ headless: true });
   try {
     for (const [label, width, height] of [["desktop", 1440, 1000], ["mobile", 390, 844]]) {
-      const context = await browser.newContext({ viewport: { width, height } }); await context.addCookies([{ name: "crossly_session", value: admin.cookie.slice("crossly_session=".length), url: origin }]);
+      const context = await browser.newContext({ viewport: { width, height } }); await context.addCookies([{ name: "crossly_session", value: admin.token, url: origin }]);
       const page = await context.newPage(); await page.goto(`${origin}/admin/private-photos/${item.row.id}`); const panel = page.locator("#admin-main-content"); await panel.waitFor({ state: "visible" });
       await panel.getByText("Private rescan setup is required.", { exact: false }).waitFor(); assert.equal(await panel.getByRole("button", { name: "Scan stored copy", exact: true }).count(), 0);
       await page.waitForLoadState("networkidle", { timeout: 15000 }); assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)); await page.screenshot({ path: `/tmp/deshdak-rescan-${label}-20261107.png` }); await context.close();

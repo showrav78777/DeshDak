@@ -21,7 +21,7 @@ async function notice(userId,title="Synthetic notice") {
 }
 const readPath=id=>`/api/v1/notifications/${id}/read`;
 async function call(path,token,body,originHeader=origin) {
- const response=await fetch(`${origin}${path}`,{method:"PATCH",headers:{...(token?{Cookie:`crossly_session=${token}`}:{ }),...(originHeader?{Origin:originHeader}:{}),...(body?{"Content-Type":"application/json"}:{})},body:body?JSON.stringify(body):undefined,redirect:"manual"});
+ const response=await fetch(`${origin}${path}`,{method:"PATCH",headers:{...(token?{Cookie:`crossly_session=${token}; __Host-crossly_session=${token}`}:{ }),...(originHeader?{Origin:originHeader}:{}),...(body?{"Content-Type":"application/json"}:{})},body:body?JSON.stringify(body):undefined,redirect:"manual"});
  return {response,body:response.headers.get("content-type")?.includes("json") ? await response.json() : null};
 }
 try {

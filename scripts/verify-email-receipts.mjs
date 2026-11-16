@@ -99,7 +99,7 @@ try {
     return new SignJWT({ email: admin.email, name: admin.fullName, roles: ["admin"] }).setProtectedHeader({ alg: "HS256" }).setJti(session.id).setSubject(admin.id).setIssuer(process.env.AUTH_ISSUER).setIssuedAt().setExpirationTime("1h").sign(new TextEncoder().encode(process.env.AUTH_SECRET));
   }
   const adminToken = await token("admin", true); const wrongPortal = await token("customer", true); const noMfa = await token("admin", false);
-  const headers = value => ({ ...(value ? { Cookie: `crossly_session=${value}` } : {}), Origin: origin.origin, "Content-Type": "application/json" });
+  const headers = value => ({ ...(value ? { Cookie: `crossly_session=${value}; __Host-crossly_session=${value}` } : {}), Origin: origin.origin, "Content-Type": "application/json" });
   const listUrl = new URL("/api/v1/admin/email-suppressions", origin);
   for (const value of [null, wrongPortal, noMfa]) assert.equal((await fetchOriginal(listUrl, { headers: headers(value) })).status, 403);
   const listing = await fetchOriginal(listUrl, { headers: headers(adminToken) }); assert.equal(listing.status, 200); assert.match(listing.headers.get("cache-control"), /no-store/);

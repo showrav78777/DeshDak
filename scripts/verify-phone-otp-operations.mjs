@@ -17,7 +17,7 @@ assert.equal(formatSummary({phoneOtpPayloadsPurged:-1}),'No recognized cleanup c
 const db=new PrismaClient(),marker=randomBytes(8).toString('hex'),sensitive=`PRIVATE_OTP_${marker}`;let admin,customer,browser;
 const path='/admin/notifications/sms';
 async function jwt(user,portal,mfa){const session=await db.authSession.create({data:{userId:user.id,portal,expiresAt:new Date(Date.now()+3600000),mfaVerifiedAt:mfa?new Date():null,clientType:'WEB',clientName:'SMS operations acceptance'}});return new SignJWT({email:user.email,name:user.fullName,roles:[portal==='admin'?'admin':'customer_personal']}).setProtectedHeader({alg:'HS256'}).setJti(session.id).setSubject(user.id).setIssuer(process.env.AUTH_ISSUER??origin).setIssuedAt().setExpirationTime('1h').sign(new TextEncoder().encode(process.env.AUTH_SECRET));}
-const request=(query='',token)=>fetch(`${origin}${path}${query}`,{headers:token?{Cookie:`crossly_session=${token}`}:{},redirect:'manual'});
+const request=(query='',token)=>fetch(`${origin}${path}${query}`,{headers:token?{Cookie:`crossly_session=${token}; __Host-crossly_session=${token}`}:{},redirect:'manual'});
 async function job(status='QUEUED',attempts=0,reference=null,tokenId=null){const n=await db.notification.create({data:{userId:customer.id,eventType:'PHONE_OTP_DISPATCH',category:'SECURITY',priority:'HIGH',title:sensitive,body:sensitive,entityType:'SecurityToken',entityId:tokenId,idempotencyKey:randomUUID(),deliveries:{create:{channel:'SMS',status,attempts,providerReference:reference,idempotencyKey:randomUUID(),securePayloadCiphertext:attempts?null:sensitive,securePayloadIv:attempts?null:'A'.repeat(16),securePayloadTag:attempts?null:'A'.repeat(24),nextAttemptAt:new Date()}}},select:{deliveries:{select:{id:true}}}});return n.deliveries[0].id;}
 try{
  const role=await db.role.findUniqueOrThrow({where:{code:'admin'}});
@@ -39,7 +39,7 @@ try{
  for(const width of [390,1440]){const context=await browser.newContext({viewport:{width,height:1000}});await context.addCookies([{name:'crossly_session',value:token,url:origin}]);const page=await context.newPage();await page.goto(`${origin}${path}?state=all`);await page.getByRole('heading',{name:'SMS verification review.'}).waitFor();await page.getByRole('navigation',{name:'Administrator navigation'}).waitFor({state:'attached'});await page.evaluate(()=>document.fonts.ready);assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));await page.screenshot({path:`/tmp/deshdak-sms-operations-${width}.png`,fullPage:false});await context.close();}
  // Investigation acknowledgements are immutable and never alter send state.
  const reviewPath=id=>`${origin}/api/v1/admin/notifications/sms/${id}/investigation`;
- const review=(id,credential=token,body={reviewed:true},sourceOrigin=origin)=>fetch(reviewPath(id),{method:'POST',headers:{Cookie:`crossly_session=${credential}`,Origin:sourceOrigin,'Content-Type':'application/json'},body:JSON.stringify(body)});
+ const review=(id,credential=token,body={reviewed:true},sourceOrigin=origin)=>fetch(reviewPath(id),{method:'POST',headers:{Cookie:`crossly_session=${credential}; __Host-crossly_session=${credential}`,Origin:sourceOrigin,'Content-Type':'application/json'},body:JSON.stringify(body)});
  for(const credential of [unverified,wrongPortal,forgedRole])assert.equal((await review(unknown,credential)).status,403);
  assert.equal((await review(unknown,token,{reviewed:true},'https://untrusted.example')).status,403);
  assert.equal((await review(unknown,token,{reviewed:false})).status,422);
@@ -82,17 +82,17 @@ try{
   assert.equal((await db.notificationDelivery.findUniqueOrThrow({where:{id:pendingCleanup}})).status,'QUEUED');
  }
  for(const deniedToken of [unverified,wrongPortal,forgedRole]) {
-  const rejected=await fetch(`${origin}/api/v1/admin/maintenance/run`,{method:'POST',headers:{Cookie:`crossly_session=${deniedToken}`,Origin:origin}});assert.equal(rejected.status,403);
-  const rejectedConfiguration=await fetch(`${origin}/api/v1/admin/maintenance/configuration`,{headers:{Cookie:`crossly_session=${deniedToken}`}});assert.equal(rejectedConfiguration.status,403);
+  const rejected=await fetch(`${origin}/api/v1/admin/maintenance/run`,{method:'POST',headers:{Cookie:`crossly_session=${deniedToken}; __Host-crossly_session=${deniedToken}`,Origin:origin}});assert.equal(rejected.status,403);
+  const rejectedConfiguration=await fetch(`${origin}/api/v1/admin/maintenance/configuration`,{headers:{Cookie:`crossly_session=${deniedToken}; __Host-crossly_session=${deniedToken}`}});assert.equal(rejectedConfiguration.status,403);
  }
- const wrongOrigin=await fetch(`${origin}/api/v1/admin/maintenance/run`,{method:'POST',headers:{Cookie:`crossly_session=${token}`,Origin:'https://untrusted.example'}});assert.equal(wrongOrigin.status,403);
+ const wrongOrigin=await fetch(`${origin}/api/v1/admin/maintenance/run`,{method:'POST',headers:{Cookie:`crossly_session=${token}; __Host-crossly_session=${token}`,Origin:'https://untrusted.example'}});assert.equal(wrongOrigin.status,403);
  const cleanupResponse=await fetch(`${origin}${maintenancePath}`,{method:'POST',headers:{Authorization:`Bearer ${process.env.MAINTENANCE_JOB_SECRET}`}});assert.equal(cleanupResponse.status,200);
  const cleanupResult=await cleanupResponse.json();assert.equal(cleanupResult.data.summary.phoneOtpPayloadsPurged,1);
  assert.equal((await db.notificationDelivery.findUniqueOrThrow({where:{id:pendingCleanup}})).securePayloadCiphertext,null);
  const runHistory=await db.maintenanceJobRun.findUniqueOrThrow({where:{id:cleanupResult.data.runId}});assert.equal(runHistory.status,'SUCCEEDED');assert.equal(runHistory.summary.phoneOtpPayloadsPurged,1);
  assert.equal((await db.notificationDelivery.findUniqueOrThrow({where:{id:unknown}})).status,'SENT');
  const manualPayload=await job('QUEUED',0,null,expired.id);
- const manualResponse=await fetch(`${origin}/api/v1/admin/maintenance/run`,{method:'POST',headers:{Cookie:`crossly_session=${token}`,Origin:origin}});assert.equal(manualResponse.status,200);assert.equal((await manualResponse.json()).data.summary.phoneOtpPayloadsPurged,1);
+ const manualResponse=await fetch(`${origin}/api/v1/admin/maintenance/run`,{method:'POST',headers:{Cookie:`crossly_session=${token}; __Host-crossly_session=${token}`,Origin:origin}});assert.equal(manualResponse.status,200);assert.equal((await manualResponse.json()).data.summary.phoneOtpPayloadsPurged,1);
  assert.equal((await db.notificationDelivery.findUniqueOrThrow({where:{id:manualPayload}})).status,'FAILED');
  const maintenanceContext=await browser.newContext({viewport:{width:390,height:1000}});await maintenanceContext.addCookies([{name:'crossly_session',value:token,url:origin}]);
  const maintenancePage=await maintenanceContext.newPage();

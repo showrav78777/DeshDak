@@ -231,3 +231,15 @@ The warmed local development runtime passed a bounded read-only performance
 baseline across home, products and liveness. All 100 requests returned HTTP 200
 at concurrency five, with 611 ms p95. The initial cold warm-up exceeded its
 deadline. The rerun used preloaded pages and the canonical local hostname.
+
+### Full local launch verification
+
+All 110 ordered launch-candidate gates passed on 16 November after correcting
+test-only cookie headers, classifying the standalone Docker and SQA commands,
+and updating the anonymous-market assertions for the current homepage. The gate
+list and audit threshold were preserved. The separate production build and Docker
+runtime checks passed. The scanner container also passed acceptance with real
+ClamAV and fresh definitions, invoking the engine probe inside its disposable
+environment. The local launch runner removed its schema and database container.
+Evidence is in /tmp/deshdak-launch-final.log. Live provider, staging, cloud and
+physical-device acceptance remain separate release requirements.
