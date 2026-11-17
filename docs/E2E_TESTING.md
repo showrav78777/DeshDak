@@ -1,6 +1,14 @@
 # Browser testing
 
-Latest full inventory verification: **4 November 2026**, all **105 checks passed
+Latest macOS verification: **17 November 2026**. All **105 browser checks
+passed** on Chromium with desktop and emulated mobile, including both reviewed
+visual comparisons. HTML and JUnit are in `/tmp/deshdak-browser-full-fixed.DQ2TtuHr/`.
+The isolated schema and database container were removed. The Admin setup test now
+checks 10 required and five optional areas in the visible workspace. The account
+test verifies the current development-only phone flow and confirms that no SMS
+was sent. No visual baselines, application code, or live providers changed.
+
+Prior full inventory verification: **4 November 2026**, all **105 checks passed
 in one isolated run** on Next.js 16.4.5, with zero failures, errors or skips
 (5.8 minutes). Includes both reviewed macOS visual comparisons. HTML report:
 `playwright-report-full105-20261104/`; JUnit and artifacts:

@@ -305,6 +305,7 @@ test.describe("customer account review", () => {
       try {
         expect((await context.request.post("/api/v1/auth/login", { headers: { Origin: baseURL! }, data: { email: fixture().emptyEmail, password: process.env.E2E_CUSTOMER_PASSWORD, portal: "customer" } })).status()).toBe(200);
         const page = await context.newPage();
+        page.setDefaultTimeout(10_000);
         const errors: string[] = [];
         page.on("pageerror", error => errors.push(error.message));
         await page.goto("/profile");
@@ -316,7 +317,7 @@ test.describe("customer account review", () => {
           for (const form of await fallback.locator(".identity-verification-panel form").all()) await expect(form).toHaveAttribute("method", "post");
         } finally { await fallbackContext.close(); }
         for (const config of [
-          { button: "Send verification code", path: "/api/v1/account/phone-verification/request", data: { requested: true, expiresAt: "2030-01-01T00:00:00.000Z" }, message: "A verification code was requested." },
+          { button: "Generate development code", path: "/api/v1/account/phone-verification/request", data: { requested: true, deliveryStatus: "DEVELOPMENT_ONLY", developmentCode: "000000", expiresAt: "2030-01-01T00:00:00.000Z" }, message: "Development test only: no SMS was sent." },
           { button: "Verify phone", path: "/api/v1/account/phone-verification/confirm", data: { verified: true }, message: "Phone number verified successfully." },
           { button: "Upload and submit", path: "/api/v1/account/identity-verifications", data: { submission: { id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", status: "PENDING" } }, message: "Identity verification submitted for Compliance review." },
         ]) {
@@ -357,6 +358,7 @@ test.describe("customer account review", () => {
           mode = "success";
           await panel.getByRole("button", { name: config.button, exact: true }).click();
           await expect(panel.getByRole("status")).toContainText(config.message);
+          if (config.button === "Generate development code") await expect(panel.getByText("Development-only code: 000000")).toBeVisible();
           if (config.button === "Upload and submit") {
             await expect(panel.getByLabel("Last 4 characters only")).toHaveValue("");
             expect(await panel.getByLabel("Clear document photo").evaluate((input: HTMLInputElement) => input.files?.length)).toBe(0);

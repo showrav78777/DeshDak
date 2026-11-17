@@ -13,6 +13,9 @@ test.use({ trace: "off", screenshot: "off", actionTimeout: 10_000 });
 test.describe.configure({ retries: 0 });
 test("Admin live setup guide explains remaining configuration", async ({ browser, baseURL }, info) => {
   test.skip(!process.env.E2E_LIVE_SETUP_ADMINS, "Requires isolated Admin fixtures."); test.setTimeout(120_000);
+  const requiredAreas = ["website-media", "hosting", "captcha", "email", "payments", "documents", "phone", "operations", "staff", "operations-security"];
+  const optionalAreas = ["private-rescan", "whatsapp", "google", "ai", "suppliers"];
+  const totalAreas = requiredAreas.length + optionalAreas.length;
   const admin = JSON.parse(process.env.E2E_LIVE_SETUP_ADMINS!)[info.project.name];
   const viewport = info.project.name === "mobile" ? { width: 375, height: 812 } : { width: 1440, height: 1000 };
   const context = await browser.newContext({ baseURL, viewport, storageState: { cookies: [], origins: [] } });
@@ -21,18 +24,20 @@ test("Admin live setup guide explains remaining configuration", async ({ browser
     const setup = await context.request.post("/api/v1/auth/mfa/setup", { headers: { Origin: baseURL! } }); expect(setup.status()).toBe(200);
     expect((await context.request.post("/api/v1/auth/mfa/confirm", { headers: { Origin: baseURL! }, data: { code: code((await setup.json()).data.secret) } })).status()).toBe(200);
     const page = await context.newPage(); await page.goto("/admin/launch-readiness/setup");
-    const guide = page.locator(".live-setup-page");
+    const guide = page.locator("#admin-main-content .live-setup-page:visible");
     await expect(guide.getByRole("heading", { name: "Set up DeshDak for live use." })).toBeVisible();
     if (info.project.name === "mobile") expect(await page.locator(".admin-menu-button").evaluate(el => getComputedStyle(el, "::after").content)).toContain("DeshDak Admin");
-    await expect(guide.locator(".live-setup-card")).toHaveCount(13);
-    await expect(guide.getByRole("region", { name: "Required live setup" }).locator("article")).toHaveCount(10);
-    await expect(guide.getByRole("region", { name: "Optional integrations" }).locator("article")).toHaveCount(3);
+    for (const [section, areas] of [["Required live setup", requiredAreas], ["Optional integrations", optionalAreas]] as const) {
+      const cards = guide.getByRole("region", { name: section }).locator("article");
+      await expect(cards).toHaveCount(areas.length);
+      expect(await cards.evaluateAll(elements => elements.map(element => element.id))).toEqual(areas);
+    }
     const incomplete = await guide.locator('.live-setup-configuration[data-state="required"]').count();
     await expect(guide.getByLabel("Areas missing configuration", { exact: true }).locator("b")).toHaveText(String(incomplete));
     await expect(guide).toContainText("These counts overlap; neither is a launch approval");
     await guide.getByText("Jump to a setup area", { exact: true }).click();
     const navigation = guide.getByRole("navigation", { name: "Setup areas" });
-    await expect(navigation.getByRole("link")).toHaveCount(13);
+    await expect(navigation.getByRole("link")).toHaveCount(totalAreas);
     await navigation.getByRole("link", { name: "Phone verification and SMS Required", exact: true }).click();
     await expect(guide.locator("#phone h3")).toBeInViewport();
     await guide.getByText("Jump to a setup area", { exact: true }).click();
@@ -57,12 +62,12 @@ test("Admin live setup guide explains remaining configuration", async ({ browser
     const fallback = await browser.newContext({ baseURL, viewport, javaScriptEnabled: false, storageState: await context.storageState() });
     try {
       const noScript = await fallback.newPage(); await noScript.goto("/admin/launch-readiness/setup");
-      await expect(noScript.locator(".live-setup-card:visible")).toHaveCount(13);
+      await expect(noScript.locator(".live-setup-card:visible")).toHaveCount(totalAreas);
       // Without hydration, Suspense also retains hidden server content. Operate
       // the visible native details element, as a keyboard/pointer user would.
       const jump = noScript.locator(".live-setup-jump:visible");
       await jump.locator("summary").click();
-      await expect(jump.getByRole("navigation", { name: "Setup areas" }).getByRole("link")).toHaveCount(13);
+      await expect(jump.getByRole("navigation", { name: "Setup areas" }).getByRole("link")).toHaveCount(totalAreas);
     }
     finally { await fallback.close(); }
     await email.getByRole("link", { name: "Open notification controls", exact: false }).click();
