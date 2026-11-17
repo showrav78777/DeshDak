@@ -1,7 +1,10 @@
 # DeshDak release handoff
 
-Reviewed 18 November 2026. The verified source is prepared for the approved
+Reviewed 18 November 2026. The verified source was uploaded to the approved
 GitHub repository, showrav78777/DeshDak, on codex/deshdak-platform.
+
+Open https://github.com/showrav78777/DeshDak/tree/codex/deshdak-platform
+to review it. Uploading the source does not deploy the application.
 
 ## Verified locally
 
