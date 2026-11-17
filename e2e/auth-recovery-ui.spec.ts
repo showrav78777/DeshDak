@@ -26,7 +26,11 @@ test('Customer authentication signup handles lost response and verification inte
   await page.locator('[data-human-verification="registration"][data-rendered="true"]').waitFor({state:'attached'});
   await page.getByLabel('Full name',{exact:true}).fill('Synthetic connection customer');
   await page.getByLabel('Email address',{exact:true}).fill('signup-fixture@example.test');
-  await page.getByLabel('Phone number',{exact:true}).fill('+8801700000000');
+  const phone = page.getByLabel('Phone number', { exact: true });
+  await phone.fill('01700000000');
+  expect(await phone.evaluate((input: HTMLInputElement) => input.validity.patternMismatch)).toBe(true);
+  await phone.fill('+880 (17) 0000-0000');
+  expect(await phone.evaluate((input: HTMLInputElement) => input.validity.patternMismatch)).toBe(false);
   await page.getByLabel('Create password',{exact:true}).fill('Synthetic-password-only-123!');
   await page.route('**/api/v1/auth/register',route=>route.abort('failed'));
   const button=page.getByRole('button',{name:'Create account',exact:true});

@@ -392,6 +392,12 @@ test.describe("customer account review", () => {
         const profile = manager.locator(".profile-form");
         const book = manager.locator(".address-book");
         const add = book.locator(".new-address form");
+        const phone = profile.getByLabel("Phone number", { exact: true });
+        const savedPhone = await phone.inputValue();
+        await phone.fill("01700000000");
+        expect(await phone.evaluate((input: HTMLInputElement) => input.validity.patternMismatch)).toBe(true);
+        await phone.fill(savedPhone);
+        expect(await phone.evaluate((input: HTMLInputElement) => input.validity.patternMismatch)).toBe(false);
         await profile.getByLabel("Full name", { exact: true }).fill(`Synthetic updated ${name}`);
         const noScript = await browser.newContext({ baseURL, extraHTTPHeaders: accountClientHeaders, viewport, javaScriptEnabled: false, storageState: await context.storageState() });
         try {

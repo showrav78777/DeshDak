@@ -8,6 +8,13 @@ checks 10 required and five optional areas in the visible workspace. The account
 test verifies the current development-only phone flow and confirms that no SMS
 was sent. No visual baselines, application code, or live providers changed.
 
+A subsequent fix restores native browser validation of international phone numbers
+on signup and profile forms. Seven focused Chromium checks passed on 17 November
+across desktop and emulated mobile, including the setup cases. The checks reject
+a local-only number and accept the intended international format. The production
+build, lint and TypeScript passed. The focused HTML/JUnit reports are in
+`/tmp/deshdak-phone-pattern.VapF8BYf/`.
+
 Prior full inventory verification: **4 November 2026**, all **105 checks passed
 in one isolated run** on Next.js 16.4.5, with zero failures, errors or skips
 (5.8 minutes). Includes both reviewed macOS visual comparisons. HTML report:
