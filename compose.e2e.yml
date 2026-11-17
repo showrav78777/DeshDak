@@ -32,6 +32,8 @@ services:
       APP_BASE_URL: http://localhost:3117
       TEST_BASE_URL: http://localhost:3117
       NEXT_TELEMETRY_DISABLED: "1"
+      # Exercise the synthetic verification-code flow in this disposable stack.
+      ALLOW_DEV_AUTH_LINKS: "true"
       E2E_VISUAL: "${E2E_VISUAL:-1}"
       E2E_UPDATE_SNAPSHOTS: "${E2E_UPDATE_SNAPSHOTS:-0}"
       E2E_BLOB: "${E2E_BLOB:-0}"

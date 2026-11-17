@@ -15,6 +15,13 @@ a local-only number and accept the intended international format. The production
 build, lint and TypeScript passed. The focused HTML/JUnit reports are in
 `/tmp/deshdak-phone-pattern.VapF8BYf/`.
 
+The focused Linux Docker rerun passed all 11 Admin, account and setup checks. The
+disposable browser stack explicitly enables development-only verification codes
+so it exercises the same branch as the native run. No production configuration
+changed. Full Linux acceptance is pending: the complete retries reached time
+limits on this host and the earlier third shard lacked the fixture setting.
+Linux focused HTML/JUnit reports are in `/tmp/deshdak-browser-linux-phone.105XACuh/`.
+
 Prior full inventory verification: **4 November 2026**, all **105 checks passed
 in one isolated run** on Next.js 16.4.5, with zero failures, errors or skips
 (5.8 minutes). Includes both reviewed macOS visual comparisons. HTML report:
