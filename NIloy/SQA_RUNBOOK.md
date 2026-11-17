@@ -133,3 +133,11 @@ responses and remains busy through queue refresh. Targeted authorization/browser
 and Compliance portal checks passed; the complete 39-suite run above precedes
 this UI change. Use the evidence in docs/IDENTITY_REVIEW_AUTHORIZATION.md for the
 current targeted scope. No owner setting is required for the UI fix.
+
+## Linux browser acceptance confirmed 18 November 2026
+
+All 105 configured Chromium desktop and emulated-mobile cases passed across three
+sequential disposable Docker shards against de27e69. The Linux visual comparisons
+also passed. Reports are recorded in docs/E2E_TESTING.md. No owner setting or
+production migration is needed for this verification. Actual phones, scanners,
+printers, live providers and the deployed environment still require acceptance.

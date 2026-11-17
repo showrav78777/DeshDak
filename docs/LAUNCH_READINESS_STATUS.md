@@ -243,3 +243,15 @@ ClamAV and fresh definitions, invoking the engine probe inside its disposable
 environment. The local launch runner removed its schema and database container.
 Evidence is in /tmp/deshdak-launch-final.log. Live provider, staging, cloud and
 physical-device acceptance remain separate release requirements.
+
+### Linux browser acceptance confirmed 18 November 2026
+
+The sequential run against de27e69 passed every one of the 105 declared Chromium
+desktop/emulated-mobile checks, including the two Linux visual baselines.
+Three shards passed 37 executions each, with six repeated setup executions
+accounting for the 111 total. JUnit showed zero failures, errors or skips.
+Combined project/file/full-title coverage was checked against Playwright's
+declared inventory. The run removed its disposable databases and networks.
+Evidence is in /tmp/deshdak-browser-linux-sequential.0bVjzDZf/.
+This completes local Linux browser acceptance for that source revision.
+Cloud/provider certification and physical-device/warehouse acceptance remain due.

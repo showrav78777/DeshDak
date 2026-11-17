@@ -1,5 +1,16 @@
 # Browser testing
 
+Latest Linux verification confirmed **18 November 2026**, from the sequential
+17 November run against commit de27e69. All **105 distinct browser checks passed**
+across three fresh database shards, including both reviewed Linux visual
+comparisons. Each shard passed 37 executions, for 111 executions including the
+three setup checks repeated in each shard. JUnit records zero failures, errors
+and skips. The combined project/file/test-title inventory matches the declared
+105 checks exactly. HTML/JUnit reports and logs are in
+`/tmp/deshdak-browser-linux-sequential.0bVjzDZf/shard-{1,2,3}/`.
+The disposable schemas, containers and networks were removed. Running shards
+sequentially resolved the resource contention seen during simultaneous runs.
+
 Latest macOS verification: **17 November 2026**. All **105 browser checks
 passed** on Chromium with desktop and emulated mobile, including both reviewed
 visual comparisons. HTML and JUnit are in `/tmp/deshdak-browser-full-fixed.DQ2TtuHr/`.
@@ -18,8 +29,9 @@ build, lint and TypeScript passed. The focused HTML/JUnit reports are in
 The focused Linux Docker rerun passed all 11 Admin, account and setup checks. The
 disposable browser stack explicitly enables development-only verification codes
 so it exercises the same branch as the native run. No production configuration
-changed. Full Linux acceptance is pending: the complete retries reached time
-limits on this host and the earlier third shard lacked the fixture setting.
+changed. Earlier full Linux retries reached time limits on this host and the earlier third
+shard lacked the fixture setting. The sequential result above supersedes that
+pending status.
 Linux focused HTML/JUnit reports are in `/tmp/deshdak-browser-linux-phone.105XACuh/`.
 
 Prior full inventory verification: **4 November 2026**, all **105 checks passed
