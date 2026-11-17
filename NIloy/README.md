@@ -9,7 +9,9 @@ or production environment files in this folder or Git.
 The approved destination is `https://github.com/showrav78777/DeshDak.git`.
 A dedicated application repository has been initialized here, isolated from the
 previously inherited home-directory repository. Do not run `git add .` from the
-home directory. Upload remains pending completion and verification of the project.
+home directory. The verified source is prepared for upload on the
+`codex/deshdak-platform` branch. See [the release handoff](RELEASE_HANDOFF.md)
+for verified work and the remaining engineering/account tasks.
 
 ## 2. Hosting and domain
 
