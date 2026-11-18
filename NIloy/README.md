@@ -4,6 +4,9 @@ This folder contains tasks requiring your accounts, business information, servic
 approvals or physical equipment. Never put passwords, tokens, identity documents
 or production environment files in this folder or Git.
 
+Start with [your ordered next actions](RELEASE_HANDOFF.md#your-next-actions-in-order).
+The handoff also identifies unfinished development work and live acceptance.
+
 ## 1. Git destination
 
 The approved destination is `https://github.com/showrav78777/DeshDak.git`.

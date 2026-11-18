@@ -6,6 +6,38 @@ GitHub repository, showrav78777/DeshDak, on codex/deshdak-platform.
 Open https://github.com/showrav78777/DeshDak/tree/codex/deshdak-platform
 to review it. Uploading the source does not deploy the application.
 
+## Current completion status
+
+Local build and automated workflow acceptance are complete for the revisions
+recorded below. Production engineering and acceptance are still open. The earlier
+statement that all other website work was finished overstated completion.
+Several remaining features require code integration as well as provider access.
+
+## Your next actions, in order
+
+1. Provide the chosen domain, hosting provider/AWS region and the deployment
+   operator's role access. Create a separate staging environment first.
+2. Provide approved company/billing details, policies, warehouse addresses,
+   shipping rates and named staff accounts.
+3. Arrange payment sandbox access, an email sending domain and the selected SMS
+   gateway's approved account/API documentation. Put secret values in the
+   deployment secret manager. Share service names and setup status only.
+4. Arrange private storage, KMS and a dedicated private scanner with the deployment
+   operator using PRIVATE_PHOTO_STORAGE_SETUP.md. Engineering must finish the
+   intake/download/lifecycle integration before live identity verification can
+   support ordering.
+5. Confirm which optional services should launch: Google sign-in, conversational
+   AI, supplier discovery/image search and WhatsApp. Their account prerequisites
+   are in API_CONNECTION_GUIDE.md.
+6. Test the integrated staging site with Finance, Compliance and warehouse staff
+   on real devices, including payment/refund, identity/phone verification,
+   inspection evidence, measured shipping quotes and delivery tracking. Record
+   failures and acceptance evidence in Admin launch readiness.
+
+The implementation work listed under Engineering still required belongs to the
+development team. Adding account credentials alone cannot finish those items.
+
+
 ## Verified locally
 
 - The full launch runner passed 110 gates.
