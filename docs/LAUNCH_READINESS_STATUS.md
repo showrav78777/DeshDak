@@ -5,9 +5,9 @@ Status reviewed: 19 November 2026, Asia/Dhaka
 Current summary: scanned identity/inspection photo routes and protected object
 downloads are implemented behind a disabled production switch. The production
 build and targeted migration/photo/Admin checks pass. The fresh full dependency
-audit reports zero findings. The last full run passed 108 gates before a
-quarantine regression that was then corrected and verified with five affected
-suites. A single clean 111-gate rerun and live acceptance are not claimed.
+audit reports zero findings. After correcting the quarantine regression, a fresh
+run passed all 111 launch gates in sequence against application revision fdd181c.
+Live acceptance is not claimed.
 Video, media lifecycle controls, messaging/supplier integration and real staging
 acceptance remain unfinished. See the dated 19 November section below and NIloy/.
 
@@ -328,3 +328,29 @@ It also exercised the real Admin forms at desktop/mobile sizes. Synthetic S3 and
 scanner responses were used; no production storage was contacted. This closes
 the observed fallback/response regression but does not turn the preceding full
 run into a single successful 111-gate execution.
+
+## 19 November 2026 — combined launch gate closed
+
+A fresh full run against application revision fdd181c passed all 111 gates in
+sequence in 4.8 minutes, including the full npm audit (zero vulnerabilities),
+clean migration/drift checks, role workflows, clock-skew regression, object photo
+submissions and the quarantine/review/rescan checks. The owned schema and Docker
+database were removed. No owner DB or live provider was used. Raw local evidence:
+/tmp/deshdak-full-release-current.log. This supersedes the earlier stopped run for
+combined local acceptance without erasing its failure history.
+
+The disposable runner now accepts --full as its only optional argument so the
+full run can be repeated without modifying runner source. Default mode preserves
+the selected role suites. Unsupported/extra arguments are rejected before Docker
+or database access. Use npm run test:sqa:isolated -- --full. Production build and
+cloud/provider/device acceptance remain separate gates. Retention/legal-hold and
+deletion controls are still engineering work; this verification adds none of them.
+
+The committed --full command was then exercised end to end and passed all 111
+ordered gates in 5.6 minutes, with zero audit findings and owned-container/schema
+cleanup confirmed. See verification/20261119-local-launch.json for the sanitized
+ordered gate inventory, exact application revision, runner/lockfile hashes and
+local log digest. Raw evidence is /tmp/deshdak-full-disposable-command.log.
+Unsupported/extra runner arguments were separately rejected before Docker access.
+The production bundle previously passed for the same application source; the
+only code change in this verification increment is the disposable runner flag.

@@ -38,16 +38,15 @@ The implementation work listed under Engineering still required belongs to the
 development team. Adding account credentials alone cannot finish those items.
 
 
-The 18 November full launch rerun stopped at 14 high dependency findings in
-the lint toolchain. A fresh full audit on 19 November reports zero findings with
-no dependency changes or exceptions. The full rerun passed 108 gates before an obsolete quarantine assertion. After
-correcting the download boundary and assertions, all five affected photo suites
-passed, including the remaining quarantine/review/rescan gates. This is not a
-single successful 111-gate run or live-service certification.
+The 18 November audit and the subsequent quarantine regression are historical
+failed runs. A fresh run on 19 November passed all 111 launch gates in sequence
+against application revision fdd181c, including the full dependency audit with
+zero findings. This closes the combined local verification gap. It does not
+certify live services or complete the engineering work below.
 
 ## Verified locally
 
-- The full launch runner passed 110 gates.
+- The full launch runner passed all 111 gates in one isolated run on 19 November.
 - All 105 configured Chromium browser cases passed on macOS.
 - All 105 distinct Linux browser cases passed across three sequential Docker
   shards, including both visual comparisons. Each shard passed 37 executions

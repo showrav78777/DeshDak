@@ -13,7 +13,7 @@ This command creates its own randomly named PostgreSQL container, random test
 credentials and a generated isolated schema. It selects a local application port,
 runs 42 customer/seller/employee/Admin/authentication/notification workflow suites,
 then removes its schema/container on normal success or failure. It rejects remote
-Docker daemons and accepts no database/container/script arguments. It does not
+Docker daemons and accepts only the optional --full flag, never database/container/script arguments. It does not
 migrate, seed or target your application database. Live provider switches and
 credentials are disabled for this run; phone codes are development-only and no SMS
 is sent. Do not use real customer documents or production credentials as fixtures.
@@ -29,6 +29,23 @@ Desktop for the exact `deshdak-sqa-...` container from that run, confirm it is a
 resource and no verification is still using it, and remove that container only.
 Never prune unrelated containers, volumes or databases to clean up a test.
 
+## Full disposable launch verification
+
+To run every locally configured launch gate, including the dependency audit,
+clean migrations, role workflows and photo safety checks, use:
+
+```sh
+npm run test:sqa:isolated -- --full
+```
+
+This uses the same owned disposable Docker database and cleanup safeguards.
+Production build and actual provider/device acceptance remain separate. A full
+run passed all 111 gates on 19 November 2026 against application revision fdd181c.
+The new --full command also passed all 111 ordered gates in 5.6 minutes.
+The sanitized inventory and evidence digest are in
+[the verification record](../docs/verification/20261119-local-launch.json).
+The earlier stopped runs remain historical evidence.
+
 ## Separate mandatory checks
 
 Run the production build, lint, TypeScript, API contract and full security audit as
@@ -42,9 +59,9 @@ npm run build
 npm run test:dependency-audit
 ```
 
-The full dependency audit currently blocks release with the tooling findings
-recorded in README.md. A passing production-only audit is not a waiver. Do not
-force dependency overrides or lower the audit threshold to mark launch ready.
+The full dependency audit passed with zero findings on 19 November. Repeat it
+for the actual release. A production-only audit is not a waiver for full-audit
+failures. Do not force dependency overrides or lower the audit threshold.
 
 For the existing Playwright suite and HTML/JUnit reports, follow
 [the E2E testing guide](../docs/E2E_TESTING.md). Console workflow checks and browser

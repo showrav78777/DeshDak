@@ -3,8 +3,8 @@ import { spawnSync } from "node:child_process";
 import { access } from "node:fs/promises";
 import { createServer } from "node:net";
 
-// Workflow acceptance only. Production build, full dependency audit and live
-// provider/device acceptance remain separate required release gates.
+// Default mode covers role workflows; --full runs every isolated launch gate,
+// including the dependency audit. Build and live acceptance remain separate.
 const checks = [
   "test:admin-mfa", "test:auth-recovery", "test:session-management", "test:session-authorization", "test:logout-atomicity",
   "test:customer-account", "test:customer-markets", "test:wishlist", "test:cart", "test:coupon-workflow",
@@ -14,7 +14,9 @@ const checks = [
   "test:admin-shell", "test:admin-audit-log", "test:launch-readiness", "test:notification-preferences", "test:notification-read-actions",
   "test:phone-code-binding", "test:phone-verification-availability", "test:phone-otp-jobs", "test:phone-otp-operations",
 ];
-if (process.argv.length > 2) throw new Error("This SQA runner accepts no external database, container or script arguments.");
+const fullLaunch = process.argv.length === 3 && process.argv[2] === "--full";
+if (process.argv.length > 2 && !fullLaunch) throw new Error("Use no arguments or --full. External database, container and script arguments are rejected.");
+const selectedChecks = fullLaunch ? [] : checks;
 let docker = "docker";
 if (process.platform === "darwin") {
   try { await access("/Applications/Docker.app/Contents/Resources/bin/docker"); docker = "/Applications/Docker.app/Contents/Resources/bin/docker"; } catch { /* Use PATH. */ }
@@ -40,7 +42,7 @@ async function testPort() {
   return address.port;
 }
 try {
-  console.log(`Starting ${checks.length} isolated workflow suites with synthetic users and live providers disabled.`);
+  console.log(fullLaunch ? "Starting full isolated launch verification with synthetic users and live providers disabled." : `Starting ${checks.length} isolated workflow suites with synthetic users and live providers disabled.`);
   runDocker(["run", "--detach", "--name", name, "--label", "deshdak.acceptance=true", "--publish", "127.0.0.1::5432", "--env", `POSTGRES_PASSWORD=${password}`, "--env", "POSTGRES_DB=sqa_test", "postgres:16-alpine"]);
   created = true;
   const deadline = Date.now() + 60000;
@@ -67,9 +69,9 @@ try {
     NEXT_PUBLIC_TURNSTILE_SITE_KEY: "", TURNSTILE_SECRET_KEY: "", TURNSTILE_EXPECTED_HOSTNAME: "",
     AWS_ACCESS_KEY_ID: "", AWS_SECRET_ACCESS_KEY: "", AWS_SESSION_TOKEN: "", AWS_EC2_METADATA_DISABLED: "true",
   };
-  const result = spawnSync(process.execPath, ["scripts/verify-launch-isolated.mjs", ...checks], { cwd: process.cwd(), env, stdio: "inherit" });
+  const result = spawnSync(process.execPath, ["scripts/verify-launch-isolated.mjs", ...selectedChecks], { cwd: process.cwd(), env, stdio: "inherit" });
   if (result.error || result.status !== 0) throw new Error("Isolated SQA stopped on a failed workflow. Inspect the preceding check; no release gate has been waived.");
-  console.log(`All ${checks.length} selected workflow suites passed. This is not full release, audit, cloud/provider or physical-device certification.`);
+  console.log(fullLaunch ? "Full isolated launch gates passed. Production build, cloud/provider and physical-device acceptance remain separate." : `All ${checks.length} selected workflow suites passed. This is not full release, audit, cloud/provider or physical-device certification.`);
 } finally {
   if (created) { runDocker(["rm", "-f", name]); console.log("Removed the owned disposable SQA database container. No owner database was targeted."); }
 }
