@@ -282,3 +282,16 @@ includes removed. Same app source had passing build/lint/type/API/security/integ
 No application changes required during full run, owner DB/provider untouched.
 This closes selected local workflow acceptance only; production implementation,
 dependency, live provider/cloud/load/device/security gates remain open.
+
+18 November 2026 — object photo upload/download routing is connected behind a
+disabled production switch. Seven affected suites, five desktop/mobile browser
+cases, clean migration and the production build passed. The actual multipart
+handler was executed with synthetic storage; S3/scanner remain uncertified live.
+Video, retention/legal holds and controlled lifecycle operations remain open.
+Full111 verification stopped at dependency audit with 14 high picomatch-chain
+findings. Official advisory has no patched version, current latest 4.0.7;
+production-only audit zero. No audit exemption or breaking downgrade applied.
+Live provider credentials/account contracts and approved retention policy were
+requested through the pending owner questions. No production services enabled.
+
+19 November 2026: fixed database/application scan-attestation clock mismatch with a deterministic skew regression. Targeted migration/intake/submission/binding/delivery passed and production build passed. Fresh full audit reports zero without lockfile changes; the later full run reached 108 passing gates before an obsolete quarantine fallback assertion. Linked downloads must never fall back to legacy bytes. Quarantine response/auth boundary and regression expectations updated; follow-up evidence belongs in current launch status. Selected provisional retention defaults documented in NIloy/MEDIA_RETENTION_POLICY.md; lifecycle worker/Admin controls remain engineering work and disabled.

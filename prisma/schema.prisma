@@ -1869,9 +1869,9 @@ model InspectionEvidence {
   mimeType       String   @db.VarChar(64)
   sizeBytes      Int
   sha256         String   @db.VarChar(64)
-  ciphertext     String
-  iv             String   @db.VarChar(32)
-  authTag        String   @db.VarChar(32)
+  ciphertext     String?
+  iv             String?  @db.VarChar(32)
+  authTag        String?  @db.VarChar(32)
   originalName   String?  @db.VarChar(180)
   createdAt      DateTime @default(now())
   package        Package  @relation(fields: [packageId], references: [id], onDelete: Restrict)
@@ -3538,6 +3538,7 @@ model PrivatePhotoUpload {
   storageNamespace    String   @db.VarChar(64)
   status              String   @default("PREPARED") @db.VarChar(24)
   preparedReference   Json
+  submissionScope     Json?
   originalScanSha256  String?  @db.VarChar(64)
   originalScanVerifiedAt DateTime?
   scanVerifiedSha256  String?  @db.VarChar(64)

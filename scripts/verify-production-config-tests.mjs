@@ -111,3 +111,11 @@ for (const invalid of [
   assert(!JSON.stringify(checked.errors).includes("secret=PRIVATE"));
 }
 console.log("Private-photo rescan startup checks passed: independent private HTTPS endpoint/token, expected storage owner/KMS, encryption keys and fail-closed activation.");
+
+for (const invalid of [
+  { PRIVATE_PHOTO_STORAGE_ENABLED: "yes" },
+  { PRIVATE_PHOTO_STORAGE_ENABLED: "true" },
+  { ...privateRescan, PRIVATE_PHOTO_STORAGE_ENABLED: "true", PRIVATE_PHOTO_STORAGE_BUCKET: "" },
+]) assert(!validateProductionEnvironment({ ...valid, ...invalid }).ok);
+assert.deepEqual(validateProductionEnvironment({ ...valid, ...privateRescan, PRIVATE_PHOTO_RESCAN_ENABLED: "false", PRIVATE_PHOTO_STORAGE_ENABLED: "true" }), { ok: true, errors: [] });
+console.log("Private photo intake/delivery activation requires the approved storage, private scanner and independent keys.");

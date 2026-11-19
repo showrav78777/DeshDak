@@ -1,3 +1,4 @@
+import { privatePhotoDeliveryResponse } from "@/modules/private-storage/delivery-response";
 import { authorizeLegacyPhotoRead } from "@/modules/private-storage/legacy-read-authorization";
 import { blockQuarantinedPrivateRecord } from "@/modules/private-storage/quarantine";
 import { type NextRequest } from "next/server";
@@ -14,8 +15,11 @@ export async function GET(request: NextRequest, context: { params: Promise<{ ver
   if (!session?.roles.includes(ROLE.COMPLIANCE) || session.portal !== "compliance") return apiError("COMPLIANCE_ACCESS_REQUIRED", "Verified Compliance access is required.", 403);
   const { verificationId } = await context.params;
   const verification = await prisma.identityVerification.findUnique({ where: { id: verificationId }, select: { id: true, documentPhotoCiphertext: true, documentPhotoIv: true, documentPhotoTag: true, documentPhotoMimeType: true, documentPhotoSha256: true } });
-  if (!verification?.documentPhotoCiphertext || !verification.documentPhotoIv || !verification.documentPhotoTag || !verification.documentPhotoMimeType) return apiError("DOCUMENT_PHOTO_NOT_AVAILABLE", "No securely uploaded document photo is available for this case.", 404);
+  if (!verification) return apiError("DOCUMENT_PHOTO_NOT_AVAILABLE", "No securely uploaded document photo is available for this case.", 404);
   if (await blockQuarantinedPrivateRecord(prisma, "identity", verificationId, session.userId)) return apiError("PHOTO_QUARANTINED", "This photo is blocked pending a controlled security review.", 410);
+  const objectResponse = await privatePhotoDeliveryResponse({ sessionId: session.sessionId, kind: "identity", subjectId: verificationId });
+  if (objectResponse) return objectResponse;
+  if (!verification.documentPhotoCiphertext || !verification.documentPhotoIv || !verification.documentPhotoTag || !verification.documentPhotoMimeType) return apiError("DOCUMENT_PHOTO_NOT_AVAILABLE", "No securely uploaded document photo is available for this case.", 404);
   try {
     const photo = decryptIdentityDocument({ documentPhotoCiphertext: verification.documentPhotoCiphertext, documentPhotoIv: verification.documentPhotoIv, documentPhotoTag: verification.documentPhotoTag });
     if (await blockQuarantinedPrivateRecord(prisma, "identity", verificationId, session.userId)) return apiError("PHOTO_QUARANTINED", "This photo is blocked pending a controlled security review.", 410);

@@ -50,7 +50,10 @@ readiness status. Supply credentials through the deployment secret manager:
 - Phone verification: contracted SMS service, sender approval and delivery tests.
 - Private media: object storage, scanning, access controls and delivery/retention.
   See [private photo infrastructure prerequisites](PRIVATE_PHOTO_STORAGE_SETUP.md);
-  the adapter core is ready, while route/lifecycle integration remains engineering.
+  photo intake/download routes are connected behind a disabled switch; video and
+  lifecycle integration still require engineering. See the selected provisional
+  [media retention defaults](MEDIA_RETENTION_POLICY.md); destructive cleanup
+  remains disabled pending implementation and verification.
 - AI and suppliers: approved accounts, commercial rights, quotas and credentials.
 
 Some adapters still require engineering and certification; keys alone do not
@@ -83,6 +86,11 @@ On 16 November 2026 both the full and production-only npm audits passed with zer
 findings. The fix pins minimatch 11.0.4 for the TypeScript ESLint parser dependency
 only, addressing [GHSA-g3hv-75wg-m249](https://github.com/advisories/GHSA-g3hv-75wg-m249).
 This needs no owner configuration and leaves the CI audit threshold in place.
+
+On 18 November the full audit reported 14 high findings from the newly reviewed
+picomatch advisory. A fresh full audit on 19 November reports zero findings,
+without dependency changes or audit exceptions. The full verification rerun is
+recorded in [current release status](../docs/LAUNCH_READINESS_STATUS.md).
 
 ### Website image scanner
 

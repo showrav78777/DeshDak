@@ -40,6 +40,7 @@ const testEnvironment = {
   // not falsely required. The optimized production bundle is verified by the
   // separate build gate before this isolated workflow suite is started.
   NODE_ENV: "development",
+  PRIVATE_PHOTO_STORAGE_ENABLED: "false",
   KYC_DOCUMENT_ENCRYPTION_KEY: randomBytes(32).toString("base64"),
   INSPECTION_EVIDENCE_ENCRYPTION_KEY: randomBytes(32).toString("base64"),
   ALLOW_DEV_KYC_DOCUMENT_UPLOADS: "true",

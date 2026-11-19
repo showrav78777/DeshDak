@@ -1,6 +1,15 @@
 # DeshDak launch readiness status
 
-Status reviewed: 7 November 2026, Asia/Dhaka
+Status reviewed: 19 November 2026, Asia/Dhaka
+
+Current summary: scanned identity/inspection photo routes and protected object
+downloads are implemented behind a disabled production switch. The production
+build and targeted migration/photo/Admin checks pass. The fresh full dependency
+audit reports zero findings. The last full run passed 108 gates before a
+quarantine regression that was then corrected and verified with five affected
+suites. A single clean 111-gate rerun and live acceptance are not claimed.
+Video, media lifecycle controls, messaging/supplier integration and real staging
+acceptance remain unfinished. See the dated 19 November section below and NIloy/.
 
 ## Current handoff — 5 November 2026
 
@@ -255,3 +264,67 @@ declared inventory. The run removed its disposable databases and networks.
 Evidence is in /tmp/deshdak-browser-linux-sequential.0bVjzDZf/.
 This completes local Linux browser acceptance for that source revision.
 Cloud/provider certification and physical-device/warehouse acceptance remain due.
+
+## 18 November 2026 — private photo routing and new audit blocker
+
+The identity and inspection photo HTTP routes now connect to the existing scanned,
+encrypted S3 ledger behind PRIVATE_PHOTO_STORAGE_ENABLED=false by default. Subject,
+immutable object binding and audit commit together. Website retries retain their
+idempotency keys. Linked downloads use current authorization and exact-version
+integrity checks. Migration 20261118120000_object_photo_intake adds reservation
+scope metadata and permits object-backed PHOTO evidence to omit legacy ciphertext.
+Existing database-backed evidence remains supported. See OBJECT_PHOTO_ROUTES.md.
+
+Seven isolated affected suites passed, including the actual multipart identity
+handler with a synthetic storage boundary. PostgreSQL transactions and encryption
+were real. Original/normalized scans and S3 acknowledgements were simulated.
+Five focused desktop/mobile browser checks passed, including setup. Clean migration,
+zero schema drift, reference seed and repeat deploy passed on a disposable DB.
+The production bundle and runtime/migration container acceptance passed. The
+container check used the earlier photo-path snapshot before the final body-bound
+and photo-only-null constraint adjustments; those adjustments have their own
+current production-build and clean-migration checks. No owner DB or live provider
+was activated. Retention, legal holds/deletion, controlled release/recovery, video
+and cloud/scanner acceptance remain due.
+
+The full 111-gate rerun stopped at test:dependency-audit. That full audit
+reported 14 high-severity package-chain findings rooted in picomatch
+[GHSA-fc5q-39xc-vjpf](https://github.com/advisories/GHSA-fc5q-39xc-vjpf).
+The official advisory lists no patched version; npm's current latest is 4.0.7.
+Production-only audit reports zero. That result superseded the earlier clean full audit
+for the 18 November release decision. No dependency downgrade or audit exemption was
+applied. Full release and later system phases remain blocked at that gate.
+Evidence is in /tmp/deshdak-object-launch-full.log and
+/tmp/deshdak-object-audit-{full,production}.json.
+
+## 19 November 2026 — clock regression and current audit
+
+The scan-attestation recording time now comes from PostgreSQL, preventing an
+application clock or timestamp rounding difference from invalidating a photo
+binding. A deterministic two-second clock-skew test and clean migration, intake,
+submission, binding and protected-delivery suites passed together. The current
+production build also passed. Evidence is in /tmp/deshdak-photo-clock-verification.log
+and /tmp/deshdak-photo-final-build.log.
+
+A fresh full npm audit reports zero findings with no dependency changes or audit
+exceptions (/tmp/deshdak-photo-current-audit.json). The subsequent full run passed
+108 gates, then stopped at the old quarantine test expecting linked downloads to
+fall back to legacy bytes while object storage was disabled. The corrected routes
+preserve authorization and quarantine responses before object access, and the
+regression now requires unavailable linked storage to fail closed while an
+unlinked legacy document still opens. The full run is recorded in
+/tmp/deshdak-photo-clock-full-launch.log; it must not be described as 111 passes.
+
+The owner confirmed production accounts/staging are not ready and authorized
+reasonable lifecycle defaults. NIloy/MEDIA_RETENTION_POLICY.md records provisional
+24-hour abandoned-upload, 90-day identity and 180-day closed inspection eligibility,
+with legal holds and separate approval required. No destructive cleanup is active;
+Admin lifecycle configuration, approval/deletion implementation and staging
+acceptance remain unfinished.
+
+The follow-up in /tmp/deshdak-photo-quarantine-current.log passed all five selected
+suites: quarantine, reviews, rescans, download authorization and object submissions.
+It also exercised the real Admin forms at desktop/mobile sizes. Synthetic S3 and
+scanner responses were used; no production storage was contacted. This closes
+the observed fallback/response regression but does not turn the preceding full
+run into a single successful 111-gate execution.

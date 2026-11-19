@@ -38,6 +38,10 @@ try{
  const saved=await db.privatePhotoUpload.findUniqueOrThrow({where:{id:result.uploadId}});assert.equal(saved.originalScanSha256,hash(original));assert(saved.originalScanVerifiedAt);assert(saved.scanVerifiedAt>=saved.createdAt);assert.notEqual(saved.originalScanSha256,saved.scanVerifiedSha256);
  const normalized=await store.read(saved.storedReference);assert.equal(saved.scanVerifiedSha256,hash(normalized));const metadata=await sharp(normalized).metadata();assert.equal(metadata.width,8);assert.equal(metadata.height,12);assert.equal(metadata.exif,undefined);
  const before=puts;await intake.intake(input);assert.equal(puts,before);assert.equal(await db.auditLog.count({where:{entityId:saved.id,action:"private_photo.scan_verified"}}),1);
+ // A lagging application clock must not make a freshly stored photo unbindable.
+ const clockSkewDb=new Proxy(db,{get(target,key){if(key==="$transaction")return callback=>target.$transaction(async tx=>{const SystemDate=globalThis.Date;globalThis.Date=class extends SystemDate{constructor(...args){super(...(args.length?args:[SystemDate.now()-2000]));}static now(){return SystemDate.now()-2000;}};try{return await callback(tx);}finally{globalThis.Date=SystemDate;}});const value=Reflect.get(target,key);return typeof value==="function"?value.bind(target):value;}});
+ const skewed=await createScannedPrivateIntake(clockSkewDb,store,scanner).intake({...input,idempotencyKey:`intake:${marker}:clock-skew`});
+ const skewedRow=await db.privatePhotoUpload.findUniqueOrThrow({where:{id:skewed.uploadId}});assert(skewedRow.scanVerifiedAt>=skewedRow.createdAt);assert.equal(skewedRow.originalScanVerifiedAt.getTime(),skewedRow.scanVerifiedAt.getTime());
  // Same pixels with a different original comment must not replace the proof.
  const comment=Buffer.from("Synthetic changed original comment");const segment=Buffer.alloc(4);segment[0]=255;segment[1]=254;segment.writeUInt16BE(comment.length+2,2);const alternate=Buffer.concat([original.subarray(0,2),segment,comment,original.subarray(2)]);
  assert((await normalizePrivatePhoto(alternate,"image/jpeg","identity")).equals(normalized));

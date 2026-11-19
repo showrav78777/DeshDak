@@ -1,3 +1,4 @@
+import { privatePhotoDeliveryResponse } from "@/modules/private-storage/delivery-response";
 import { authorizeLegacyPhotoRead } from "@/modules/private-storage/legacy-read-authorization";
 import { blockQuarantinedPrivateRecord } from "@/modules/private-storage/quarantine";
 import { type NextRequest, NextResponse } from "next/server";
@@ -19,6 +20,8 @@ export async function GET(request: NextRequest, context: RouteContext<"/api/v1/o
   const staffAllowed = Boolean((inspectorAccess ?? warehouseAccess) && canAccessWarehouse(inspectorAccess ?? warehouseAccess!, evidence.package.warehouseId));
   if (!customerAllowed && !staffAllowed) return apiError("EVIDENCE_ACCESS_DENIED", "You do not have access to this inspection evidence.", 403);
   if (await blockQuarantinedPrivateRecord(prisma, "inspection", evidenceId, session.userId)) return apiError("PHOTO_QUARANTINED", "This photo is blocked pending a controlled security review.", 410);
+  const objectResponse = await privatePhotoDeliveryResponse({ sessionId: session.sessionId, kind: "inspection", subjectId: evidenceId });
+  if (objectResponse) return objectResponse;
   let bytes: Buffer;
   try { bytes = decryptInspectionEvidence(evidence); }
   catch { return apiError("EVIDENCE_UNAVAILABLE", "This evidence cannot be read securely.", 410); }

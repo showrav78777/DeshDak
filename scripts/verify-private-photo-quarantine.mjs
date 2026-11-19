@@ -79,7 +79,10 @@ try {
   assert.equal((await block({ "Idempotency-Key": "" })).status, 422);
   assert.equal((await block({}, " ".repeat(4097))).status, 422);
   const url = `${origin}/api/v1/compliance/identity-verifications/${identity.id}/document`;
-  assert.equal((await fetch(url, { headers: { Cookie: compliance.cookie } })).status, 200);
+  // A linked object cannot fall back to legacy bytes when storage is disabled.
+  assert.equal((await fetch(url, { headers: { Cookie: compliance.cookie } })).status, 503);
+  const unlinkedLegacy = await document(owner);
+  assert.equal((await fetch(`${origin}/api/v1/compliance/identity-verifications/${unlinkedLegacy.id}/document`, { headers: { Cookie: compliance.cookie } })).status, 200);
   const [first, second] = await Promise.all([block(), block()]); assert.equal(first.status, 200); assert.equal(second.status, 200);
   assert.equal((await first.json()).data.quarantined, true); assert.equal(await db.privatePhotoQuarantine.count({ where: { uploadId: item.id } }), 1);
   assert.equal(await db.auditLog.count({ where: { actorId: admin.user.id, action: "private_photo.quarantined" } }), 1);
@@ -109,7 +112,7 @@ try {
   const evidenceUpload = await reserve(inspector, "inspection"), encrypted = legacy(process.env.INSPECTION_EVIDENCE_ENCRYPTION_KEY);
   const evidence = await db.inspectionEvidence.create({ data: { packageId: parcel.id, uploadedById: inspector.user.id, mediaKind: "PHOTO", mimeType: "image/png", sizeBytes: image.length, sha256: sha, ciphertext: encrypted.ciphertext, iv: encrypted.iv, authTag: encrypted.tag } });
   await links.link({ sessionId: inspector.session.id, uploadId: evidenceUpload.id, kind: "inspection", subjectId: evidence.id });
-  const evidenceUrl = `${origin}/api/v1/operations/inspection-evidence/${evidence.id}`; assert.equal((await fetch(evidenceUrl, { headers: { Cookie: owner.cookie } })).status, 200);
+  const evidenceUrl = `${origin}/api/v1/operations/inspection-evidence/${evidence.id}`; assert.equal((await fetch(evidenceUrl, { headers: { Cookie: owner.cookie } })).status, 503);
   onRead = () => controls.block(admin.session.id, evidenceUpload.id, { reason: "PRIVACY_REVIEW", confirmed: true, idempotencyKey: randomUUID() });
   await assert.rejects(() => delivery.read({ sessionId: owner.session.id, kind: "inspection", subjectId: evidence.id }), /PRIVATE_PHOTO_ACCESS_DENIED/);
   assert.equal((await fetch(evidenceUrl, { headers: { Cookie: owner.cookie } })).status, 410);

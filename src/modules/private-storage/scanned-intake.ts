@@ -11,7 +11,7 @@ function verifyProof(proof: PrivatePhotoScanProof, bytes: Buffer) {
   if (proof?.sha256 !== digest(bytes) || !(proof.verifiedAt instanceof Date) || !Number.isFinite(proof.verifiedAt.getTime()) || proof.verifiedAt.getTime() > Date.now() || Date.now()-proof.verifiedAt.getTime() > 60_000) throw new Error("PRIVATE_PHOTO_INTAKE_FAILED");
 }
 
-/** Authenticated HTTP intake is intentionally not enabled by this internal component. */
+/** Scan both original and normalized bytes before storing; callers enforce session authorization. */
 export function createScannedPrivateIntake(db: PrismaClient, store: ReturnType<typeof createPrivatePhotoStore>, scan: (bytes: Buffer) => Promise<PrivatePhotoScanProof>) {
   const ledger = createPrivateUploadLedger(db,store);
   return { intake: async (input: { actorId: string; purpose: "identity" | "inspection"; idempotencyKey: string; file: File }) => {
@@ -37,7 +37,11 @@ export function createScannedPrivateIntake(db: PrismaClient, store: ReturnType<t
           if (row.originalScanSha256 !== originalProof.sha256 || row.scanVerifiedSha256 !== normalizedProof.sha256 || !row.originalScanVerifiedAt || !row.scanVerifiedAt) throw new Error("PRIVATE_PHOTO_SCAN_CONFLICT");
           return;
         }
-        await tx.privatePhotoUpload.update({ where: { id: row.id }, data: { originalScanSha256: originalProof.sha256, originalScanVerifiedAt: originalProof.verifiedAt, scanVerifiedSha256: normalizedProof.sha256, scanVerifiedAt: new Date() } });
+        // Record both verified attestations against the database clock. Mixing the
+        // application clock with timestamp(3) creation times can invert chronology.
+        const [clock] = await tx.$queryRaw<Array<{ recordedAt: Date }>>`SELECT clock_timestamp()::timestamp(3) AS "recordedAt"`;
+        const recordedAt = new Date(Math.max(clock.recordedAt.getTime(), row.createdAt.getTime()));
+        await tx.privatePhotoUpload.update({ where: { id: row.id }, data: { originalScanSha256: originalProof.sha256, originalScanVerifiedAt: recordedAt, scanVerifiedSha256: normalizedProof.sha256, scanVerifiedAt: recordedAt } });
         await tx.auditLog.create({ data: { actorId: input.actorId, action: "private_photo.scan_verified", entityType: "PrivatePhotoUpload", entityId: row.id, metadata: { purpose: input.purpose, policy: "private-image-v1" } } });
       });
       return { state: "STORED" as const, uploadId: stored.uploadId };

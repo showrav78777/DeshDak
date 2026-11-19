@@ -22,10 +22,8 @@ async function authorizedSession(tx: Tx, sessionId: string) {
 /** Internal staged migration/linking component; session IDs come from verified server sessions. */
 export function createPrivatePhotoLinks(db: PrismaClient, storageNamespace: string) {
   if (!/^[a-f0-9]{64}$/.test(storageNamespace)) throw new PrivatePhotoBindingError("PRIVATE_PHOTO_BINDING_UNAVAILABLE");
-  async function link(raw: z.infer<typeof inputSchema>) {
-    try {
+  async function linkInTransaction(tx: Tx, raw: z.infer<typeof inputSchema>) {
       const input = inputSchema.parse(raw);
-      return await db.$transaction(async tx => {
         const session = await authorizedSession(tx,input.sessionId);
         await tx.$queryRaw`SELECT "id" FROM "PrivatePhotoUpload" WHERE "id" = ${input.uploadId} FOR UPDATE`;
         const upload = await tx.privatePhotoUpload.findUnique({ where: { id: input.uploadId }, include: { quarantine: true } });
@@ -54,11 +52,14 @@ export function createPrivatePhotoLinks(db: PrismaClient, storageNamespace: stri
         const created = await tx.privatePhotoLink.create({ data: { uploadId: input.uploadId, linkedById: session.userId, ...target } });
         await tx.auditLog.create({ data: { actorId: session.userId, action: "private_photo.linked", entityType: "PrivatePhotoLink", entityId: created.id, metadata: { kind: input.kind, subjectId: input.subjectId } } });
         return { id: created.id, kind: input.kind, subjectId: input.subjectId, createdAt: created.createdAt };
-      });
+  }
+  async function link(raw: z.infer<typeof inputSchema>) {
+    try {
+      return await db.$transaction(tx => linkInTransaction(tx, raw));
     } catch (error) {
       if (error instanceof PrivatePhotoBindingError) throw error;
       throw new PrivatePhotoBindingError("PRIVATE_PHOTO_BINDING_UNAVAILABLE");
     }
   }
-  return { link };
+  return { link, linkInTransaction };
 }

@@ -14,9 +14,9 @@ If a submission changed or was replaced, refresh the Compliance queue and review
 the current pending submission; after an access denial, sign in again with the
 authorized Compliance account. No new owner configuration is required.
 
-Do not enable private identity or inspection uploads yet. The S3 adapter core is
-implemented and locally tested, but route/lifecycle integration remains engineering
-work recorded in docs/PRIVATE_PHOTO_STORAGE_ADAPTER.md. No production bucket or
+Do not enable private identity or inspection uploads yet. The S3 photo intake/download routes are
+implemented behind a disabled deployment switch. Video and lifecycle integration
+remain engineering work; see docs/OBJECT_PHOTO_ROUTES.md. No production bucket or
 AWS resource was provisioned and no credentials are required in chat.
 
 When the integration is ready for staging, your deployment operator must:
@@ -27,8 +27,8 @@ When the integration is ready for staging, your deployment operator must:
 2. Create the approved KMS encryption key in the same region/account. Record only
    the bucket name, region, account ID and key ARN in controlled deployment
    configuration; actual authentication/encryption secrets belong in the secret
-   manager. Production intake/download activation remains unavailable; the optional
-   stored-copy rescan configuration is described below.
+   manager. Keep PRIVATE_PHOTO_STORAGE_ENABLED=false until the migration and staging review
+   described below are accepted. Rescanning has its own independent switch.
 3. Give the app workload role only the required object PutObject and
    GetObjectVersion/checksum permissions for the private purpose prefixes and the
    corresponding KMS GenerateDataKey/Decrypt permissions. Review exact actions
@@ -184,3 +184,30 @@ photo per rolling day. Never delete a block or alter SQL to release the photo.
 See [engineering scope and acceptance](../docs/PRIVATE_PHOTO_RESCAN.md). Account,
 scanner and policy setup require your authorized deployment/operator team; missing
 routing/recovery/retention code remains engineering work.
+
+## Object photo upload and delivery — 18 November 2026
+
+The existing identity and inspection photo routes now connect to the scanned S3
+pipeline. Apply reviewed migration 20261118120000_object_photo_intake in staging
+before deploying this version. It permits object-backed inspection records to
+omit legacy database ciphertext and adds retry target metadata to reservations.
+Old encrypted records remain readable.
+
+Keep PRIVATE_PHOTO_STORAGE_ENABLED=false while provisioning the existing
+PRIVATE_PHOTO_STORAGE_*, PRIVATE_PHOTO_SCANNER_* and independent encryption-key
+settings. The app uses the workload role. After controlled cloud/scanner and
+Compliance acceptance, enable the switch and restart. Use an Idempotency-Key
+header for uploads from mobile/API clients; the website supplies it automatically.
+Configure ingress body/time limits for bounded photo scanning/storage requests.
+
+The new path accepts photos. Production video processing, retention/legal-hold
+rules, deletion and controlled release/recovery remain unfinished. Provide the
+approved retention periods and deletion authority before lifecycle activation.
+No AWS resource, owner migration or live upload was performed here.
+
+## Provisional lifecycle defaults selected 19 November
+
+See [media retention defaults](MEDIA_RETENTION_POLICY.md) for the selected time
+limits, legal-hold exclusions and separate approval requirements. Admin lifecycle
+configuration and the deletion worker remain engineering work. Do not enable
+bucket expiration or destructive cleanup before those controls are verified.

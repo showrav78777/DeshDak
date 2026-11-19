@@ -38,7 +38,7 @@ function hash(bytes: Buffer, encoding: "hex" | "base64") { return createHash("sh
 function aad(purpose: Purpose, key: string) { return Buffer.from(`deshdak:private-photo:v1:${purpose}:${key}`); }
 function maximum(purpose: Purpose) { return purpose === "identity" ? 5 * 1024 * 1024 : 8 * 1024 * 1024; }
 
-/** Admin rescanning may use this adapter; normal private intake/delivery remains disabled. */
+/** Versioned private storage shared by protected photo intake, delivery and rescanning. */
 export function createPrivatePhotoStore(input: { config: Configuration; keys: Record<Purpose, Buffer>; client?: S3Client }) {
   const config = privateStorageConfigSchema.parse(input.config);
   const keys = { identity: Buffer.from(input.keys.identity), inspection: Buffer.from(input.keys.inspection) };

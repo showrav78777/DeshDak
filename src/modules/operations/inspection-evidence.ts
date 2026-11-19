@@ -80,7 +80,8 @@ export async function encryptInspectionEvidence(file: File): Promise<EncryptedIn
   };
 }
 
-export function decryptInspectionEvidence(record: Pick<EncryptedInspectionEvidence, "ciphertext" | "iv" | "authTag">) {
+export function decryptInspectionEvidence(record: { ciphertext: string | null; iv: string | null; authTag: string | null }) {
+  if (!record.ciphertext || !record.iv || !record.authTag) throw new Error("Private object delivery is required for this evidence.");
   const decipher = createDecipheriv("aes-256-gcm", evidenceKey(), Buffer.from(record.iv, "base64"));
   decipher.setAuthTag(Buffer.from(record.authTag, "base64"));
   return Buffer.concat([decipher.update(Buffer.from(record.ciphertext, "base64")), decipher.final()]);

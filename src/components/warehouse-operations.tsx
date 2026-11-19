@@ -45,7 +45,29 @@ export function PackageReceiveForm({ orders, warehouses }: { orders: Option[]; w
 
 export function PackageInspectionForm({ packageId }: { packageId: string }) {
   const router = useRouter(); const [error, setError] = useState(""); const [isSaving, setIsSaving] = useState(false); const [mediaReference, setMediaReference] = useState(""); const [mediaKind, setMediaKind] = useState<"PHOTO" | "VIDEO" | null>(null); const [inspectionType, setInspectionType] = useState("BASIC");
-  async function upload(file: File) { setError(""); setIsSaving(true); try { const data = new FormData(); data.set("media", file); const response = await fetch(`/api/v1/operations/packages/${packageId}/inspection-evidence`, { method: "POST", body: data }); const result = await response.json(); if (!response.ok) throw new Error(result.error?.message ?? "Could not upload inspection evidence."); setMediaReference(result.data.evidence.reference); setMediaKind(result.data.evidence.mediaKind); setInspectionType(result.data.evidence.mediaKind); } catch (caught) { setMediaReference(""); setMediaKind(null); setError(caught instanceof Error ? caught.message : "Could not upload inspection evidence."); } finally { setIsSaving(false); } }
+  const photoRequest = useRef<{ fingerprint: string; key: string } | null>(null);
+  async function upload(file: File) {
+    if (pending.current) return;
+    pending.current = true;
+    const fingerprint = JSON.stringify([packageId, file.name, file.size, file.lastModified]);
+    if (photoRequest.current?.fingerprint !== fingerprint) photoRequest.current = { fingerprint, key: crypto.randomUUID() };
+    setError(""); setIsSaving(true);
+    try {
+      const data = new FormData(); data.set("media", file);
+      const response = await fetch(`/api/v1/operations/packages/${packageId}/inspection-evidence`, {
+        method: "POST", headers: { "Idempotency-Key": photoRequest.current.key },
+        signal: AbortSignal.timeout(90_000), body: data,
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result?.error?.message ?? "Could not upload inspection evidence.");
+      const evidence = result?.data?.evidence;
+      if (!evidence || !["PHOTO", "VIDEO"].includes(evidence.mediaKind) || evidence.reference !== `inspection-evidence/${evidence.id}`) throw new Error("The upload could not be confirmed. Check saved evidence before retrying.");
+      setMediaReference(evidence.reference); setMediaKind(evidence.mediaKind); setInspectionType(evidence.mediaKind);
+    } catch (caught) {
+      setMediaReference(""); setMediaKind(null);
+      setError(caught instanceof Error ? caught.message : "Could not upload inspection evidence.");
+    } finally { pending.current = false; setIsSaving(false); }
+  }
   const pending = useRef(false);
   const attempt = useRef<{ payload: string; key: string } | null>(null);
   const [completed, setCompleted] = useState(false);
@@ -73,7 +95,29 @@ export function PackageInspectionForm({ packageId }: { packageId: string }) {
 
 export function InspectionEvidenceCapture({ packageId }: { packageId: string }) {
   const router = useRouter(); const [error, setError] = useState(""); const [saving, setSaving] = useState(false); const [success, setSuccess] = useState("");
-  async function upload(file: File) { setSaving(true); setError(""); setSuccess(""); try { const data = new FormData(); data.set("media", file); const response = await fetch(`/api/v1/operations/packages/${packageId}/inspection-evidence`, { method: "POST", body: data }); const result = await response.json(); if (!response.ok) throw new Error(result.error?.message ?? "Could not upload evidence."); setSuccess(`${result.data.evidence.mediaKind === "VIDEO" ? "Video" : "Photo"} saved for the assigned Inspector.`); router.refresh(); } catch (caught) { setError(caught instanceof Error ? caught.message : "Could not upload evidence."); } finally { setSaving(false); } }
+  const photoRequest = useRef<{ fingerprint: string; key: string } | null>(null);
+  const uploadPending = useRef(false);
+  async function upload(file: File) {
+    if (uploadPending.current) return;
+    uploadPending.current = true;
+    const fingerprint = JSON.stringify([packageId, file.name, file.size, file.lastModified]);
+    if (photoRequest.current?.fingerprint !== fingerprint) photoRequest.current = { fingerprint, key: crypto.randomUUID() };
+    setSaving(true); setError(""); setSuccess("");
+    try {
+      const data = new FormData(); data.set("media", file);
+      const response = await fetch(`/api/v1/operations/packages/${packageId}/inspection-evidence`, {
+        method: "POST", headers: { "Idempotency-Key": photoRequest.current.key },
+        signal: AbortSignal.timeout(90_000), body: data,
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result?.error?.message ?? "Could not upload evidence.");
+      const evidence = result?.data?.evidence;
+      if (!evidence || !["PHOTO", "VIDEO"].includes(evidence.mediaKind) || evidence.reference !== `inspection-evidence/${evidence.id}`) throw new Error("The upload could not be confirmed. Check saved evidence before retrying.");
+      setSuccess(`${evidence.mediaKind === "VIDEO" ? "Video" : "Photo"} saved for the assigned Inspector.`);
+      router.refresh();
+    } catch (caught) { setError(caught instanceof Error ? caught.message : "Could not upload evidence."); }
+    finally { uploadPending.current = false; setSaving(false); }
+  }
   return <div className="package-action-form"><EvidenceCaptureInputs disabled={saving} onFile={(file) => { void upload(file); }} /><p className="form-help">Use this only for the physical package. The Inspector remains responsible for the pass/fail decision.</p>{success ? <p className="form-success" role="status">{success}</p> : null}{error ? <p className="form-error" role="alert">{error}</p> : null}</div>;
 }
 

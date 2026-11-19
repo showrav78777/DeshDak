@@ -1,3 +1,6 @@
+import { privatePhotoRuntime, privatePhotoStorageConfigured } from "@/modules/private-storage/runtime";
+import { createPrivatePhotoSubmissions } from "@/modules/private-storage/submissions";
+import { privatePhotoSubmissionError } from "@/modules/private-storage/submission-response";
 import { authorizePrivateUpload } from "@/modules/private-storage/upload-authorization";
 import { MultipartUploadError, readBoundedMultipart } from "@/lib/uploads/bounded-multipart";
 import { type NextRequest } from "next/server";
@@ -30,7 +33,7 @@ export async function POST(request: NextRequest) {
   const session = await getRequestSession(request);
   if (!session?.roles.includes(ROLE.CUSTOMER_PERSONAL)) return apiError("CUSTOMER_ACCESS_REQUIRED", "A customer account is required.", 403);
   if (!hasTrustedMutationOrigin(request)) return apiError("UNTRUSTED_ORIGIN", "Identity verification must be submitted from the protected customer application.", 403);
-  if (!identityDocumentUploadsEnabled()) return apiError("IDENTITY_DOCUMENT_UPLOAD_UNAVAILABLE", "Secure document-photo upload is unavailable until the approved private storage and malware scanning service is configured.", 503);
+  if (!privatePhotoStorageConfigured() && !identityDocumentUploadsEnabled()) return apiError("IDENTITY_DOCUMENT_UPLOAD_UNAVAILABLE", "Secure document-photo upload is unavailable until the approved private storage and malware scanning service is configured.", 503);
   const [accountLimit, ipLimit] = await Promise.all([
     consumeSecurityRateLimit("identity-document:account", session.userId, 3, 24 * 60 * 60_000),
     consumeSecurityRateLimit("identity-document:ip", requestIp(request), 10, 60 * 60_000),
@@ -50,6 +53,18 @@ export async function POST(request: NextRequest) {
   if (!parsed.success) return apiError("VALIDATION_ERROR", "Choose a document type, issuing country, and the final four characters only.", 422, z.treeifyError(parsed.error));
   const documentPhoto = formData?.get("documentPhoto");
   if (!(documentPhoto instanceof File) || formData.getAll("documentPhoto").length !== 1) return apiError("DOCUMENT_PHOTO_REQUIRED", "Upload one clear document photo before submitting verification.", 422);
+  if (process.env.PRIVATE_PHOTO_STORAGE_ENABLED === "true") {
+    if (!["image/jpeg", "image/png", "image/webp"].includes(documentPhoto.type) || !documentPhoto.size || documentPhoto.size > 5 * 1024 * 1024) return apiError("INVALID_DOCUMENT_PHOTO", "Use one JPEG, PNG or WebP document photo under 5 MB.", 422);
+    const runtime = privatePhotoRuntime();
+    if (!runtime) return apiError("IDENTITY_DOCUMENT_UPLOAD_UNAVAILABLE", "Secure document upload is unavailable.", 503);
+    const requestKey = request.headers.get("Idempotency-Key");
+    if (!requestKey || !/^[a-zA-Z0-9:_-]{16,128}$/.test(requestKey)) return apiError("IDEMPOTENCY_KEY_REQUIRED", "Supply a stable upload request key before submitting.", 422);
+    try {
+      const result = await createPrivatePhotoSubmissions(prisma, runtime).submit({ kind: "identity", actorId: session.userId, sessionId: session.sessionId, requestKey, file: documentPhoto, details: parsed.data });
+      const submission = await prisma.identityVerification.findUniqueOrThrow({ where: { id: result.subjectId }, select: { id: true, documentType: true, issuingCountryCode: true, documentNumberLast4: true, status: true, submittedAt: true, documentPhotoMimeType: true, documentPhotoSizeBytes: true } });
+      return apiSuccess({ submission }, { status: result.replayed ? 200 : 201, headers: { "Cache-Control": "private, no-store, max-age=0" } });
+    } catch (error) { return privatePhotoSubmissionError(error); }
+  }
   let encryptedPhoto;
   try { encryptedPhoto = await encryptUploadedIdentityDocument(documentPhoto); }
   catch (error) { return apiError("INVALID_DOCUMENT_PHOTO", error instanceof Error ? error.message : "Unable to process this document photo.", 422); }

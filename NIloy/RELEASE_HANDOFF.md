@@ -1,6 +1,6 @@
 # DeshDak release handoff
 
-Reviewed 18 November 2026. The verified source was uploaded to the approved
+Reviewed 19 November 2026. The verified source was uploaded to the approved
 GitHub repository, showrav78777/DeshDak, on codex/deshdak-platform.
 
 Open https://github.com/showrav78777/DeshDak/tree/codex/deshdak-platform
@@ -24,7 +24,7 @@ Several remaining features require code integration as well as provider access.
    deployment secret manager. Share service names and setup status only.
 4. Arrange private storage, KMS and a dedicated private scanner with the deployment
    operator using PRIVATE_PHOTO_STORAGE_SETUP.md. Engineering must finish the
-   intake/download/lifecycle integration before live identity verification can
+   lifecycle/video integration and certify the connected photo routes before live identity verification can
    support ordering.
 5. Confirm which optional services should launch: Google sign-in, conversational
    AI, supplier discovery/image search and WhatsApp. Their account prerequisites
@@ -37,6 +37,13 @@ Several remaining features require code integration as well as provider access.
 The implementation work listed under Engineering still required belongs to the
 development team. Adding account credentials alone cannot finish those items.
 
+
+The 18 November full launch rerun stopped at 14 high dependency findings in
+the lint toolchain. A fresh full audit on 19 November reports zero findings with
+no dependency changes or exceptions. The full rerun passed 108 gates before an obsolete quarantine assertion. After
+correcting the download boundary and assertions, all five affected photo suites
+passed, including the remaining quarantine/review/rescan gates. This is not a
+single successful 111-gate run or live-service certification.
 
 ## Verified locally
 
@@ -74,9 +81,9 @@ See docs/LAUNCH_READINESS_STATUS.md and docs/E2E_TESTING.md.
 
 ## Engineering still required
 
-- Connect authenticated identity and inspection intake/download routes to the
-  private storage and scanner components. Complete retention, holds, recovery,
-  controlled quarantine release and video handling. See
+- Identity and inspection photo routes now connect to the private storage and
+  scanner components behind a disabled deployment switch. Complete retention,
+  holds, recovery, controlled quarantine release, video handling and live acceptance. See
   PRIVATE_PHOTO_STORAGE_SETUP.md.
 - Finish live phone issuance/dispatch scheduling, delivery receipts and
   reconciliation. The encrypted queue and transport components have local tests.
