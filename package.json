@@ -147,7 +147,8 @@
     "test:screening-review-authorization": "node scripts/verify-screening-review-authorization.mjs",
     "test:compliance-rule-controls": "node scripts/verify-compliance-rule-controls.mjs",
     "test:compliance-catalog-controls": "node scripts/verify-compliance-catalog-controls.mjs",
-    "test:private-photo-submissions": "node --no-warnings scripts/verify-private-photo-submissions.mjs"
+    "test:private-photo-submissions": "node --no-warnings scripts/verify-private-photo-submissions.mjs",
+    "test:private-media-lifecycle": "node --no-warnings scripts/verify-private-media-lifecycle.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "3.1163.0",

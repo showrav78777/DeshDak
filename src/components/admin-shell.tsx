@@ -95,6 +95,7 @@ export const ADMIN_NAVIGATION: AdminNavigationGroup[] = [
       { href: "/admin/ai", icon: "✦", label: "AI & discovery" },
       { href: "/admin/audit-logs", icon: "≣", label: "Audit log" },
       { href: "/admin/private-photos", icon: "▣", label: "Private photo safety" },
+      { href: "/admin/private-media", icon: "▣", label: "Media retention and holds" },
       { href: "/admin/launch-readiness", icon: "✓", label: "Launch readiness" },
       { href: "/admin/launch-readiness/setup", icon: "⚙", label: "Live setup guide" },
       { href: "/admin/system-maintenance", icon: "⚙", label: "System maintenance" },

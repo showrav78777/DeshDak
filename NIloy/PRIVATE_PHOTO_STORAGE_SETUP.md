@@ -211,3 +211,12 @@ See [media retention defaults](MEDIA_RETENTION_POLICY.md) for the selected time
 limits, legal-hold exclusions and separate approval requirements. Admin lifecycle
 configuration and the deletion worker remain engineering work. Do not enable
 bucket expiration or destructive cleanup before those controls are verified.
+
+## Admin policy versions and preservation holds — 20 November
+
+Apply migration 20261119150000_private_media_lifecycle before opening Admin →
+Media retention and holds. Versioned settings and scoped holds, including
+independent Compliance-authorized hold release, are implemented. Follow
+MEDIA_RETENTION_POLICY.md for roles, case references and safe retries. This does
+not enable deletion or release quarantine. The eligibility/deletion approval and
+worker, video handling, controlled recovery and live acceptance remain due.

@@ -18,21 +18,44 @@ Eligibility means a review can begin. It does not authorize automatic deletion.
 Compliance must check applicable business requirements before enabling a policy.
 Keep deletion disabled until the workflow below has been implemented and tested.
 
-## Required implementation and controls
+## Available Admin controls — 20 November 2026
 
-1. Persist configurable durations and policy versions in protected Admin settings.
-2. Support legal holds on evidence and its related account, package and order.
-   A hold overrides every retention deadline and storage lifecycle rule.
-3. Show eligible items, the reason, policy version and related open cases in Admin.
-4. Require a Compliance approver distinct from the requester. Recheck holds,
+Apply migration 20261119150000_private_media_lifecycle through the reviewed,
+backed-up deployment job before using Admin → Media retention and holds.
+
+1. An administrator with completed MFA can view policy/hold history and place a
+   preservation hold on an upload, customer account, order or package reference.
+2. An administrator who also holds the Compliance role can record a new policy
+   version. Existing versions are immutable; a stale form must be reloaded.
+3. A different administrator with the Compliance role and completed MFA can
+   release one hold after independent case review. They cannot release their own
+   hold. The original hold and release remain in history. Other holds stay active.
+4. Use controlled INC/SEC/KYC/OPS case references only. Do not put identity numbers,
+   names, phone numbers, credentials or URLs in these fields.
+5. On an uncertain response, retry the same request or reload history before
+   making another decision. The forms keep the same retry key and payload.
+
+The object-photo scope resolver checks upload, customer-account, order and package
+holds together, including photos linked after a broad hold was placed. It returns
+up to 100 active blockers; any returned hold prevents future eligibility. It is
+not a deletion worker. All media remains retained while deletion is disabled.
+A preservation hold does not block authorized viewing; quarantine is the separate
+control for blocking unsafe access.
+
+## Remaining implementation and controls
+
+1. Show eligible items, the reason, policy version and related open cases in Admin.
+2. Require a Compliance approver distinct from the deletion requester. Recheck holds,
    authorization and subject state immediately before each deletion.
-5. Use a separate deletion role and exact bucket, key and version identifiers.
+3. Use a separate deletion role and exact bucket, key and version identifiers.
    Preserve minimal audit records without retaining the deleted document content.
-6. Account for object versions, backups, replication and failed deletion retries.
+4. Account for object versions, backups, replication and failed deletion retries.
    A delete marker alone is not evidence that sensitive bytes were erased.
-7. Test held evidence, concurrent case reopening, revoked approval, partial storage
+5. Test held evidence, concurrent case reopening, revoked approval, partial storage
    failure and replay in staging before scheduling any destructive cleanup.
 
-The current app has scanned photo intake, protected delivery and quarantine/review
-controls. The lifecycle settings, approval workflow and deletion worker above still
-require engineering. Do not configure a broad S3 expiration rule as a substitute.
+The current app has scanned photo intake, protected delivery, quarantine/review,
+versioned retention settings and scoped preservation holds. Deletion eligibility,
+independent deletion approvals, legacy-media/video handling and the deletion
+worker still require engineering. No automatic cleanup is enabled. Do not
+configure a broad S3 expiration rule as a substitute.

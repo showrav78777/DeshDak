@@ -51,7 +51,9 @@ readiness status. Supply credentials through the deployment secret manager:
 - Private media: object storage, scanning, access controls and delivery/retention.
   See [private photo infrastructure prerequisites](PRIVATE_PHOTO_STORAGE_SETUP.md);
   photo intake/download routes are connected behind a disabled switch; video and
-  lifecycle integration still require engineering. See the selected provisional
+  deletion lifecycle integration still require engineering. Admin → Media retention
+  and holds provides policy history, scoped holds and independent hold release.
+  See the selected provisional
   [media retention defaults](MEDIA_RETENTION_POLICY.md); destructive cleanup
   remains disabled pending implementation and verification.
 - AI and suppliers: approved accounts, commercial rights, quotas and credentials.

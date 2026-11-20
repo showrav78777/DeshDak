@@ -158,3 +158,12 @@ sequential disposable Docker shards against de27e69. The Linux visual comparison
 also passed. Reports are recorded in docs/E2E_TESTING.md. No owner setting or
 production migration is needed for this verification. Actual phones, scanners,
 printers, live providers and the deployed environment still require acceptance.
+
+## Media lifecycle verification — 20 November 2026
+
+The full disposable command passed all 112 current launch gates, including the
+new media-lifecycle workflow and the full dependency audit with zero findings.
+Policy/hold/release audit rollback and desktop/mobile forms passed. The focused
+lifecycle run also passed after final page formatting. Review
+[the sanitized evidence](../docs/verification/20261120-media-lifecycle.json) for
+scope and limits. These checks never enabled deletion or contacted live storage.

@@ -15,7 +15,7 @@ export default async function PrivatePhotoPage({ searchParams }: { searchParams:
   return <main className="dashboard-shell"><section className="admin-content private-photo-page"><p className="eyebrow">PRIVATE MEDIA SAFETY</p><h1>Review private photo uploads</h1>
     <p>1. Match the upload reference to your controlled incident review. 2. Choose a reason. 3. Confirm quarantine to block downloads and ordinary recovery. Files and history are preserved.</p>
     <p>Quarantine has no release action here. This queue covers the staged object-storage pipeline, including linked legacy photos. After quarantine, record the next review action and use the history link to see earlier decisions. This does not activate production uploads or remove evidence.</p>
-    <Link href="/admin/launch-readiness">← Launch readiness and setup requirements</Link>
+    <Link href="/admin/launch-readiness">← Launch readiness and setup requirements</Link><p><Link href="/admin/private-media">Retention policy and legal holds →</Link></p>
     {!parsed.success ? <p role="alert">Invalid filter. Showing the first page.</p> : null}
     <form method="get" className="private-photo-filter"><label htmlFor="photo-state">Show uploads</label><select id="photo-state" name="state" defaultValue={query.state}><option value="all">All reservations</option><option value="quarantined">Quarantined</option></select><button className="button secondary" type="submit">Apply filter</button></form>
     {!result ? <p role="alert">The queue could not be opened securely. Reload or contact the deployment operator; no change has been made.</p> : <>

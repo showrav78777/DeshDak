@@ -742,6 +742,10 @@ model User {
   privatePhotoQuarantines     PrivatePhotoQuarantine[]
   privatePhotoQuarantineReviews PrivatePhotoQuarantineReview[]
   privatePhotoRescans          PrivatePhotoRescan[]
+  privateMediaPolicies        PrivateMediaPolicy[]
+  privateMediaHoldsCreated    PrivateMediaHold[] @relation("MediaHoldActor")
+  privateMediaAccountHolds    PrivateMediaHold[] @relation("MediaHoldAccount")
+  privateMediaHoldReleases    PrivateMediaHoldRelease[]
   identityVerifications       IdentityVerification[]                @relation("IdentityVerificationCustomer")
   identityVerificationsReviewed IdentityVerification[]              @relation("IdentityVerificationReviewer")
   maintenanceRuns             MaintenanceJobRun[]                   @relation("MaintenanceRunActor")
@@ -1191,6 +1195,8 @@ model Order {
   @@index([customerId, status])
   @@index([shippingLaneId, status])
   @@index([type, destinationCountryCode, status])
+  privateMediaHolds PrivateMediaHold[]
+
 }
 
 model Coupon {
@@ -1751,6 +1757,8 @@ model Package {
   updatedAt             DateTime                @updatedAt
 
   @@index([orderId, status])
+  privateMediaHolds PrivateMediaHold[]
+
 }
 
 model PackageException {
@@ -3558,6 +3566,8 @@ model PrivatePhotoUpload {
   @@unique([actorId, idempotencyKey])
   @@index([status, leaseExpiresAt])
   @@index([actorId, createdAt])
+  privateMediaHolds PrivateMediaHold[]
+
 }
 
 
@@ -3637,4 +3647,55 @@ model PrivatePhotoRescanResult {
   verifiedAt  DateTime?
   completedAt DateTime @default(now())
   rescan      PrivatePhotoRescan @relation(fields: [rescanId], references: [id], onDelete: Restrict)
+}
+
+
+model PrivateMediaPolicy {
+  id String @id @default(uuid())
+  sequence Int @unique
+  identityDays Int
+  inspectionDays Int
+  abandonedHours Int
+  caseReference String @db.VarChar(80)
+  actorId String
+  idempotencyKey String @db.VarChar(36)
+  createdAt DateTime @default(now())
+  actor User @relation(fields: [actorId], references: [id], onDelete: Restrict)
+  @@unique([actorId, idempotencyKey])
+}
+
+model PrivateMediaHold {
+  id String @id @default(uuid())
+  uploadId String?
+  accountId String?
+  orderId String?
+  packageId String?
+  actorId String
+  caseReference String @db.VarChar(80)
+  idempotencyKey String @db.VarChar(36)
+  createdAt DateTime @default(now())
+  upload PrivatePhotoUpload? @relation(fields: [uploadId], references: [id], onDelete: Restrict)
+  account User? @relation("MediaHoldAccount", fields: [accountId], references: [id], onDelete: Restrict)
+  order Order? @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  package Package? @relation(fields: [packageId], references: [id], onDelete: Restrict)
+  actor User @relation("MediaHoldActor", fields: [actorId], references: [id], onDelete: Restrict)
+  release PrivateMediaHoldRelease?
+  @@unique([actorId, idempotencyKey])
+  @@index([uploadId])
+  @@index([accountId])
+  @@index([orderId])
+  @@index([packageId])
+  @@index([createdAt, id])
+}
+
+model PrivateMediaHoldRelease {
+  id String @id @default(uuid())
+  holdId String @unique
+  actorId String
+  caseReference String @db.VarChar(80)
+  idempotencyKey String @db.VarChar(36)
+  createdAt DateTime @default(now())
+  hold PrivateMediaHold @relation(fields: [holdId], references: [id], onDelete: Restrict)
+  actor User @relation(fields: [actorId], references: [id], onDelete: Restrict)
+  @@unique([actorId, idempotencyKey])
 }

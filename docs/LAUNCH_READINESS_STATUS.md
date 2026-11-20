@@ -1,6 +1,6 @@
 # DeshDak launch readiness status
 
-Status reviewed: 19 November 2026, Asia/Dhaka
+Status reviewed: 20 November 2026, Asia/Dhaka
 
 Current summary: scanned identity/inspection photo routes and protected object
 downloads are implemented behind a disabled production switch. The production
@@ -8,7 +8,8 @@ build and targeted migration/photo/Admin checks pass. The fresh full dependency
 audit reports zero findings. After correcting the quarantine regression, a fresh
 run passed all 111 launch gates in sequence against application revision fdd181c.
 Live acceptance is not claimed.
-Video, media lifecycle controls, messaging/supplier integration and real staging
+Versioned retention settings and scoped holds are now implemented. Deletion
+eligibility/approvals/worker, video, messaging/supplier integration and real staging
 acceptance remain unfinished. See the dated 19 November section below and NIloy/.
 
 ## Current handoff — 5 November 2026
@@ -354,3 +355,35 @@ local log digest. Raw evidence is /tmp/deshdak-full-disposable-command.log.
 Unsupported/extra runner arguments were separately rejected before Docker access.
 The production bundle previously passed for the same application source; the
 only code change in this verification increment is the disposable runner flag.
+
+## 20 November 2026 — retention policy and scoped holds
+
+Admin → Media retention and holds now provides immutable policy versions, hold
+placement and paginated history. A different administrator with the Compliance
+role and current MFA can release one hold. Upload/account/order/package scopes
+are resolved against object-photo ownership and links at read time, so broad
+holds cover photos linked later. SQL constraints preserve targets, versions,
+independent release and immutable history. Fresh server authority, stable retry
+keys and atomic success audits guard every change. The four versioned API
+operations are authenticated and documented; mutations require idempotency keys.
+The contract now contains 310 operations. No data deletion or provider activation
+was added. Deletion eligibility, separate deletion approvals, worker/recovery,
+legacy/video lifecycle and staging acceptance remain due.
+
+The initial migration/workflow run and expanded lifecycle/Admin/readiness/photo
+regressions passed in disposable PostgreSQL databases. Tests include concurrency,
+role loss, immutable constraints, future linked-media scopes, policy/hold/release
+audit rollback, bounded/redacted pagination, desktop/mobile forms and lost-response
+retry. The full runner now declares 112 gates; its current execution is recorded
+separately after completion. Local evidence: /tmp/deshdak-lifecycle-workflow.log
+and /tmp/deshdak-lifecycle-workflow-expanded.log. Real storage was never contacted.
+
+The combined run passed all 112 gates in 5.2 minutes with zero dependency audit
+findings. The owned schema/container were removed. Evidence is in
+/tmp/deshdak-lifecycle-full-launch.log. After the final text/CSS hierarchy polish,
+the lifecycle API/desktop/mobile regression passed again and the production
+bundle was rebuilt. No owner DB or production service was used. See
+verification/20261120-media-lifecycle.json for the sanitized gate inventory,
+evidence hashes and limits. Manual source checks were performed. The dedicated
+security-review agent was unavailable in this session; independent production
+security acceptance remains outstanding.

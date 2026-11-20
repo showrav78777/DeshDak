@@ -6,6 +6,10 @@ const API_ROOT = join(process.cwd(), "src", "app", "api", "v1");
 const OPTIONAL_SESSION_PATHS = new Set(["/payments/providers"]);
 const OPTIONAL_SESSION_PREFIXES = ["/identifiers/products/"];
 const EXACT_OPERATIONS = {
+  "get /admin/private-media": { authenticated: true, summary: "Read protected versioned retention settings and scoped legal holds; deletion remains disabled", parameters: [{ name: "page", in: "query", schema: { type: "integer", minimum: 1, maximum: 10000, default: 1 } }, { name: "policyPage", in: "query", schema: { type: "integer", minimum: 1, maximum: 10000, default: 1 } }, { name: "state", in: "query", schema: { type: "string", enum: ["active", "all"], default: "active" } }], errors: ["ADMIN_MFA_REQUIRED", "VALIDATION_ERROR", "MEDIA_LIFECYCLE_DENIED", "MEDIA_LIFECYCLE_UNAVAILABLE"] },
+  "post /admin/private-media/policy": { authenticated: true, idempotent: true, summary: "Record an immutable policy version with fresh Admin and Compliance authority; never enable deletion", requestSchema: "MediaPolicyRequest", successSchema: "MediaPolicyResponse", errors: ["ADMIN_MFA_REQUIRED", "UNTRUSTED_ORIGIN", "IDEMPOTENCY_KEY_REQUIRED", "VALIDATION_ERROR", "MEDIA_LIFECYCLE_DENIED", "MEDIA_LIFECYCLE_CONFLICT", "MEDIA_LIFECYCLE_UNAVAILABLE"] },
+  "post /admin/private-media/holds": { authenticated: true, idempotent: true, summary: "Place a scoped preservation hold with Admin MFA and atomic audit", requestSchema: "MediaHoldRequest", successSchema: "MediaHoldResponse", errors: ["ADMIN_MFA_REQUIRED", "UNTRUSTED_ORIGIN", "IDEMPOTENCY_KEY_REQUIRED", "VALIDATION_ERROR", "MEDIA_LIFECYCLE_DENIED", "MEDIA_LIFECYCLE_CONFLICT", "MEDIA_LIFECYCLE_UNAVAILABLE"] },
+  "post /admin/private-media/holds/{holdId}/release": { authenticated: true, idempotent: true, summary: "Independently release one hold with fresh Admin and Compliance authority; preserve all other holds", requestSchema: "MediaHoldReleaseRequest", successSchema: "MediaHoldReleaseResponse", errors: ["ADMIN_MFA_REQUIRED", "UNTRUSTED_ORIGIN", "IDEMPOTENCY_KEY_REQUIRED", "VALIDATION_ERROR", "MEDIA_LIFECYCLE_DENIED", "MEDIA_LIFECYCLE_CONFLICT", "MEDIA_LIFECYCLE_UNAVAILABLE"] },
   "post /admin/notifications/sms/{deliveryId}/investigation": { summary: "Idempotently acknowledge one uncertain SMS investigation with Admin MFA; never resend or confirm delivery", requestSchema: "SmsOtpInvestigationRequest", successSchema: "SmsOtpInvestigationResponse", successStatuses: ["200"], errors: ["ADMIN_MFA_REQUIRED", "UNTRUSTED_ORIGIN", "VALIDATION_ERROR", "SMS_REVIEW_CONFLICT", "SMS_REVIEW_UNAVAILABLE"] },
   "patch /notifications": { summary: "Mark the authenticated user's current unread notifications read", requestSchema: "NotificationMarkAllRequest", successSchema: "NotificationMarkAllResponse", successStatuses: ["200"], errors: ["AUTHENTICATION_REQUIRED", "UNTRUSTED_ORIGIN", "VALIDATION_ERROR"] },
   "patch /notifications/{notificationId}/read": { summary: "Mark an owned notification read while preserving its first read timestamp", successSchema: "NotificationReadResponse", successStatuses: ["200"], errors: ["AUTHENTICATION_REQUIRED", "UNTRUSTED_ORIGIN", "VALIDATION_ERROR", "NOTIFICATION_NOT_FOUND"] },
@@ -559,7 +563,7 @@ function accessFor(path, source, exact) {
   if (source.includes("verifyMaintenanceJobSecret")) return { security: [{ schedulerBearer: [] }], access: "scheduler" };
   if (path === "/admin/setup") return { security: [], access: "one-time-bootstrap" };
   if (exact?.optionalSession || OPTIONAL_SESSION_PATHS.has(path) || OPTIONAL_SESSION_PREFIXES.some((prefix) => path.startsWith(prefix))) return { security: [{}, { cookieSession: [] }], access: "optional-session" };
-  if (source.includes("getRequestSession")) return { security: [{ cookieSession: [] }], access: "authenticated" };
+  if (exact?.authenticated || source.includes("getRequestSession")) return { security: [{ cookieSession: [] }], access: "authenticated" };
   return { security: [], access: "public" };
 }
 
@@ -570,7 +574,7 @@ function parameterList(method, path, source, exact) {
     required: true,
     schema: { type: "string" },
   }));
-  if (["post", "put", "patch", "delete"].includes(method) && source.includes('headers.get("Idempotency-Key")')) parameters.push({ $ref: "#/components/parameters/IdempotencyKey" });
+  if (["post", "put", "patch", "delete"].includes(method) && (exact?.idempotent || source.includes('headers.get("Idempotency-Key")'))) parameters.push({ $ref: "#/components/parameters/IdempotencyKey" });
   if (exact?.parameters) parameters.push(...exact.parameters);
   return parameters;
 }
@@ -692,6 +696,12 @@ export function buildOpenApiDocument() {
         AcceptLanguage: { name: "Accept-Language", in: "header", required: false, schema: { type: "string", enum: ["en", "bn"] } },
       },
       schemas: {
+        MediaPolicyRequest: { type: "object", required: ["expectedSequence", "identityDays", "inspectionDays", "abandonedHours", "caseReference", "confirmed"], properties: { expectedSequence: { type: "integer", minimum: 0, maximum: 1000000 }, identityDays: { type: "integer", minimum: 1, maximum: 36500 }, inspectionDays: { type: "integer", minimum: 1, maximum: 36500 }, abandonedHours: { type: "integer", minimum: 24, maximum: 8760 }, caseReference: { type: "string", minLength: 8, maxLength: 80, pattern: "^(INC|SEC|KYC|OPS)-[A-Z0-9]+(-[A-Z0-9]+){0,5}$" }, confirmed: { type: "boolean", const: true } }, additionalProperties: false },
+        MediaHoldRequest: { type: "object", required: ["scope", "targetId", "caseReference", "confirmed"], properties: { scope: { type: "string", enum: ["UPLOAD", "ACCOUNT", "ORDER", "PACKAGE"] }, targetId: { type: "string", format: "uuid" }, caseReference: { type: "string", minLength: 8, maxLength: 80, pattern: "^(INC|SEC|KYC|OPS)-[A-Z0-9]+(-[A-Z0-9]+){0,5}$" }, confirmed: { type: "boolean", const: true } }, additionalProperties: false },
+        MediaHoldReleaseRequest: { type: "object", required: ["caseReference", "confirmed"], properties: { caseReference: { type: "string", minLength: 8, maxLength: 80, pattern: "^(INC|SEC|KYC|OPS)-[A-Z0-9]+(-[A-Z0-9]+){0,5}$" }, confirmed: { type: "boolean", const: true } }, additionalProperties: false },
+        MediaPolicyResponse: { type: "object", required: ["data"], properties: { data: { type: "object", required: ["sequence", "replayed", "deletionEnabled"], properties: { sequence: { type: "integer", minimum: 1 }, replayed: { type: "boolean" }, deletionEnabled: { type: "boolean", const: false } }, additionalProperties: false } }, additionalProperties: false },
+        MediaHoldResponse: { type: "object", required: ["data"], properties: { data: { type: "object", required: ["id", "replayed"], properties: { id: { type: "string", format: "uuid" }, replayed: { type: "boolean" } }, additionalProperties: false } }, additionalProperties: false },
+        MediaHoldReleaseResponse: { type: "object", required: ["data"], properties: { data: { type: "object", required: ["released", "replayed"], properties: { released: { type: "boolean", const: true }, replayed: { type: "boolean" } }, additionalProperties: false } }, additionalProperties: false },
         NotificationMarkAllRequest: { type: "object", required: ["action"], properties: { action: { type: "string", enum: ["MARK_ALL_READ"] } }, additionalProperties: false },
         NotificationMarkAllResponse: { type: "object", required: ["data"], properties: { data: { type: "object", required: ["updated"], properties: { updated: { type: "integer", minimum: 0 } }, additionalProperties: false } }, additionalProperties: false },
         NotificationReadResponse: { type: "object", required: ["data"], properties: { data: { type: "object", required: ["id", "readAt"], properties: { id: { type: "string", format: "uuid" }, readAt: { type: "string", format: "date-time" } }, additionalProperties: false } }, additionalProperties: false },

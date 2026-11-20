@@ -4705,6 +4705,308 @@
         }
       }
     },
+    "/admin/private-media": {
+      "get": {
+        "operationId": "get_admin_private_media",
+        "tags": [
+          "admin"
+        ],
+        "summary": "Read protected versioned retention settings and scoped legal holds; deletion remains disabled",
+        "security": [
+          {
+            "cookieSession": []
+          }
+        ],
+        "x-crossly-access": "authenticated",
+        "x-crossly-error-codes": [
+          "ADMIN_MFA_REQUIRED",
+          "VALIDATION_ERROR",
+          "MEDIA_LIFECYCLE_DENIED",
+          "MEDIA_LIFECYCLE_UNAVAILABLE"
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 10000,
+              "default": 1
+            }
+          },
+          {
+            "name": "policyPage",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 10000,
+              "default": 1
+            }
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "active",
+                "all"
+              ],
+              "default": "active"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Success"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "#/components/responses/Unprocessable"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/admin/private-media/holds": {
+      "post": {
+        "operationId": "post_admin_private_media_holds",
+        "tags": [
+          "admin"
+        ],
+        "summary": "Place a scoped preservation hold with Admin MFA and atomic audit",
+        "security": [
+          {
+            "cookieSession": []
+          }
+        ],
+        "x-crossly-access": "authenticated",
+        "x-crossly-error-codes": [
+          "ADMIN_MFA_REQUIRED",
+          "UNTRUSTED_ORIGIN",
+          "IDEMPOTENCY_KEY_REQUIRED",
+          "VALIDATION_ERROR",
+          "MEDIA_LIFECYCLE_DENIED",
+          "MEDIA_LIFECYCLE_CONFLICT",
+          "MEDIA_LIFECYCLE_UNAVAILABLE"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response.",
+            "headers": {
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MediaHoldResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "#/components/responses/Unprocessable"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/admin/private-media/holds/{holdId}/release": {
+      "post": {
+        "operationId": "post_admin_private_media_holds_holdId_release",
+        "tags": [
+          "admin"
+        ],
+        "summary": "Independently release one hold with fresh Admin and Compliance authority; preserve all other holds",
+        "security": [
+          {
+            "cookieSession": []
+          }
+        ],
+        "x-crossly-access": "authenticated",
+        "x-crossly-error-codes": [
+          "ADMIN_MFA_REQUIRED",
+          "UNTRUSTED_ORIGIN",
+          "IDEMPOTENCY_KEY_REQUIRED",
+          "VALIDATION_ERROR",
+          "MEDIA_LIFECYCLE_DENIED",
+          "MEDIA_LIFECYCLE_CONFLICT",
+          "MEDIA_LIFECYCLE_UNAVAILABLE"
+        ],
+        "parameters": [
+          {
+            "name": "holdId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response.",
+            "headers": {
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MediaHoldReleaseResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "#/components/responses/Unprocessable"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/admin/private-media/policy": {
+      "post": {
+        "operationId": "post_admin_private_media_policy",
+        "tags": [
+          "admin"
+        ],
+        "summary": "Record an immutable policy version with fresh Admin and Compliance authority; never enable deletion",
+        "security": [
+          {
+            "cookieSession": []
+          }
+        ],
+        "x-crossly-access": "authenticated",
+        "x-crossly-error-codes": [
+          "ADMIN_MFA_REQUIRED",
+          "UNTRUSTED_ORIGIN",
+          "IDEMPOTENCY_KEY_REQUIRED",
+          "VALIDATION_ERROR",
+          "MEDIA_LIFECYCLE_DENIED",
+          "MEDIA_LIFECYCLE_CONFLICT",
+          "MEDIA_LIFECYCLE_UNAVAILABLE"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response.",
+            "headers": {
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MediaPolicyResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "#/components/responses/Unprocessable"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
     "/admin/private-photos": {
       "get": {
         "operationId": "get_admin_private_photos",
@@ -18929,6 +19231,188 @@
       }
     },
     "schemas": {
+      "MediaPolicyRequest": {
+        "type": "object",
+        "required": [
+          "expectedSequence",
+          "identityDays",
+          "inspectionDays",
+          "abandonedHours",
+          "caseReference",
+          "confirmed"
+        ],
+        "properties": {
+          "expectedSequence": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1000000
+          },
+          "identityDays": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 36500
+          },
+          "inspectionDays": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 36500
+          },
+          "abandonedHours": {
+            "type": "integer",
+            "minimum": 24,
+            "maximum": 8760
+          },
+          "caseReference": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 80,
+            "pattern": "^(INC|SEC|KYC|OPS)-[A-Z0-9]+(-[A-Z0-9]+){0,5}$"
+          },
+          "confirmed": {
+            "type": "boolean",
+            "const": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "MediaHoldRequest": {
+        "type": "object",
+        "required": [
+          "scope",
+          "targetId",
+          "caseReference",
+          "confirmed"
+        ],
+        "properties": {
+          "scope": {
+            "type": "string",
+            "enum": [
+              "UPLOAD",
+              "ACCOUNT",
+              "ORDER",
+              "PACKAGE"
+            ]
+          },
+          "targetId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "caseReference": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 80,
+            "pattern": "^(INC|SEC|KYC|OPS)-[A-Z0-9]+(-[A-Z0-9]+){0,5}$"
+          },
+          "confirmed": {
+            "type": "boolean",
+            "const": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "MediaHoldReleaseRequest": {
+        "type": "object",
+        "required": [
+          "caseReference",
+          "confirmed"
+        ],
+        "properties": {
+          "caseReference": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 80,
+            "pattern": "^(INC|SEC|KYC|OPS)-[A-Z0-9]+(-[A-Z0-9]+){0,5}$"
+          },
+          "confirmed": {
+            "type": "boolean",
+            "const": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "MediaPolicyResponse": {
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "type": "object",
+            "required": [
+              "sequence",
+              "replayed",
+              "deletionEnabled"
+            ],
+            "properties": {
+              "sequence": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "replayed": {
+                "type": "boolean"
+              },
+              "deletionEnabled": {
+                "type": "boolean",
+                "const": false
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "MediaHoldResponse": {
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "type": "object",
+            "required": [
+              "id",
+              "replayed"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "replayed": {
+                "type": "boolean"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "MediaHoldReleaseResponse": {
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "type": "object",
+            "required": [
+              "released",
+              "replayed"
+            ],
+            "properties": {
+              "released": {
+                "type": "boolean",
+                "const": true
+              },
+              "replayed": {
+                "type": "boolean"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
       "NotificationMarkAllRequest": {
         "type": "object",
         "required": [
