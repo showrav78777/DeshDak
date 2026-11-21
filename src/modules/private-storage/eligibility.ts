@@ -83,7 +83,8 @@ async function evaluate(tx: Tx, id: string, policy: Policy | null, now: Date, ho
     const history = await tx.orderStatusHistory.findFirst({ where: { orderId, toStatus: "DELIVERED" }, orderBy: { createdAt: "desc" }, select: { createdAt: true } });
     if (!history || !valid(history.createdAt)) return outcome(["DELIVERY_REQUIRED"]);
     track(history.createdAt);
-    const parcels = await tx.package.findMany({ where: { orderId, isOutboundActive: true }, take: caseLimit + 1, select: { shipmentPackages: { select: { shipment: { select: { status: true, deliveredAt: true, claimDeadline: true, updatedAt: true, events: { where: { status: "DELIVERED" }, orderBy: { occurredAt: "desc" }, take: 1, select: { occurredAt: true } } } } } } } });
+    // Retired parcels may still have a shipped claim window; unshipped repack sources do not.
+    const parcels = await tx.package.findMany({ where: { orderId, OR: [{ isOutboundActive: true }, { shipmentPackages: { some: {} } }] }, take: caseLimit + 1, select: { shipmentPackages: { take: 2, select: { shipment: { select: { status: true, deliveredAt: true, claimDeadline: true, updatedAt: true, events: { where: { status: "DELIVERED" }, orderBy: { occurredAt: "desc" }, take: 1, select: { occurredAt: true } } } } } } } });
     if (parcels.length > caseLimit) return outcome(["HISTORY_REVIEW"]);
     if (!parcels.length) return outcome(["DELIVERY_REQUIRED"]);
     for (const parcel of parcels) {

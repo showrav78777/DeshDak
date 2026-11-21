@@ -51,7 +51,9 @@ workflow. Suggested defaults do not qualify records; a recorded policy is requir
 
 The schedule uses the most recent recorded photo activity, final review and checked
 case-completion dates. Inspection evidence also needs confirmed order/shipment
-delivery events and claim-window records. Pending identity reviews, active verified
+delivery events and claim-window records. Historical shipments remain checked
+even after their parcel becomes inactive; unshipped repack sources have no
+independent delivery requirement. Pending identity reviews, active verified
 identity documents, unresolved cases, holds, quarantine and incomplete storage stay
 blocked. Routine clear checkouts do not restart retention. Histories above 100
 related records per category require manual review. Closed rejected/cancelled

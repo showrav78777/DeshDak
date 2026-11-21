@@ -49,6 +49,9 @@ certify live services or complete the engineering work below.
 - The full launch runner passed all 113 current gates in one isolated run on
   21 November, including retention preview, media-policy and legal-hold controls;
   the dependency audit reported zero findings. The production build passed.
+- A subsequent historical-shipment retention safeguard passed both media
+  workflow suites, TypeScript, lint and the production build. That narrow fix
+  followed the full run; see the 21 November claim-window verification record.
 - All 105 configured Chromium browser cases passed on macOS.
 - All 105 distinct Linux browser cases passed across three sequential Docker
   shards, including both visual comparisons. Each shard passed 37 executions

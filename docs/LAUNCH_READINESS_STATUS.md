@@ -421,3 +421,24 @@ final application source already had a passing production build; only test
 synchronization and documentation changed afterward. See
 verification/20261121-media-retention-preview.json for sanitized evidence.
 This closes local acceptance for this increment, not production acceptance.
+
+## 21 November 2026 — historical shipment claim-window safeguard
+
+Before starting deletion approval implementation, source review found that the
+retention preview queried only active outbound parcels. A retired parcel's
+shipment could therefore be omitted even while its claim deadline was open.
+A real disposable-PostgreSQL regression reproduced READY_FOR_REVIEW instead of
+WAITING. The preview now checks active parcels plus every parcel on that order
+with a shipment. Inactive unshipped repacking sources remain excluded. Shipment
+links are bounded to two, enough to reject ambiguous assignments without loading
+an unbounded list. No database schema or API contract changed.
+
+The regression now preserves the historical claim window, blocks missing historical
+claim deadlines, and accepts a closed historical shipment without blocking on an
+unshipped repacking source. Both complete media preview and lifecycle suites passed,
+including desktop/mobile workflows, followed by TypeScript, ESLint and a production
+build under the same disabled-provider, owned disposable database environment.
+Cleanup was confirmed. The preceding 113-gate full run predates this narrow fix;
+it was not repeated. See verification/20261121-historical-shipment-claims.json.
+No file deletion, deletion approval, storage access or production activation was
+added. Authoritative deletion review/worker and live acceptance remain due.

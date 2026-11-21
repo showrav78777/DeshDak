@@ -1,0 +1,34 @@
+{
+  "date": "2026-11-21",
+  "baseRevision": "ef7a0bc295b38c3215d24fc65f296fa5c6444d57",
+  "result": "passed",
+  "checks": [
+    "test:private-media-eligibility",
+    "test:private-media-lifecycle",
+    "typecheck",
+    "lint",
+    "build"
+  ],
+  "regressionReproducedBeforeFix": true,
+  "regressionScenarios": [
+    "Inactive shipped parcel with an open claim deadline remains WAITING",
+    "Inactive shipped parcel with missing claim deadline remains BLOCKED",
+    "Closed historical shipment permits review scheduling",
+    "Inactive unshipped repack source does not require separate delivery"
+  ],
+  "beforeLogSha256": "6e8c496e0ad83d4acb5a1fa3d5a51eca18ccdf526635cc71ad0742b4bd614f1c",
+  "afterLogSha256": "1ae17915faec0484f165e1cd4dad6b2a33d21fe19e716866be2cca1eed954a52",
+  "verifiedFilesSha256": {
+    "src/modules/private-storage/eligibility.ts": "426ccfbbc0c707dae11bce94e3bdea33e01024baeb60071076c41074fc37e5bd",
+    "scripts/verify-private-media-eligibility.mjs": "9175ea0854d0a6befb1b148fecd55cff565e7c1871bdb0fb4770d34a7fda2ba4"
+  },
+  "disposableDatabaseRemoved": true,
+  "automaticDeletionEnabled": false,
+  "productionAccepted": false,
+  "limits": [
+    "No new full 113-gate run; the prior full run belongs to the base revision.",
+    "Scan proofs and provider responses were synthetic; storage and live services were not contacted.",
+    "Deletion requests, approvals, locked revalidation and destructive worker remain unimplemented.",
+    "Desktop/mobile browser emulation does not certify physical devices."
+  ]
+}

@@ -311,3 +311,11 @@ and docs were the only later changes. Admin retention scheduling is available;
 authoritative deletion requests/independent approval/revalidation/worker, video and
 live-service/security/deployment acceptance remain unfinished. Evidence:
 docs/verification/20261121-media-retention-preview.json.
+
+21 November historical-shipment safeguard: reproduced and fixed a retention-preview
+gap that ignored shipments on inactive parcels. Active claim windows and missing
+deadlines now preserve those records; unshipped repack sources do not create a
+false delivery requirement. Preview and lifecycle browser/API suites, TypeScript,
+lint and production build passed with disposable data and all providers disabled.
+No deletion approvals or worker were added. The prior 113-gate full run is historical
+evidence for ef7a0bc, not a new full run for this fix.
