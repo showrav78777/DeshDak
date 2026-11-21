@@ -4789,6 +4789,101 @@
         }
       }
     },
+    "/admin/private-media/eligibility": {
+      "get": {
+        "operationId": "get_admin_private_media_eligibility",
+        "tags": [
+          "admin"
+        ],
+        "summary": "Preview bounded photo-retention review eligibility; never authorize or perform deletion",
+        "security": [
+          {
+            "cookieSession": []
+          }
+        ],
+        "x-crossly-access": "authenticated",
+        "x-crossly-error-codes": [
+          "ADMIN_MFA_REQUIRED",
+          "VALIDATION_ERROR",
+          "MEDIA_LIFECYCLE_DENIED",
+          "MEDIA_LIFECYCLE_UNAVAILABLE"
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 10000,
+              "default": 1
+            }
+          },
+          {
+            "name": "purpose",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "all",
+                "identity",
+                "inspection"
+              ],
+              "default": "all"
+            }
+          },
+          {
+            "name": "uploadId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response.",
+            "headers": {
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MediaReviewPreviewResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "#/components/responses/Unprocessable"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
     "/admin/private-media/holds": {
       "post": {
         "operationId": "post_admin_private_media_holds",
@@ -19231,6 +19326,152 @@
       }
     },
     "schemas": {
+      "MediaReviewPreviewResponse": {
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "type": "object",
+            "required": [
+              "page",
+              "purpose",
+              "pageSize",
+              "hasMore",
+              "policySequence",
+              "evaluatedAt",
+              "deletionEnabled",
+              "rows"
+            ],
+            "properties": {
+              "page": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 10000
+              },
+              "purpose": {
+                "type": "string",
+                "enum": [
+                  "all",
+                  "identity",
+                  "inspection"
+                ]
+              },
+              "uploadId": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "pageSize": {
+                "type": "integer",
+                "enum": [
+                  10
+                ]
+              },
+              "hasMore": {
+                "type": "boolean"
+              },
+              "policySequence": {
+                "type": "integer",
+                "minimum": 1,
+                "nullable": true
+              },
+              "evaluatedAt": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "deletionEnabled": {
+                "type": "boolean",
+                "enum": [
+                  false
+                ]
+              },
+              "rows": {
+                "type": "array",
+                "maxItems": 10,
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "uploadId",
+                    "purpose",
+                    "state",
+                    "reasons",
+                    "reviewAfter",
+                    "deletionAllowed"
+                  ],
+                  "properties": {
+                    "uploadId": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "purpose": {
+                      "type": "string",
+                      "enum": [
+                        "identity",
+                        "inspection"
+                      ]
+                    },
+                    "state": {
+                      "type": "string",
+                      "enum": [
+                        "BLOCKED",
+                        "WAITING",
+                        "READY_FOR_REVIEW"
+                      ]
+                    },
+                    "reasons": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "enum": [
+                          "POLICY_REQUIRED",
+                          "QUARANTINED",
+                          "LEGAL_HOLD",
+                          "STORAGE_UNCONFIRMED",
+                          "INVALID_TIME",
+                          "CONTEXT_REQUIRED",
+                          "CONTEXT_CHANGED",
+                          "ACCOUNT_REVIEW",
+                          "CURRENT_IDENTITY",
+                          "IDENTITY_REVIEW_REQUIRED",
+                          "DELIVERY_REQUIRED",
+                          "SUPPORT_REVIEW_REQUIRED",
+                          "RETURN_REVIEW_REQUIRED",
+                          "REFUND_REVIEW_REQUIRED",
+                          "WAREHOUSE_REVIEW_REQUIRED",
+                          "SERVICE_REVIEW_REQUIRED",
+                          "PAYMENT_REVIEW_REQUIRED",
+                          "ORDER_REVIEW_REQUIRED",
+                          "CASE_RECORD_INCOMPLETE",
+                          "COMPLIANCE_REVIEW",
+                          "FINANCE_REVIEW",
+                          "HISTORY_REVIEW",
+                          "RETENTION_RUNNING",
+                          "READY_FOR_REVIEW"
+                        ]
+                      }
+                    },
+                    "reviewAfter": {
+                      "type": "string",
+                      "format": "date-time",
+                      "nullable": true
+                    },
+                    "deletionAllowed": {
+                      "type": "boolean",
+                      "enum": [
+                        false
+                      ]
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
       "MediaPolicyRequest": {
         "type": "object",
         "required": [

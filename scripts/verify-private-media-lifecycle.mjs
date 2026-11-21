@@ -15,7 +15,8 @@ async function source(file, replacements = {}) {
  return `data:text/javascript;base64,${Buffer.from(stripTypeScriptTypes(code)).toString("base64")}`;
 }
 const quarantine = await source("../src/modules/private-storage/quarantine.ts");
-const { createMediaLifecycle, activePrivateMediaHolds, lockPrivateMediaLifecycle } = await import(await source("../src/modules/private-storage/lifecycle.ts", { "./quarantine": quarantine }));
+const eligibility = await source("../src/modules/private-storage/eligibility.ts");
+const { createMediaLifecycle, activePrivateMediaHolds, lockPrivateMediaLifecycle } = await import(await source("../src/modules/private-storage/lifecycle.ts", { "./quarantine": quarantine, "./eligibility": eligibility }));
 const db = new PrismaClient(), marker = randomBytes(8).toString("hex"), controls = createMediaLifecycle(db);
 const contract = JSON.parse(await readFile(new URL("../public/openapi.yaml", import.meta.url), "utf8"));
 for (const [method, path] of [["get", "/admin/private-media"], ["post", "/admin/private-media/policy"], ["post", "/admin/private-media/holds"], ["post", "/admin/private-media/holds/{holdId}/release"]]) {
@@ -37,7 +38,8 @@ try {
  for (const who of [noMfa, customer]) assert.equal((await fetch(root, { headers: { Cookie: who.cookie } })).status, 403);
  assert.equal((await fetch(root)).status, 403);
  await assert.rejects(() => controls.overview(noMfa.session.id, {}), /MEDIA_LIFECYCLE_DENIED/);
- const policy = { expectedSequence: 0, identityDays: 90, inspectionDays: 180, abandonedHours: 24, caseReference: "KYC-2026-001", confirmed: true }, policyKey = randomUUID();
+ const baselineCount = await db.privateMediaPolicy.count(), baselineSequence = (await db.privateMediaPolicy.findFirst({ orderBy: { sequence: "desc" } }))?.sequence ?? 0;
+ const policy = { expectedSequence: baselineSequence, identityDays: 90, inspectionDays: 180, abandonedHours: 24, caseReference: "KYC-2026-001", confirmed: true }, policyKey = randomUUID();
  assert.equal((await post(admin, "policy", policy)).status, 403);
  assert.equal((await post(author, "policy", policy, randomUUID(), { Origin: "https://untrusted.invalid" })).status, 403);
  assert.equal((await post(author, "policy", policy, "")).status, 422);
@@ -45,13 +47,13 @@ try {
  assert.equal((await post(author, "policy", { ...policy, identityDays: 0 })).status, 422);
  assert.equal((await post(author, "policy", " ".repeat(4097))).status, 422);
  const pair = await Promise.all([post(author, "policy", policy, policyKey), post(author, "policy", policy, policyKey)]); assert.deepEqual(pair.map(r => r.status), [200, 200]);
- assert.equal(await db.privateMediaPolicy.count(), 1); assert.equal(await db.auditLog.count({ where: { actorId: author.user.id, action: "private_media.policy_recorded" } }), 1);
+ assert.equal(await db.privateMediaPolicy.count(), baselineCount + 1); assert.equal(await db.auditLog.count({ where: { actorId: author.user.id, action: "private_media.policy_recorded" } }), 1);
  assert.equal((await post(author, "policy", { ...policy, identityDays: 91 }, policyKey)).status, 409);
  assert.equal((await post(reviewer, "policy", policy)).status, 409);
- const race = await Promise.all([post(author, "policy", { ...policy, expectedSequence: 1 }), post(reviewer, "policy", { ...policy, expectedSequence: 1 })]); assert.deepEqual(race.map(r => r.status).sort(), [200, 409]);
+ const race = await Promise.all([post(author, "policy", { ...policy, expectedSequence: baselineSequence + 1 }), post(reviewer, "policy", { ...policy, expectedSequence: baselineSequence + 1 })]); assert.deepEqual(race.map(r => r.status).sort(), [200, 409]);
  const firstPolicy = await db.privateMediaPolicy.findFirstOrThrow({ orderBy: { sequence: "asc" } });
  await assert.rejects(() => db.privateMediaPolicy.update({ where: { id: firstPolicy.id }, data: { identityDays: 1 } }));
- await assert.rejects(() => db.privateMediaPolicy.create({ data: { ...policy, expectedSequence: undefined, confirmed: undefined, sequence: 99, actorId: author.user.id, idempotencyKey: randomUUID() } }));
+ await assert.rejects(() => db.privateMediaPolicy.create({ data: { ...policy, expectedSequence: undefined, confirmed: undefined, sequence: baselineSequence + 99, actorId: author.user.id, idempotencyKey: randomUUID() } }));
  const holdInput = { scope: "ACCOUNT", targetId: customer.user.id, caseReference: "SEC-2026-001", confirmed: true }, holdKey = randomUUID();
  const held = await post(author, "holds", holdInput, holdKey); assert.equal(held.status, 200); const holdId = (await held.json()).data.id;
  assert.equal((await post(author, "holds", holdInput, holdKey)).status, 200);
@@ -87,19 +89,19 @@ try {
  const before = await db.privateMediaHold.count();
  try {
   assert.equal((await post(admin, "holds", holdInput)).status, 503); assert.equal(await db.privateMediaHold.count(), before);
-  assert.equal((await post(author, "policy", { ...policy, expectedSequence: 2 })).status, 503); assert.equal(await db.privateMediaPolicy.count(), 2);
+  assert.equal((await post(author, "policy", { ...policy, expectedSequence: baselineSequence + 2 })).status, 503); assert.equal(await db.privateMediaPolicy.count(), baselineCount + 2);
   assert.equal((await post(author, `holds/${scoped[0]}/release`, release)).status, 503); assert.equal(await db.privateMediaHoldRelease.count({ where: { holdId: scoped[0] } }), 0);
  }
  finally { await db.$executeRawUnsafe('DROP TRIGGER lifecycle_test_audit_failure ON "AuditLog"'); await db.$executeRawUnsafe('DROP FUNCTION lifecycle_test_audit_failure()'); }
  const complianceRole = await db.role.findUniqueOrThrow({ where: { code: "compliance" } });
  let unlock, entered; const wait = new Promise(r => { unlock = r; }), locked = new Promise(r => { entered = r; });
  const revoke = db.$transaction(async tx => { await tx.$queryRaw`SELECT "id" FROM "User" WHERE "id"=${reviewer.user.id} FOR UPDATE`; entered(); await wait; await tx.userRole.delete({ where: { userId_roleId: { userId: reviewer.user.id, roleId: complianceRole.id } } }); });
- await locked; const changing = controls.savePolicy(reviewer.session.id, { ...policy, expectedSequence: 2, idempotencyKey: randomUUID() }); unlock(); await revoke; await assert.rejects(() => changing, /MEDIA_LIFECYCLE_DENIED/); assert.equal(await db.privateMediaPolicy.count(), 2);
+ await locked; const changing = controls.savePolicy(reviewer.session.id, { ...policy, expectedSequence: baselineSequence + 2, idempotencyKey: randomUUID() }); unlock(); await revoke; await assert.rejects(() => changing, /MEDIA_LIFECYCLE_DENIED/); assert.equal(await db.privateMediaPolicy.count(), baselineCount + 2);
  await db.userRole.create({ data: { userId: reviewer.user.id, roleId: complianceRole.id } });
- for (let i = 3; i <= 22; i++) await controls.savePolicy(author.session.id, { ...policy, expectedSequence: i - 1, idempotencyKey: randomUUID() });
+ for (let i = baselineSequence + 3; i <= baselineSequence + 22; i++) await controls.savePolicy(author.session.id, { ...policy, expectedSequence: i - 1, idempotencyKey: randomUUID() });
  for (let i = 0; i < 51; i++) await controls.placeHold(admin.session.id, { ...holdInput, idempotencyKey: randomUUID() });
  const page1 = await controls.overview(author.session.id, {}), page2 = await controls.overview(author.session.id, { page: 2, policyPage: 2 });
- assert.equal(page1.deletionEnabled, false); assert(page1.hasMore && page1.policyHasMore); assert.equal(page1.holds.length, 50); assert.equal(page1.policies.length, 20); assert(page2.holds.length > 0 && page2.policies.length === 2); assert(!page1.holds.some(h => page2.holds.some(k => k.id === h.id)));
+ assert.equal(page1.deletionEnabled, false); assert(page1.hasMore && page1.policyHasMore); assert.equal(page1.holds.length, 50); assert.equal(page1.policies.length, 20); assert(page2.holds.length > 0 && page2.policies.length === Math.min(20, baselineCount + 2)); assert(!page1.holds.some(h => page2.holds.some(k => k.id === h.id)));
  const redacted = JSON.stringify(page1); for (const forbidden of ["idempotencyKey", "storageNamespace", "storedReference", customer.user.email, "passwordHash", "ciphertext"]) assert(!redacted.includes(forbidden));
  const response = await fetch(root, { headers: { Cookie: author.cookie } }); assert.equal(response.status, 200); assert.match(response.headers.get("cache-control"), /no-store/);
  const { chromium } = await import("@playwright/test"); const browser = await chromium.launch({ headless: true });

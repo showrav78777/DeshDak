@@ -81,9 +81,14 @@ try {
     const refreshPattern=`${origin}/notifications**`;
     const holdRefresh=async route=>{if(route.request().method()==="GET" && route.request().headers()["rsc"]==="1"){refreshCount++;await refreshHeld;await route.continue();continuedRefresh();return;}await route.continue();};
     await page.route(refreshPattern,holdRefresh);
+    const refreshResponse=page.waitForResponse(r=>new URL(r.url()).pathname==="/notifications"&&r.request().method()==="GET"&&r.request().headers()["rsc"]==="1",{timeout:15000});void refreshResponse.catch(()=>{});
     const path=button===single?readPath(target.id):"/api/v1/notifications";const completed=page.waitForResponse(r=>r.url()===`${origin}${path}`&&r.request().method()==="PATCH");void completed.catch(()=>{});
     await button.click();await expect(button).toBeDisabled();await expect.poll(()=>count).toBe(1);release();assert.equal((await completed).status(),200);await page.unroute(endpoint);
     await expect.poll(()=>refreshCount).toBe(1);await expect(button).toBeDisabled();releaseRefresh();await refreshContinued;await page.unroute(refreshPattern,holdRefresh);
+    // Releasing the request does not mean its server-rendered response has arrived.
+    // Keep UI assertions strict, but begin them after the refresh response arrives.
+    // RSC responses can remain streamed in development; UI state is the completion signal.
+    const refreshed=await refreshResponse;assert.equal(refreshed.status(),200);
     if(button===single){await expect(card.getByText("Read",{exact:true})).toBeVisible();}else{await expect(page.locator(".notification-summary b")).toHaveText("0");await expect(all).toBeDisabled();}
    }
    assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));await page.evaluate(()=>{document.activeElement?.blur();window.scrollTo(0,0);});await page.screenshot({path:`/tmp/deshdak-read-actions-${width}-20261111.png`});await context.close();

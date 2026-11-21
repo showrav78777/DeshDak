@@ -42,9 +42,35 @@ not a deletion worker. All media remains retained while deletion is disabled.
 A preservation hold does not block authorized viewing; quarantine is the separate
 control for blocking unsafe access.
 
+## Retention-review preview
+
+Open Admin → Media retention and holds → Review media retention. Choose the photo
+type or paste one upload UUID. The preview checks ten object-upload reservations
+per page and shows the first blocking checks with links to the relevant Admin
+workflow. Suggested defaults do not qualify records; a recorded policy is required.
+
+The schedule uses the most recent recorded photo activity, final review and checked
+case-completion dates. Inspection evidence also needs confirmed order/shipment
+delivery events and claim-window records. Pending identity reviews, active verified
+identity documents, unresolved cases, holds, quarantine and incomplete storage stay
+blocked. Routine clear checkouts do not restart retention. Histories above 100
+related records per category require manual review. Closed rejected/cancelled
+records without a dedicated completion field use their last update as the
+conservative activity time.
+
+A ready result means ready for independent review only. It is not a deletion
+approval, a locked snapshot or proof of current object availability. External and
+unrecorded investigations, legacy database-only media and video are outside the
+preview. Future deletion must recheck the current policy, holds, case state and
+exact object version under its own authorization/locking controls.
+
+Apply migration 20261120170000_media_preview_indexes through the reviewed deployment
+job for the bounded preview ordering indexes. Keep storage expiration disabled.
+
 ## Remaining implementation and controls
 
-1. Show eligible items, the reason, policy version and related open cases in Admin.
+1. Finish authoritative deletion requests and approval snapshots, with locked
+   eligibility revalidation. The read-only scheduling preview is available.
 2. Require a Compliance approver distinct from the deletion requester. Recheck holds,
    authorization and subject state immediately before each deletion.
 3. Use a separate deletion role and exact bucket, key and version identifiers.
@@ -55,7 +81,7 @@ control for blocking unsafe access.
    failure and replay in staging before scheduling any destructive cleanup.
 
 The current app has scanned photo intake, protected delivery, quarantine/review,
-versioned retention settings and scoped preservation holds. Deletion eligibility,
-independent deletion approvals, legacy-media/video handling and the deletion
-worker still require engineering. No automatic cleanup is enabled. Do not
+versioned retention settings, scoped preservation holds and read-only review
+scheduling. Locked deletion eligibility, independent deletion approvals,
+legacy-media/video handling and the deletion worker still require engineering. No automatic cleanup is enabled. Do not
 configure a broad S3 expiration rule as a substitute.

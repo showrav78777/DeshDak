@@ -2,6 +2,7 @@ import "server-only";
 import type { Prisma, PrismaClient } from "@prisma/client";
 import { z } from "zod";
 import { authorizePrivatePhotoAdmin } from "./quarantine";
+import { buildMediaReviewPreview, type mediaPreviewQuery } from "./eligibility";
 
 const caseReference = z.string().min(8).max(80).regex(/^(INC|SEC|KYC|OPS)-[A-Z0-9]+(?:-[A-Z0-9]+){0,5}$/);
 export const mediaPolicyRequest = z.object({ expectedSequence: z.number().int().min(0).max(1_000_000), identityDays: z.number().int().min(1).max(36500), inspectionDays: z.number().int().min(1).max(36500), abandonedHours: z.number().int().min(24).max(8760), caseReference, confirmed: z.literal(true), idempotencyKey: z.uuid() }).strict();
@@ -52,6 +53,11 @@ export function createMediaLifecycle(db: PrismaClient) {
     }
   }
   return {
+    preview: (sessionId: string, raw: z.input<typeof mediaPreviewQuery>) => run(sessionId, async (tx, actorId) => {
+      const result = await buildMediaReviewPreview(tx, raw, activePrivateMediaHolds);
+      await tx.auditLog.create({ data: { actorId, action: "private_media.retention_previewed", entityType: "PrivateMediaPolicy", metadata: { page: result.page, purpose: result.purpose, policySequence: result.policySequence, rows: result.rows.length } } });
+      return result;
+    }),
     overview: (sessionId: string, raw: z.input<typeof mediaLifecycleQuery>) => run(sessionId, async (tx, actorId, compliance) => {
       const query = mediaLifecycleQuery.parse(raw);
       const current = await tx.privateMediaPolicy.findFirst({ orderBy: { sequence: "desc" }, select: policySelect });

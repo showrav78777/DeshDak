@@ -3568,6 +3568,9 @@ model PrivatePhotoUpload {
   @@index([actorId, createdAt])
   privateMediaHolds PrivateMediaHold[]
 
+  @@index([updatedAt, id])
+  @@index([purpose, updatedAt, id])
+
 }
 
 

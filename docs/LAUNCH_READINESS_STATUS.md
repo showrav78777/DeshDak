@@ -1,6 +1,6 @@
 # DeshDak launch readiness status
 
-Status reviewed: 20 November 2026, Asia/Dhaka
+Status reviewed: 21 November 2026, Asia/Dhaka
 
 Current summary: scanned identity/inspection photo routes and protected object
 downloads are implemented behind a disabled production switch. The production
@@ -387,3 +387,37 @@ verification/20261120-media-lifecycle.json for the sanitized gate inventory,
 evidence hashes and limits. Manual source checks were performed. The dedicated
 security-review agent was unavailable in this session; independent production
 security acceptance remains outstanding.
+
+## 21 November 2026 — retention preview verification in progress
+
+The protected Admin/API retention-review preview is implemented. It uses recorded
+policy versions and a database clock, checks active holds, scan/storage metadata,
+identity and delivery/claim records and related case closure, and returns no
+storage paths, hashes or customer contact data. Purpose/upload-reference filters,
+ten-row batches and bounded histories keep review requests limited. Ready means
+ready for human review, never permission to delete. The versioned API contract
+contains 311 operations. Index migration: 20261120170000_media_preview_indexes.
+
+The production build passed for the final application source. An initial full
+113-gate run stopped at gate 104, test:notification-read-actions: the DB count
+was zero while the page was pending refresh. Its test now waits for the RSC
+response headers before the unchanged UI assertions; waiting for the whole body
+was rejected because development RSC responses can stay streamed.
+
+After Docker resumed, all three affected suites passed together in a fresh owned
+disposable database: notification read actions, retention preview (including the
+routine-checkout regression), and immutable policy/hold/release workflows. The
+schema/container were removed. A fresh full 113-gate run is in progress; do not
+report it passed until completion. No owner DB, private storage, or production
+provider was contacted, and no deletion or cloud activation was added.
+Raw local evidence: /tmp/deshdak-preview-read-response.log and
+/tmp/deshdak-preview-full-final.log. Live/independent security acceptance and
+remaining deletion/video/provider engineering are still due.
+
+The final rerun completed all 113 gates in 6.4 minutes with zero dependency audit
+findings, including the new preview and existing lifecycle and notification
+workflows. The owned schema and disposable Docker container were removed. The
+final application source already had a passing production build; only test
+synchronization and documentation changed afterward. See
+verification/20261121-media-retention-preview.json for sanitized evidence.
+This closes local acceptance for this increment, not production acceptance.

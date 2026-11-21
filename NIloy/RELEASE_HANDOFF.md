@@ -46,8 +46,9 @@ certify live services or complete the engineering work below.
 
 ## Verified locally
 
-- The full launch runner passed all 112 current gates in one isolated run on
-  20 November, including media-policy and legal-hold controls.
+- The full launch runner passed all 113 current gates in one isolated run on
+  21 November, including retention preview, media-policy and legal-hold controls;
+  the dependency audit reported zero findings. The production build passed.
 - All 105 configured Chromium browser cases passed on macOS.
 - All 105 distinct Linux browser cases passed across three sequential Docker
   shards, including both visual comparisons. Each shard passed 37 executions
@@ -84,7 +85,8 @@ See docs/LAUNCH_READINESS_STATUS.md and docs/E2E_TESTING.md.
 - Identity and inspection photo routes now connect to the private storage and
   scanner components behind a disabled deployment switch. Versioned retention
   settings and scoped legal holds are available under Admin → Media retention
-  and holds. Complete deletion eligibility/approvals/worker, recovery, controlled
+  and holds, with a read-only retention-review preview. Complete deletion
+  requests/approvals, locked revalidation and the worker, recovery, controlled
   quarantine release, video handling and live acceptance. See
   PRIVATE_PHOTO_STORAGE_SETUP.md.
 - Finish live phone issuance/dispatch scheduling, delivery receipts and

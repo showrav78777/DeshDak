@@ -23,7 +23,7 @@ const checks = [
   "test:public-rate-limit",
   "test:admin-shell", "test:admin-audit-log", "test:launch-readiness", "test:notification-preferences",
   ...(canInjectDatabaseFaults ? ["test:notification-read-actions", "test:phone-code-binding", "test:phone-otp-jobs", "test:phone-otp-operations"] : []), "test:marketing-campaigns",
-  ...(canInjectDatabaseFaults ? ["test:private-photo-quarantine", "test:private-photo-reviews", "test:private-photo-rescans", "test:private-media-lifecycle"] : []),
+  ...(canInjectDatabaseFaults ? ["test:private-photo-quarantine", "test:private-photo-reviews", "test:private-photo-rescans", "test:private-media-eligibility", "test:private-media-lifecycle"] : []),
   ...(skipBuild ? [] : ["build"]),
 ];
 
