@@ -1,13 +1,18 @@
 import "server-only";
+import { createHash } from "node:crypto";
 import type { Prisma, PrismaClient } from "@prisma/client";
 import { z } from "zod";
 import { authorizePrivatePhotoAdmin } from "./quarantine";
 import { buildMediaReviewPreview, type mediaPreviewQuery } from "./eligibility";
+import { parsePrivatePhotoReference } from "./photos";
 
 const caseReference = z.string().min(8).max(80).regex(/^(INC|SEC|KYC|OPS)-[A-Z0-9]+(?:-[A-Z0-9]+){0,5}$/);
 export const mediaPolicyRequest = z.object({ expectedSequence: z.number().int().min(0).max(1_000_000), identityDays: z.number().int().min(1).max(36500), inspectionDays: z.number().int().min(1).max(36500), abandonedHours: z.number().int().min(24).max(8760), caseReference, confirmed: z.literal(true), idempotencyKey: z.uuid() }).strict();
 export const mediaHoldRequest = z.object({ scope: z.enum(["UPLOAD", "ACCOUNT", "ORDER", "PACKAGE"]), targetId: z.uuid(), caseReference, confirmed: z.literal(true), idempotencyKey: z.uuid() }).strict();
 export const mediaReleaseRequest = z.object({ caseReference, confirmed: z.literal(true), idempotencyKey: z.uuid() }).strict();
+export const mediaDeletionRequest = z.object({ uploadId: z.uuid(), expectedPolicySequence: z.number().int().min(1), caseReference, confirmed: z.literal(true), idempotencyKey: z.uuid() }).strict();
+export const mediaDeletionDecision = z.object({ decision: z.enum(["APPROVED", "REJECTED"]), caseReference, confirmed: z.literal(true), idempotencyKey: z.uuid() }).strict();
+export const mediaDeletionQuery = z.object({ page: z.coerce.number().int().min(1).max(10000).default(1), state: z.enum(["pending", "all"]).default("pending") }).strict();
 export const mediaLifecycleQuery = z.object({ page: z.coerce.number().int().min(1).max(10000).default(1), policyPage: z.coerce.number().int().min(1).max(10000).default(1), state: z.enum(["active", "all"]).default("active") }).strict();
 export const mediaPolicyDefaults = { identityDays: 90, inspectionDays: 180, abandonedHours: 24 };
 export class MediaLifecycleError extends Error {
@@ -16,6 +21,24 @@ export class MediaLifecycleError extends Error {
 const denied = () => new MediaLifecycleError("MEDIA_LIFECYCLE_DENIED");
 const conflict = () => new MediaLifecycleError("MEDIA_LIFECYCLE_CONFLICT");
 const policySelect = { sequence: true, identityDays: true, inspectionDays: true, abandonedHours: true, caseReference: true, createdAt: true } as const;
+function canonical(value: unknown): string {
+  if (value instanceof Date) return JSON.stringify(value.toISOString());
+  if (Array.isArray(value)) return `[${value.map(canonical).join(",")}]`;
+  if (value && typeof value === "object") return `{${Object.entries(value).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)).map(([key, item]) => `${JSON.stringify(key)}:${canonical(item)}`).join(",")}}`;
+  return JSON.stringify(value) ?? "null";
+}
+// A review snapshot is never an execution token. A future worker must independently
+// revalidate live cases/holds/authority and exact versions before removing any bytes.
+async function deletionSnapshot(tx: Prisma.TransactionClient, uploadId: string) {
+  await tx.$queryRaw`SELECT "id" FROM "PrivatePhotoUpload" WHERE "id" = ${uploadId} FOR SHARE`;
+  const preview = await buildMediaReviewPreview(tx, { uploadId }, activePrivateMediaHolds);
+  const row = preview.rows[0];
+  if (!preview.policySequence || !row || row.state !== "READY_FOR_REVIEW" || !row.reviewAfter) throw conflict();
+  const upload = await tx.privatePhotoUpload.findUniqueOrThrow({ where: { id: uploadId }, select: { actorId: true, purpose: true, status: true, updatedAt: true, storageNamespace: true, storedReference: true, originalScanSha256: true, originalScanVerifiedAt: true, scanVerifiedSha256: true, scanVerifiedAt: true, privatePhotoLink: { select: { identityVerificationId: true, inspectionEvidenceId: true } } } });
+  const reference = parsePrivatePhotoReference(upload.storedReference);
+  if (reference.purpose !== upload.purpose || reference.plaintextSha256 !== upload.scanVerifiedSha256) throw conflict();
+  return { policySequence: preview.policySequence, reviewAfter: row.reviewAfter, snapshotDigest: createHash("sha256").update(canonical({ uploadId, upload, policySequence: preview.policySequence, reviewAfter: row.reviewAfter })).digest("hex"), evaluatedAt: preview.evaluatedAt };
+}
 // Every future eligibility/deletion claim must take this same lock before checking holds.
 export async function lockPrivateMediaLifecycle(tx: Prisma.TransactionClient) {
   await tx.$queryRaw`SELECT 1 AS locked FROM pg_advisory_xact_lock(191119, 1)`;
@@ -53,6 +76,47 @@ export function createMediaLifecycle(db: PrismaClient) {
     }
   }
   return {
+    deletionReviews: (sessionId: string, raw: z.input<typeof mediaDeletionQuery>) => run(sessionId, async (tx, actorId, compliance) => {
+      const query = mediaDeletionQuery.parse(raw);
+      const [clock] = await tx.$queryRaw<Array<{ now: Date }>>`SELECT clock_timestamp()::timestamp(3) AS now`;
+      const policy = await tx.privateMediaPolicy.findFirst({ orderBy: { sequence: "desc" }, select: { sequence: true } });
+      const requests = await tx.privateMediaDeletionRequest.findMany({ where: query.state === "pending" ? { decision: null } : {}, orderBy: [{ createdAt: "desc" }, { id: "asc" }], take: 11, skip: (query.page - 1) * 10, select: { id: true, uploadId: true, policySequence: true, reviewAfter: true, actorId: true, caseReference: true, createdAt: true, expiresAt: true, decision: { select: { decision: true, caseReference: true, createdAt: true } } } });
+      await tx.auditLog.create({ data: { actorId, action: "private_media.deletion_reviews_viewed", entityType: "PrivateMediaDeletionRequest", metadata: query } });
+      return { ...query, policySequence: policy?.sequence ?? null, deletionEnabled: false as const, hasMore: requests.length > 10, requests: requests.slice(0, 10).map(({ actorId: requester, ...row }) => ({ ...row, expired: row.expiresAt <= clock.now, canDecide: compliance && requester !== actorId && !row.decision })) };
+    }),
+    requestDeletionReview: (sessionId: string, raw: z.input<typeof mediaDeletionRequest>) => run(sessionId, async (tx, actorId) => {
+      const input = mediaDeletionRequest.parse(raw);
+      const existing = await tx.privateMediaDeletionRequest.findUnique({ where: { actorId_idempotencyKey: { actorId, idempotencyKey: input.idempotencyKey } } });
+      if (existing) {
+        if (existing.uploadId !== input.uploadId || existing.policySequence !== input.expectedPolicySequence || existing.caseReference !== input.caseReference) throw conflict();
+        return { id: existing.id, replayed: true, deletionEnabled: false as const };
+      }
+      if (await tx.privateMediaDeletionRequest.findFirst({ where: { uploadId: input.uploadId, decision: null }, select: { id: true } })) throw conflict();
+      const snapshot = await deletionSnapshot(tx, input.uploadId);
+      if (snapshot.policySequence !== input.expectedPolicySequence) throw conflict();
+      const request = await tx.privateMediaDeletionRequest.create({ data: { uploadId: input.uploadId, policySequence: snapshot.policySequence, snapshotDigest: snapshot.snapshotDigest, reviewAfter: snapshot.reviewAfter, actorId, caseReference: input.caseReference, idempotencyKey: input.idempotencyKey, expiresAt: new Date(snapshot.evaluatedAt.getTime() + 86_400_000) } });
+      await tx.auditLog.create({ data: { actorId, action: "private_media.deletion_review_requested", entityType: "PrivateMediaDeletionRequest", entityId: request.id, metadata: { policySequence: request.policySequence, deletionEnabled: false } } });
+      return { id: request.id, replayed: false, deletionEnabled: false as const };
+    }),
+    decideDeletionReview: (sessionId: string, requestId: string, raw: z.input<typeof mediaDeletionDecision>) => run(sessionId, async (tx, actorId, compliance) => {
+      if (!compliance) throw denied();
+      z.uuid().parse(requestId); const input = mediaDeletionDecision.parse(raw);
+      const request = await tx.privateMediaDeletionRequest.findUnique({ where: { id: requestId }, include: { decision: true } });
+      if (!request || request.actorId === actorId) throw denied();
+      const prior = await tx.privateMediaDeletionDecision.findUnique({ where: { actorId_idempotencyKey: { actorId, idempotencyKey: input.idempotencyKey } } });
+      if (prior) {
+        if (prior.requestId !== requestId || prior.decision !== input.decision || prior.caseReference !== input.caseReference) throw conflict();
+        return { id: prior.id, decision: prior.decision, replayed: true, deletionEnabled: false as const };
+      }
+      if (request.decision) throw conflict();
+      if (input.decision === "APPROVED") {
+        const snapshot = await deletionSnapshot(tx, request.uploadId);
+        if (request.expiresAt <= snapshot.evaluatedAt || snapshot.policySequence !== request.policySequence || snapshot.snapshotDigest !== request.snapshotDigest || snapshot.reviewAfter.getTime() !== request.reviewAfter.getTime()) throw conflict();
+      }
+      const decision = await tx.privateMediaDeletionDecision.create({ data: { requestId, actorId, decision: input.decision, caseReference: input.caseReference, idempotencyKey: input.idempotencyKey } });
+      await tx.auditLog.create({ data: { actorId, action: "private_media.deletion_review_decided", entityType: "PrivateMediaDeletionRequest", entityId: requestId, metadata: { decision: input.decision, deletionEnabled: false } } });
+      return { id: decision.id, decision: decision.decision, replayed: false, deletionEnabled: false as const };
+    }),
     preview: (sessionId: string, raw: z.input<typeof mediaPreviewQuery>) => run(sessionId, async (tx, actorId) => {
       const result = await buildMediaReviewPreview(tx, raw, activePrivateMediaHolds);
       await tx.auditLog.create({ data: { actorId, action: "private_media.retention_previewed", entityType: "PrivateMediaPolicy", metadata: { page: result.page, purpose: result.purpose, policySequence: result.policySequence, rows: result.rows.length } } });

@@ -10,9 +10,10 @@ if (!["localhost", "127.0.0.1", "[::1]"].includes(database.hostname) || !/^cross
 const origin = process.env.TEST_BASE_URL; if (!origin || !["localhost", "127.0.0.1"].includes(new URL(origin).hostname)) throw new Error("A disposable local test server is required.");
 const require = createRequire(import.meta.url);
 async function source(file, replacements = {}) { let code = (await readFile(new URL(file, import.meta.url), "utf8")).replace('import "server-only";', "").replace('from "zod"', `from ${JSON.stringify(pathToFileURL(require.resolve("zod")).href)}`); for (const [a, b] of Object.entries(replacements)) code = code.replace(`from "${a}"`, `from ${JSON.stringify(b)}`); return `data:text/javascript;base64,${Buffer.from(stripTypeScriptTypes(code)).toString("base64")}`; }
+const photos = await source("../src/modules/private-storage/photos.ts", { "@aws-sdk/client-s3": pathToFileURL(require.resolve("@aws-sdk/client-s3")).href });
 const eligibility = await source("../src/modules/private-storage/eligibility.ts"), quarantine = await source("../src/modules/private-storage/quarantine.ts");
 const { mediaPreviewReasons, buildMediaReviewPreview } = await import(eligibility);
-const { createMediaLifecycle, activePrivateMediaHolds, lockPrivateMediaLifecycle } = await import(await source("../src/modules/private-storage/lifecycle.ts", { "./quarantine": quarantine, "./eligibility": eligibility }));
+const { createMediaLifecycle, activePrivateMediaHolds, lockPrivateMediaLifecycle } = await import(await source("../src/modules/private-storage/lifecycle.ts", { "./quarantine": quarantine, "./eligibility": eligibility, "./photos": photos }));
 const db = new PrismaClient(), controls = createMediaLifecycle(db), marker = randomBytes(8).toString("hex"), now = Date.now(), day = 86400000, ago = days => new Date(now - days * day), hash = "a".repeat(64);
 async function actor(label, codes = ["customer_personal"], mfa = true) {
  const roles = await db.role.findMany({ where: { code: { in: codes } } });

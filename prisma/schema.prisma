@@ -746,6 +746,8 @@ model User {
   privateMediaHoldsCreated    PrivateMediaHold[] @relation("MediaHoldActor")
   privateMediaAccountHolds    PrivateMediaHold[] @relation("MediaHoldAccount")
   privateMediaHoldReleases    PrivateMediaHoldRelease[]
+  privateMediaDeletionRequests PrivateMediaDeletionRequest[]
+  privateMediaDeletionDecisions PrivateMediaDeletionDecision[]
   identityVerifications       IdentityVerification[]                @relation("IdentityVerificationCustomer")
   identityVerificationsReviewed IdentityVerification[]              @relation("IdentityVerificationReviewer")
   maintenanceRuns             MaintenanceJobRun[]                   @relation("MaintenanceRunActor")
@@ -3567,6 +3569,7 @@ model PrivatePhotoUpload {
   @@index([status, leaseExpiresAt])
   @@index([actorId, createdAt])
   privateMediaHolds PrivateMediaHold[]
+  deletionRequests PrivateMediaDeletionRequest[]
 
   @@index([updatedAt, id])
   @@index([purpose, updatedAt, id])
@@ -3664,6 +3667,7 @@ model PrivateMediaPolicy {
   idempotencyKey String @db.VarChar(36)
   createdAt DateTime @default(now())
   actor User @relation(fields: [actorId], references: [id], onDelete: Restrict)
+  deletionRequests PrivateMediaDeletionRequest[]
   @@unique([actorId, idempotencyKey])
 }
 
@@ -3699,6 +3703,39 @@ model PrivateMediaHoldRelease {
   idempotencyKey String @db.VarChar(36)
   createdAt DateTime @default(now())
   hold PrivateMediaHold @relation(fields: [holdId], references: [id], onDelete: Restrict)
+  actor User @relation(fields: [actorId], references: [id], onDelete: Restrict)
+  @@unique([actorId, idempotencyKey])
+}
+
+model PrivateMediaDeletionRequest {
+  id String @id @default(uuid())
+  uploadId String
+  policySequence Int
+  snapshotDigest String @db.VarChar(64)
+  reviewAfter DateTime
+  actorId String
+  caseReference String @db.VarChar(80)
+  idempotencyKey String @db.VarChar(36)
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+  upload PrivatePhotoUpload @relation(fields: [uploadId], references: [id], onDelete: Restrict)
+  policy PrivateMediaPolicy @relation(fields: [policySequence], references: [sequence], onDelete: Restrict)
+  actor User @relation(fields: [actorId], references: [id], onDelete: Restrict)
+  decision PrivateMediaDeletionDecision?
+  @@unique([actorId, idempotencyKey])
+  @@index([uploadId])
+  @@index([createdAt, id])
+}
+
+model PrivateMediaDeletionDecision {
+  id String @id @default(uuid())
+  requestId String @unique
+  actorId String
+  decision String @db.VarChar(8)
+  caseReference String @db.VarChar(80)
+  idempotencyKey String @db.VarChar(36)
+  createdAt DateTime @default(now())
+  request PrivateMediaDeletionRequest @relation(fields: [requestId], references: [id], onDelete: Restrict)
   actor User @relation(fields: [actorId], references: [id], onDelete: Restrict)
   @@unique([actorId, idempotencyKey])
 }

@@ -1,16 +1,16 @@
 # DeshDak launch readiness status
 
-Status reviewed: 21 November 2026, Asia/Dhaka
+Status reviewed: 24 November 2026, Asia/Dhaka
 
 Current summary: scanned identity/inspection photo routes and protected object
-downloads are implemented behind a disabled production switch. The production
-build and targeted migration/photo/Admin checks pass. The fresh full dependency
-audit reports zero findings. After correcting the quarantine regression, a fresh
-run passed all 111 launch gates in sequence against application revision fdd181c.
-Live acceptance is not claimed.
-Versioned retention settings and scoped holds are now implemented. Deletion
-eligibility/approvals/worker, video, messaging/supplier integration and real staging
-acceptance remain unfinished. See the dated 19 November section below and NIloy/.
+downloads are implemented behind a disabled production switch. Admin provides
+versioned retention settings, scoped preservation holds, review scheduling and
+immutable independent deletion-review requests/decisions. Approval never queues
+cleanup or authorizes execution. All 114 launch gates and the production build passed on 24 November, with
+zero dependency audit findings. Local acceptance does not certify live services.
+Authoritative execution revalidation/cleanup, video, messaging/supplier integration
+and real staging/security acceptance remain unfinished. See the dated evidence
+and NIloy/. Live acceptance is not claimed.
 
 ## Current handoff — 5 November 2026
 
@@ -442,3 +442,35 @@ Cleanup was confirmed. The preceding 113-gate full run predates this narrow fix;
 it was not repeated. See verification/20261121-historical-shipment-claims.json.
 No file deletion, deletion approval, storage access or production activation was
 added. Authoritative deletion review/worker and live acceptance remain due.
+
+## 24 November 2026 — independent deletion review controls
+
+Implemented a protected Admin page and three versioned API operations for bounded
+review history, ready-photo requests and independent decisions. Requests bind the
+policy sequence, review schedule and private exact-upload/reference digest. The
+SQL trigger sets an immutable 24-hour lifetime and permits only one pending request
+per upload. Decisions require a different Admin with Compliance and MFA, preserve
+immutable history, and have atomic audit/idempotent retry semantics. Approval
+rechecks ready state, policy, reference snapshot, holds, related cases and expiry.
+The upload metadata is share-locked during snapshot construction. This records a
+review only; the worker still needs authoritative revalidation before any bytes
+can be removed. No deletion executor or storage/provider operation was added.
+
+Migration: 20261124150000_media_deletion_reviews. API contract: 314 operations.
+Initial targeted suites, migration application, TypeScript, lint and contract
+checks passed. The first full run stopped at photo-review history visibility:
+the instant layout assertion raced the Admin pane's smooth scrolling. The test
+now polls the same unobscured-heading requirement without sleeping or moving the
+page artificially. All four final affected suites then passed, including current
+role loss, concurrent decisions, exact-version/policy/hold/case conflicts, synthetic
+clock expiry, audit rollback, immutable SQL history, lost-response retry and
+real desktop/mobile forms. A fresh full verification/build outcome is recorded below.
+
+Final 24 November acceptance: the fresh run passed all 114 gates in 6.2 minutes,
+including the complete final review tests and unchanged toolbar-visibility
+requirement. The production build then passed in the same disabled-provider,
+owned-disposable environment. Schema/container cleanup was confirmed. See
+verification/20261124-media-deletion-reviews.json for ordered gate and file-hash
+evidence. Source/role/transaction checks were manual; independent production
+security and live provider/device acceptance remain outstanding. No executor or
+live private-storage activation was added.

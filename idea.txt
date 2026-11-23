@@ -319,3 +319,21 @@ false delivery requirement. Preview and lifecycle browser/API suites, TypeScript
 lint and production build passed with disposable data and all providers disabled.
 No deletion approvals or worker were added. The prior 113-gate full run is historical
 evidence for ef7a0bc, not a new full run for this fix.
+
+24 November 2026 — implementing independent media deletion review requests and
+immutable Admin/Compliance decisions. One pending review per upload, private
+policy/reference snapshot binding, DB-clock 24-hour expiry, independent reviewer,
+fresh role/MFA/holds/eligibility checks and atomic audited UUID retries. Approval
+is a review outcome only; no file deletion/worker/provider has been enabled.
+Migration 20261124150000_media_deletion_reviews and current verification must pass
+before upload. Authoritative execution revalidation, exact-version deletion and
+backup/version reconciliation, video and live acceptance remain outstanding.
+
+24 November final verification: all four final affected suites passed, then a
+fresh full 114-gate run passed in 6.2 minutes with zero dependency findings, followed
+by the production build under the same owned-disposable/disabled-provider settings.
+Cleanup confirmed. An earlier full run's photo-review assertion raced smooth
+scrolling; it now polls the same real unobscured-heading requirement, which passed.
+Independent review requests/decisions are complete locally. Authoritative deletion
+execution/worker, video, live integrations and production security/device/provider
+acceptance remain open. See docs/verification/20261124-media-deletion-reviews.json.

@@ -46,9 +46,10 @@ certify live services or complete the engineering work below.
 
 ## Verified locally
 
-- The full launch runner passed all 113 current gates in one isolated run on
-  21 November, including retention preview, media-policy and legal-hold controls;
-  the dependency audit reported zero findings. The production build passed.
+- The full launch runner passed all 114 current gates in one isolated run on
+  24 November, including independent deletion-review controls, retention preview
+  and legal holds. The dependency audit reported zero findings and the production
+  build passed. See the 24 November verification record.
 - A subsequent historical-shipment retention safeguard passed both media
   workflow suites, TypeScript, lint and the production build. That narrow fix
   followed the full run; see the 21 November claim-window verification record.
@@ -88,8 +89,10 @@ See docs/LAUNCH_READINESS_STATUS.md and docs/E2E_TESTING.md.
 - Identity and inspection photo routes now connect to the private storage and
   scanner components behind a disabled deployment switch. Versioned retention
   settings and scoped legal holds are available under Admin → Media retention
-  and holds, with a read-only retention-review preview. Complete deletion
-  requests/approvals, locked revalidation and the worker, recovery, controlled
+  and holds, with a read-only retention-review preview and immutable independent
+  review requests/decisions (24 November migration). Approval never enables
+  execution. Complete authoritative execution revalidation and the cleanup worker,
+  recovery, controlled
   quarantine release, video handling and live acceptance. See
   PRIVATE_PHOTO_STORAGE_SETUP.md.
 - Finish live phone issuance/dispatch scheduling, delivery receipts and

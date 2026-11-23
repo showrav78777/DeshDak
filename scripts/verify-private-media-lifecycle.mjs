@@ -15,8 +15,9 @@ async function source(file, replacements = {}) {
  return `data:text/javascript;base64,${Buffer.from(stripTypeScriptTypes(code)).toString("base64")}`;
 }
 const quarantine = await source("../src/modules/private-storage/quarantine.ts");
+const photos = await source("../src/modules/private-storage/photos.ts", { "@aws-sdk/client-s3": pathToFileURL(require.resolve("@aws-sdk/client-s3")).href });
 const eligibility = await source("../src/modules/private-storage/eligibility.ts");
-const { createMediaLifecycle, activePrivateMediaHolds, lockPrivateMediaLifecycle } = await import(await source("../src/modules/private-storage/lifecycle.ts", { "./quarantine": quarantine, "./eligibility": eligibility }));
+const { createMediaLifecycle, activePrivateMediaHolds, lockPrivateMediaLifecycle } = await import(await source("../src/modules/private-storage/lifecycle.ts", { "./quarantine": quarantine, "./eligibility": eligibility, "./photos": photos }));
 const db = new PrismaClient(), marker = randomBytes(8).toString("hex"), controls = createMediaLifecycle(db);
 const contract = JSON.parse(await readFile(new URL("../public/openapi.yaml", import.meta.url), "utf8"));
 for (const [method, path] of [["get", "/admin/private-media"], ["post", "/admin/private-media/policy"], ["post", "/admin/private-media/holds"], ["post", "/admin/private-media/holds/{holdId}/release"]]) {

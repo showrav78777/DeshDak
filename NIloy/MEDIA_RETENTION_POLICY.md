@@ -69,10 +69,36 @@ exact object version under its own authorization/locking controls.
 Apply migration 20261120170000_media_preview_indexes through the reviewed deployment
 job for the bounded preview ordering indexes. Keep storage expiration disabled.
 
+## Independent deletion review requests — 24 November 2026
+
+Apply migration 20261124150000_media_deletion_reviews through the reviewed,
+backed-up deployment job. Open Admin → Media retention and holds → Independent
+deletion reviews.
+
+1. Check the retention preview and applicable retention requirements. An Admin
+   with MFA may request independent review of one ready, object-backed photo.
+2. Requests bind the recorded policy version, review schedule and a private digest
+   of the exact upload/reference metadata. Only one undecided request may exist
+   per upload. The database sets an immutable 24-hour expiry.
+3. A different Admin with Compliance and MFA records approval or rejection. An
+   approval rechecks current eligibility, holds, policy and upload metadata. A
+   missing/changed object reference, changed policy, case blocker or expired
+   request prevents approval. Rejection remains available for stale requests.
+4. Reject a stale pending request before requesting a replacement. On an uncertain
+   response, retry the same request/key or reload the immutable history.
+5. Review external/unrecorded investigations independently. Place a preservation
+   hold whenever evidence needs to remain retained, including after approval.
+
+An approval records a review outcome only. It does not queue a job, authorize
+execution or confirm object availability. All files remain retained. The future
+worker must recheck live authority, policy, holds, cases, expiry, storage and exact
+object versions under its own locking controls. These metadata controls do not
+replace legacy-media/video lifecycle handling or production acceptance.
+
 ## Remaining implementation and controls
 
-1. Finish authoritative deletion requests and approval snapshots, with locked
-   eligibility revalidation. The read-only scheduling preview is available.
+1. Connect the immutable review requests/decisions to an execution workflow with
+   authoritative, locked eligibility revalidation. No executor is enabled.
 2. Require a Compliance approver distinct from the deletion requester. Recheck holds,
    authorization and subject state immediately before each deletion.
 3. Use a separate deletion role and exact bucket, key and version identifiers.
@@ -83,7 +109,7 @@ job for the bounded preview ordering indexes. Keep storage expiration disabled.
    failure and replay in staging before scheduling any destructive cleanup.
 
 The current app has scanned photo intake, protected delivery, quarantine/review,
-versioned retention settings, scoped preservation holds and read-only review
-scheduling. Locked deletion eligibility, independent deletion approvals,
-legacy-media/video handling and the deletion worker still require engineering. No automatic cleanup is enabled. Do not
-configure a broad S3 expiration rule as a substitute.
+versioned retention settings, scoped preservation holds, read-only review
+scheduling and independent review requests/decisions. Authoritative deletion
+execution, legacy-media/video handling and the deletion worker still require
+engineering. No automatic cleanup is enabled. Do not configure a broad S3 expiration rule as a substitute.

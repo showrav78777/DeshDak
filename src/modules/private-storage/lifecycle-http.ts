@@ -19,6 +19,6 @@ export async function privateMediaHttpAccess(request: NextRequest, mutation = fa
 }
 export function privateMediaHttpError(error: unknown) {
   if (error instanceof Error && error.message === "MEDIA_LIFECYCLE_CONFLICT") return apiError("MEDIA_LIFECYCLE_CONFLICT", "This record or retry key changed. Reload the latest history before making another decision.", 409);
-  if (error instanceof Error && error.message === "MEDIA_LIFECYCLE_DENIED") return apiError("MEDIA_LIFECYCLE_DENIED", "Current access or the target could not be verified. Policy changes and independent hold release require the Compliance role.", 403);
+  if (error instanceof Error && error.message === "MEDIA_LIFECYCLE_DENIED") return apiError("MEDIA_LIFECYCLE_DENIED", "Current access or the target could not be verified. Policy changes, independent hold release and deletion review decisions require the Compliance role.", 403);
   return apiError("MEDIA_LIFECYCLE_UNAVAILABLE", "The change could not be confirmed. Check history or retry the same request.", 503);
 }

@@ -53,7 +53,8 @@ readiness status. Supply credentials through the deployment secret manager:
   photo intake/download routes are connected behind a disabled switch; video and
   deletion lifecycle integration still require engineering. Admin → Media retention
   and holds provides policy history, scoped holds, independent hold release and
-  read-only retention-review scheduling. A ready preview never authorizes deletion.
+  read-only retention-review scheduling plus independent review requests/decisions.
+  Neither a ready preview nor an approved review authorizes file deletion.
   See the selected provisional
   [media retention defaults](MEDIA_RETENTION_POLICY.md); destructive cleanup
   remains disabled pending implementation and verification.

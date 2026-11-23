@@ -4789,6 +4789,238 @@
         }
       }
     },
+    "/admin/private-media/deletion-reviews": {
+      "get": {
+        "operationId": "get_admin_private_media_deletion_reviews",
+        "tags": [
+          "admin"
+        ],
+        "summary": "Read bounded immutable deletion-review history; cleanup remains disabled",
+        "security": [
+          {
+            "cookieSession": []
+          }
+        ],
+        "x-crossly-access": "authenticated",
+        "x-crossly-error-codes": [
+          "ADMIN_MFA_REQUIRED",
+          "VALIDATION_ERROR",
+          "MEDIA_LIFECYCLE_DENIED",
+          "MEDIA_LIFECYCLE_UNAVAILABLE"
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 10000,
+              "default": 1
+            }
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "pending",
+                "all"
+              ],
+              "default": "pending"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response.",
+            "headers": {
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MediaDeletionListResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "#/components/responses/Unprocessable"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      },
+      "post": {
+        "operationId": "post_admin_private_media_deletion_reviews",
+        "tags": [
+          "admin"
+        ],
+        "summary": "Request a 24-hour independent deletion review of ready version-bound photo metadata; never execute deletion",
+        "security": [
+          {
+            "cookieSession": []
+          }
+        ],
+        "x-crossly-access": "authenticated",
+        "x-crossly-error-codes": [
+          "ADMIN_MFA_REQUIRED",
+          "UNTRUSTED_ORIGIN",
+          "IDEMPOTENCY_KEY_REQUIRED",
+          "VALIDATION_ERROR",
+          "MEDIA_LIFECYCLE_DENIED",
+          "MEDIA_LIFECYCLE_CONFLICT",
+          "MEDIA_LIFECYCLE_UNAVAILABLE"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response.",
+            "headers": {
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MediaDeletionResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "#/components/responses/Unprocessable"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/admin/private-media/deletion-reviews/{requestId}/decision": {
+      "post": {
+        "operationId": "post_admin_private_media_deletion_reviews_requestId_decision",
+        "tags": [
+          "admin"
+        ],
+        "summary": "Record independent Admin and Compliance decision after fresh checks; never authorize deletion execution",
+        "security": [
+          {
+            "cookieSession": []
+          }
+        ],
+        "x-crossly-access": "authenticated",
+        "x-crossly-error-codes": [
+          "ADMIN_MFA_REQUIRED",
+          "UNTRUSTED_ORIGIN",
+          "IDEMPOTENCY_KEY_REQUIRED",
+          "VALIDATION_ERROR",
+          "MEDIA_LIFECYCLE_DENIED",
+          "MEDIA_LIFECYCLE_CONFLICT",
+          "MEDIA_LIFECYCLE_UNAVAILABLE"
+        ],
+        "parameters": [
+          {
+            "name": "requestId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response.",
+            "headers": {
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MediaDeletionDecisionResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "#/components/responses/Unprocessable"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
     "/admin/private-media/eligibility": {
       "get": {
         "operationId": "get_admin_private_media_eligibility",
@@ -19461,6 +19693,274 @@
                       "enum": [
                         false
                       ]
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "MediaDeletionRequest": {
+        "type": "object",
+        "required": [
+          "uploadId",
+          "expectedPolicySequence",
+          "caseReference",
+          "confirmed"
+        ],
+        "properties": {
+          "uploadId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "expectedPolicySequence": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "caseReference": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 80,
+            "pattern": "^(INC|SEC|KYC|OPS)-[A-Z0-9]+(-[A-Z0-9]+){0,5}$"
+          },
+          "confirmed": {
+            "type": "boolean",
+            "const": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "MediaDeletionDecisionRequest": {
+        "type": "object",
+        "required": [
+          "decision",
+          "caseReference",
+          "confirmed"
+        ],
+        "properties": {
+          "decision": {
+            "type": "string",
+            "enum": [
+              "APPROVED",
+              "REJECTED"
+            ]
+          },
+          "caseReference": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 80,
+            "pattern": "^(INC|SEC|KYC|OPS)-[A-Z0-9]+(-[A-Z0-9]+){0,5}$"
+          },
+          "confirmed": {
+            "type": "boolean",
+            "const": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "MediaDeletionResponse": {
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "type": "object",
+            "required": [
+              "id",
+              "replayed",
+              "deletionEnabled"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "replayed": {
+                "type": "boolean"
+              },
+              "deletionEnabled": {
+                "type": "boolean",
+                "enum": [
+                  false
+                ]
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "MediaDeletionDecisionResponse": {
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "type": "object",
+            "required": [
+              "id",
+              "decision",
+              "replayed",
+              "deletionEnabled"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "decision": {
+                "type": "string",
+                "enum": [
+                  "APPROVED",
+                  "REJECTED"
+                ]
+              },
+              "replayed": {
+                "type": "boolean"
+              },
+              "deletionEnabled": {
+                "type": "boolean",
+                "enum": [
+                  false
+                ]
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "MediaDeletionListResponse": {
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "type": "object",
+            "required": [
+              "page",
+              "state",
+              "policySequence",
+              "deletionEnabled",
+              "hasMore",
+              "requests"
+            ],
+            "properties": {
+              "page": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 10000
+              },
+              "state": {
+                "type": "string",
+                "enum": [
+                  "pending",
+                  "all"
+                ]
+              },
+              "policySequence": {
+                "type": "integer",
+                "minimum": 1,
+                "nullable": true
+              },
+              "deletionEnabled": {
+                "type": "boolean",
+                "enum": [
+                  false
+                ]
+              },
+              "hasMore": {
+                "type": "boolean"
+              },
+              "requests": {
+                "type": "array",
+                "maxItems": 10,
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "id",
+                    "uploadId",
+                    "policySequence",
+                    "reviewAfter",
+                    "caseReference",
+                    "createdAt",
+                    "expiresAt",
+                    "expired",
+                    "canDecide",
+                    "decision"
+                  ],
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "uploadId": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "policySequence": {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    "reviewAfter": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "caseReference": {
+                      "type": "string",
+                      "minLength": 8,
+                      "maxLength": 80,
+                      "pattern": "^(INC|SEC|KYC|OPS)-[A-Z0-9]+(-[A-Z0-9]+){0,5}$"
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "expiresAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "expired": {
+                      "type": "boolean"
+                    },
+                    "canDecide": {
+                      "type": "boolean"
+                    },
+                    "decision": {
+                      "type": "object",
+                      "required": [
+                        "decision",
+                        "caseReference",
+                        "createdAt"
+                      ],
+                      "properties": {
+                        "decision": {
+                          "type": "string",
+                          "enum": [
+                            "APPROVED",
+                            "REJECTED"
+                          ]
+                        },
+                        "caseReference": {
+                          "type": "string",
+                          "minLength": 8,
+                          "maxLength": 80,
+                          "pattern": "^(INC|SEC|KYC|OPS)-[A-Z0-9]+(-[A-Z0-9]+){0,5}$"
+                        },
+                        "createdAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        }
+                      },
+                      "additionalProperties": false,
+                      "nullable": true
                     }
                   },
                   "additionalProperties": false

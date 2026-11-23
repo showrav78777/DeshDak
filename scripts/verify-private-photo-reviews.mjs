@@ -94,10 +94,12 @@ try {
       await card.getByRole("link", { name: "View review history" }).click(); await page.locator("#admin-main-content").getByRole("heading", { name: "Quarantine review history" }).waitFor();
       await expect(page.locator("#admin-main-content")).toContainText("OPS-2026-001"); await page.waitForLoadState("networkidle", { timeout: 15000 });
       assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), `${label} history overflowed`);
-      assert(await page.evaluate(() => {
+      // The Admin pane scrolls smoothly; network idle does not mean its scroll has settled.
+      // Keep the unobscured-heading assertion, polling the real layout instead of sleeping.
+      await expect.poll(() => page.evaluate(() => {
         const heading = document.querySelector("#admin-main-content h1"), toolbar = document.querySelector(".admin-workspace-toolbar");
         return Boolean(heading && toolbar && heading.getBoundingClientRect().top >= toolbar.getBoundingClientRect().bottom - 1);
-      }), `${label} history heading was covered by the Admin toolbar`);
+      }), { message: `${label} history heading was covered by the Admin toolbar` }).toBe(true);
       await page.screenshot({ path: `/tmp/deshdak-photo-review-${label}-history-20261107.png` });
       const uiBlock = await db.privatePhotoQuarantine.findUniqueOrThrow({ where: { uploadId: ui.upload.id } }); assert.equal(await db.privatePhotoQuarantineReview.count({ where: { quarantineId: uiBlock.id } }), 1);
       await context.close();
