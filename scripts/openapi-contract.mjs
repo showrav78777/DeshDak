@@ -183,7 +183,7 @@ const EXACT_OPERATIONS = {
     requestSchema: "LaunchReadinessUpdateRequest",
     successSchema: "LaunchReadinessItemResponse",
     successStatuses: ["200"],
-    errors: ["ADMIN_ACCESS_REQUIRED", "UNTRUSTED_ORIGIN", "VALIDATION_ERROR", "LAUNCH_READINESS_NOT_FOUND", "VERSION_CONFLICT"],
+    errors: ["ADMIN_ACCESS_REQUIRED", "UNTRUSTED_ORIGIN", "VALIDATION_ERROR", "LAUNCH_READINESS_NOT_FOUND", "VERSION_CONFLICT", "PRIVATE_MEDIA_IMPLEMENTATION_REQUIRED"],
   },
   "get /notifications/preferences": {
     summary: "List the authenticated user's effective notification preferences and channel readiness",

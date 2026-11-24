@@ -2867,7 +2867,8 @@
           "UNTRUSTED_ORIGIN",
           "VALIDATION_ERROR",
           "LAUNCH_READINESS_NOT_FOUND",
-          "VERSION_CONFLICT"
+          "VERSION_CONFLICT",
+          "PRIVATE_MEDIA_IMPLEMENTATION_REQUIRED"
         ],
         "parameters": [
           {

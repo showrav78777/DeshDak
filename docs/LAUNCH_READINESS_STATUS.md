@@ -550,3 +550,22 @@ increment. The full 115-gate/build result above applies to its recorded revision
 this increment ran the focused worker suite only. Production cleanup remains
 disabled. Broader linked-media/video engineering and live-service/security/device
 acceptance remain unfinished. See verification/20261124-cleanup-sdk-database.json.
+
+
+## 24 November 2026 — private-media implementation release guard
+
+Admin now shows a seventh technical signal that fails for unfinished inspection
+video, broader linked-media cleanup/recovery and missing cleanup runtime/scheduler.
+The required private-media gate cannot be marked VERIFIED or made optional through
+the API; attempted bypasses produce redacted audit records without changing the
+gate. The dashboard remains blocked by that engineering status. Register/report
+readiness also requires every technical signal to pass, so historical VERIFIED
+records cannot override the failure. This is a release-reporting safeguard, not
+implementation of the missing media workflows or activation of cleanup.
+
+The isolated launch-readiness suite passed, including bypasses using renamed/
+recategorized input and synthetic all-VERIFIED records, followed by the production
+build (181 pages). API contract validation (314 operations), TypeScript, ESLint
+and diff checks passed. Disposable schema/container were removed. No owner DB
+was changed. Full launch/audit/device/live-provider acceptance was not rerun.
+See verification/20261124-media-readiness-guard.json. NIloy stays local-only.

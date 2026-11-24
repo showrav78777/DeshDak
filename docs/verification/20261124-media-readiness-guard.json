@@ -1,0 +1,42 @@
+{
+  "date": "2026-11-24",
+  "baseRevision": "9400f67c03a897e30b461a0de1fc419812930c92",
+  "result": "passed",
+  "targetedSuites": [
+    "test:launch-readiness"
+  ],
+  "apiOperationCount": 314,
+  "apiContractPassed": true,
+  "typecheckPassed": true,
+  "eslintPassed": true,
+  "productionBuildPassed": true,
+  "generatedPageCount": 181,
+  "schemaChanged": false,
+  "disposableSchemaRemoved": true,
+  "disposableDatabaseRemoved": true,
+  "fullLaunchRerun": false,
+  "productionAccepted": false,
+  "productionCleanupEnabled": false,
+  "logSha256": "187a27d055c1404ceb46cc8edd5a3b9b65db01509eac46f03adc600e6d09cff8",
+  "verifiedFilesSha256": {
+    "src/modules/launch-readiness/media-capabilities.ts": "7703d9325d015606191cb2b9d96d6288372b8f2593d53d1bb1f3c17fbc8a646b",
+    "src/modules/launch-readiness/technical-signals.ts": "6ad904eb4e26935734db67cccbb3ba45df2074e4352eec2f2bb019346013829a",
+    "src/app/api/v1/admin/launch-readiness/[itemId]/route.ts": "3d2de33bd9943a92da3ed915e10134f2e465988a82cfeffa97476b16e10c0fdb",
+    "src/app/admin/page.tsx": "4aadee01268a59af620dbef46d4387efc3a9d559a98800241a1db1fbc4215abb",
+    "src/app/admin/launch-readiness/page.tsx": "44f695b6ba0c8c48faee8135b31fe8cde704585dbd21bc43ddbbfbd5f5d95ce4",
+    "src/app/admin/launch-readiness/report/page.tsx": "2cc8c2881250608eec8c721c2d74bd4cbc06ce2cf53ffa5520bf130380f90ef3",
+    "scripts/verify-launch-readiness.mjs": "aeabc1a2c9f780a807bf5faea222065c5195a6e795e639fa1a014b68883366e6",
+    "public/openapi.yaml": "95dd671cde0f51356068b918bfb19e2525e9e762cc2c56845c8c60da800d367d"
+  },
+  "scope": [
+    "Private media implementation failure visible in Admin and protected printable report.",
+    "Media baseline cannot be verified or made optional; denials audited; record unchanged.",
+    "Renaming/recategorizing input does not bypass server key check.",
+    "All-VERIFIED historical records cannot override current engineering/technical failures."
+  ],
+  "limits": [
+    "Missing private inspection video and broader linked-media execution/recovery are not implemented by this guard.",
+    "No live provider, independent security or physical-device acceptance is claimed.",
+    "No schema migration or production activation occurred."
+  ]
+}

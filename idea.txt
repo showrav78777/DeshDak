@@ -378,3 +378,11 @@ change or activation. Broader linked identity/inspection/video handling, runtime
 wiring and live-service/security/device acceptance still remain. Owner procedures
 are local-only under ignored NIloy; do not stage/upload them.
 Evidence: docs/verification/20261124-cleanup-sdk-database.json.
+
+24 November 2026 — prevent premature private-media launch approval
+Added explicit Admin technical failure for incomplete private-media engineering.
+The required private-media gate cannot be verified/made optional; denials are
+audited. Historical VERIFIED evidence cannot override failed technical signals
+in the register/report, or the private-media engineering blocker on the dashboard.
+No schema changes, live activation or video implementation. Broader media and
+live-service/security/device acceptance still remain. NIloy remains ignored/local.

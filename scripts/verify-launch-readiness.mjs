@@ -46,9 +46,22 @@ try {
   const baselineKeys = new Set(baseline.body.data.items.filter((item) => item.isBaseline && item.isRequired).map((item) => item.key));
   assert(expectedBaselineKeys.every((key) => baselineKeys.has(key)), "Required baseline launch gates are missing.");
   assert(baseline.body.data.items.filter((item) => item.isBaseline).every((item) => item.events.length >= 1), "Baseline launch history was not initialized.");
-  assert.equal(baseline.body.data.technicalSignals.length, 6, "Machine-checked launch signals are incomplete.");
+  assert.equal(baseline.body.data.technicalSignals.length, 7, "Machine-checked launch signals are incomplete.");
   assert.equal(baseline.body.data.technicalSignals.find((signal) => signal.code === "DATABASE")?.status, "PASS", "Database readiness signal failed.");
   for (const secret of [process.env.DATABASE_URL, process.env.AUTH_SECRET, process.env.MFA_ENCRYPTION_KEY].filter(Boolean)) assert(!baseline.text.includes(secret), "A technical readiness response exposed an environment value.");
+  const mediaSignal = baseline.body.data.technicalSignals.find(signal => signal.code === "PRIVATE_MEDIA_IMPLEMENTATION");
+  assert.equal(mediaSignal?.status, "FAIL");
+  assert(mediaSignal.detail.includes("video") && mediaSignal.detail.includes("credentials alone"));
+  const mediaGate = baseline.body.data.items.find(item => item.key === "private-media");
+  const beforeMedia = await prisma.launchReadinessItem.findUniqueOrThrow({ where: { id: mediaGate.id } });
+  const mediaInput = { category: mediaGate.category, title: mediaGate.title, requirement: mediaGate.requirement, ownerName: "Synthetic reviewer", dueAt: null, evidenceReference: "SYNTHETIC-NOT-LIVE-ACCEPTANCE", evidenceNote: "Synthetic attempted bypass; never live acceptance.", blockerReason: null, version: mediaGate.version, verificationConfirmed: true, status: "VERIFIED", isRequired: true };
+  for (const patch of [mediaInput, { ...mediaInput, category: "OTHER", title: "Renamed media gate", status: "IN_PROGRESS", isRequired: false, verificationConfirmed: false }]) {
+    const denied = await call(`/api/v1/admin/launch-readiness/${mediaGate.id}`, adminToken, "PATCH", patch);
+    assert.equal(denied.response.status, 409, denied.text);
+    assert.equal(denied.body.error.code, "PRIVATE_MEDIA_IMPLEMENTATION_REQUIRED");
+  }
+  assert.deepEqual(await prisma.launchReadinessItem.findUniqueOrThrow({ where: { id: mediaGate.id } }), beforeMedia, "Denied verification changed the media gate.");
+  assert.equal(await prisma.auditLog.count({ where: { actorId: admin.id, action: "launch_readiness.verification_blocked", entityId: mediaGate.id } }), 2);
   const publicCatalog = await call("/api/v1/catalog/categories", null);
   assert.equal(publicCatalog.response.status, 200, "Public catalog cache-boundary probe failed.");
   assert(publicCatalog.response.headers.get("cache-control")?.includes("public"), "Private-page hardening disabled intentional public catalog caching.");
@@ -74,6 +87,7 @@ try {
   assert(verified.body.data.item.verifiedAt && verified.body.data.item.verifiedBy.personCode === admin.personCode, "Verifier evidence was not retained.");
   const page = await call("/admin/launch-readiness", adminToken);
   assert.equal(page.response.status, 200, "Launch-readiness Admin page did not render.");
+  assert(page.text.includes("Private media implementation") && page.text.includes("broader linked-media cleanup/recovery"));
   assert(page.text.includes("Launch readiness register.") && page.text.includes("Machine-checked signals") && page.text.includes("Open printable evidence report") && page.text.includes(`Controlled launch check ${marker}`), "Launch-readiness page omitted technical signals, the report link, or the verified item.");
   const report = await call("/admin/launch-readiness/report", adminToken);
   assert.equal(report.response.status, 200, "Launch evidence report did not render.");
@@ -90,6 +104,19 @@ try {
   const controlCenter = await call("/admin", adminToken);
   assert.equal(controlCenter.response.status, 200, "Admin control center did not render.");
   assert(controlCenter.text.includes("PAID LAUNCH READINESS") && controlCenter.text.includes("Review gates"), "Admin control center omitted launch-readiness visibility.");
+  // Historical/manual VERIFIED records must not override current implementation failures.
+  const requiredSnapshots = await prisma.launchReadinessItem.findMany({ where: { isRequired: true }, select: { id: true, status: true } });
+  try {
+    await prisma.launchReadinessItem.updateMany({ where: { id: { in: requiredSnapshots.map(item => item.id) } }, data: { status: "VERIFIED" } });
+    for (const path of ["/admin/launch-readiness", "/admin/launch-readiness/report", "/admin"]) {
+      const staleReady = await call(path, adminToken);
+      assert.equal(staleReady.response.status, 200);
+      assert(!staleReady.text.includes("READY FOR FINAL APPROVAL") && !staleReady.text.includes("All required evidence is verified"), "Stored evidence bypassed an implementation failure.");
+      assert(staleReady.text.includes(path === "/admin" ? "Private media engineering is incomplete" : "BLOCKED"));
+    }
+  } finally {
+    await prisma.$transaction(requiredSnapshots.map(item => prisma.launchReadinessItem.update({ where: { id: item.id }, data: { status: item.status } })));
+  }
   const audits = await prisma.auditLog.findMany({ where: { entityType: "LaunchReadinessItem", entityId: id } });
   assert.equal(audits.length, 3, "Create/evidence/verification audit history is incomplete.");
   const events = await prisma.launchReadinessEvent.findMany({ where: { itemId: id }, orderBy: { itemVersion: "asc" } });
@@ -97,7 +124,7 @@ try {
   assert.deepEqual(events.map((event) => event.itemVersion), [1, 2, 3], "Launch history versions are not monotonic.");
   assert.equal(events[1].evidenceReferenceSnapshot, `SEC-REVIEW-${marker}`, "Evidence snapshot was not retained.");
   assert.equal(events[2].toStatus, "VERIFIED", "Final verification transition was not retained.");
-  console.log("Launch-readiness verification passed: Admin isolation, baseline gates, six non-secret technical signals, trusted mutations, evidence rules, secret rejection, optimistic versions, immutable decision snapshots, verifier identity, audit history, register rendering, protected printable report, and control-center visibility.");
+  console.log("Launch-readiness verification passed: Admin isolation, baseline gates, seven non-secret technical signals, trusted mutations, evidence rules, secret rejection, optimistic versions, immutable decision snapshots, verifier identity, audit history, register rendering, protected printable report, and control-center visibility.");
 } finally {
   if (ids.items.length) { await prisma.auditLog.deleteMany({ where: { entityType: "LaunchReadinessItem", entityId: { in: ids.items } } }); await prisma.launchReadinessEvent.deleteMany({ where: { itemId: { in: ids.items } } }); await prisma.launchReadinessItem.deleteMany({ where: { id: { in: ids.items } } }); }
   if (ids.sessions.length) await prisma.authSession.deleteMany({ where: { id: { in: ids.sessions } } });

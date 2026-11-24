@@ -1,6 +1,7 @@
 import "server-only";
 import { prisma } from "@/lib/prisma";
 import { ROLE } from "@/lib/roles";
+import { privateMediaImplementationBlocker } from "./media-capabilities";
 import { validateProductionEnvironment } from "../../../scripts/lib/production-config.mjs";
 
 export type TechnicalReadinessSignal = {
@@ -29,6 +30,7 @@ export async function getTechnicalReadinessSignals(): Promise<TechnicalReadiness
   const status = (ready: boolean): TechnicalReadinessSignal["status"] => development ? "DEVELOPMENT" : ready ? "PASS" : "FAIL";
 
   return [
+    { code: "PRIVATE_MEDIA_IMPLEMENTATION", label: "Private media implementation", status: "FAIL", detail: privateMediaImplementationBlocker, checkedAt },
     { code: "DATABASE", label: "Database connectivity", status: databaseProbe[0]?.value === 1 ? "PASS" : "FAIL", detail: databaseProbe[0]?.value === 1 ? "The application database answered the readiness probe." : "The database readiness probe failed.", checkedAt },
     { code: "PRODUCTION_CONFIG", label: "Production configuration", status: status(productionConfig.ok), detail: productionConfig.ok ? "All fail-closed production configuration rules pass." : `${productionConfig.errors.length} production configuration control${productionConfig.errors.length === 1 ? "" : "s"} still require secure deployment values.`, checkedAt },
     { code: "CHECKOUT_LANE", label: "Approved checkout lane", status: status(checkoutLanes > 0), detail: checkoutLanes > 0 ? `${checkoutLanes} fully approved checkout lane${checkoutLanes === 1 ? "" : "s"} configured.` : "No fully approved customer checkout lane is configured.", checkedAt },

@@ -29,7 +29,7 @@ export default async function LaunchReadinessReportPage() {
   const required = items.filter((item) => item.isRequired);
   const verified = required.filter((item) => item.status === "VERIFIED").length;
   const blocked = required.filter((item) => item.status === "BLOCKED").length;
-  const ready = required.length > 0 && verified === required.length;
+  const ready = required.length > 0 && verified === required.length && technicalSignals.length > 0 && technicalSignals.every(signal => signal.status === "PASS");
 
   return <main className="launch-readiness-report">
     <nav className="launch-report-toolbar" aria-label="Report actions"><Link href="/admin/launch-readiness">Back to launch register</Link><PrintPageButton /></nav>
