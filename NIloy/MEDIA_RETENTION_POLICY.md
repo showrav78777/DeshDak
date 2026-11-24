@@ -123,3 +123,25 @@ remove files. The journal, authoritative execution guards, subject/legacy-media
 state transitions and backup/version reconciliation remain required. Keep
 cleanup disabled; follow PRIVATE_PHOTO_STORAGE_SETUP.md for staging permissions
 and protocol acceptance.
+
+## Limited internal worker — 24 November
+
+A default-disabled internal worker now covers abandoned, unbound identity uploads
+for personal customers without domain history. It has durable attempts, fresh
+execution checks, uncertainty reconciliation and immutable removed-upload
+markers. Admin's review history displays its redacted journal. There is no
+production runtime, scheduler or execution button, and approval does not run it.
+Linked documents, inspection evidence, wallets/transactional accounts and broader
+recovery/replica/backup handling remain unsupported.
+
+Review and apply migration 20261124190000_abandoned_photo_cleanup through the
+normal backed-up deployment job before the updated Admin history is used. No
+owner database was migrated here. Do not edit statuses or attempt to relink a
+fenced upload. A pending/blocked/uncertain journal needs controlled investigation;
+never repeat deletion to clear the warning. Read-only reconciliation still needs
+current authorized access and a valid original review. See
+[worker scope and limits](../docs/ABANDONED_PHOTO_CLEANUP.md).
+
+Before any production connection, approve its separately scoped storage role,
+metadata retention and crash/restore/incident behavior in staging. Adding provider
+credentials or recording an approval does not finish this work or activate it.

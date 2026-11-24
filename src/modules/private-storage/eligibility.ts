@@ -7,6 +7,7 @@ export const mediaPreviewReasons = {
   POLICY_REQUIRED: "Record a Compliance-reviewed retention policy first.",
   QUARANTINED: "The photo is quarantined and needs its controlled safety review.",
   LEGAL_HOLD: "An active preservation hold applies to this photo or its related records.",
+  CLEANUP_REVIEW_REQUIRED: "A cleanup journal fences this upload. Review its outcome; do not relink or retry deletion.",
   STORAGE_UNCONFIRMED: "Storage or scan confirmation is incomplete; reconcile the upload first.",
   INVALID_TIME: "A required timestamp is missing, inconsistent or in the future.",
   CONTEXT_REQUIRED: "The inspection upload has no confirmed customer/order context.",
@@ -37,11 +38,11 @@ const caseLimit = 100;
 const day = 86_400_000;
 
 /** Read-only review scheduling. Never use this result as authorization to remove bytes. */
-async function evaluate(tx: Tx, id: string, policy: Policy | null, now: Date, holds: HoldReader) {
+async function evaluate(tx: Tx, id: string, policy: Policy | null, now: Date, holds: HoldReader, ignoredAttemptId?: string) {
   const row = await tx.privatePhotoUpload.findUniqueOrThrow({ where: { id }, select: {
     id: true, actorId: true, purpose: true, status: true, createdAt: true, updatedAt: true, leaseToken: true,
     originalScanSha256: true, originalScanVerifiedAt: true, scanVerifiedSha256: true, scanVerifiedAt: true,
-    quarantine: { select: { id: true } },
+    quarantine: { select: { id: true } }, cleanupAttempt: { select: { id: true } },
     privatePhotoLink: { select: {
       identityVerification: { select: { userId: true, status: true, submittedAt: true, reviewedAt: true, documentPhotoSha256: true } },
       inspectionEvidence: { select: { uploadedById: true, sha256: true, createdAt: true, package: { select: { orderId: true } } } },
@@ -54,6 +55,7 @@ async function evaluate(tx: Tx, id: string, policy: Policy | null, now: Date, ho
   const valid = (date: Date | null | undefined) => Boolean(date && Number.isFinite(date.getTime()) && date.getTime() <= now.getTime());
   const track = (date: Date | null | undefined) => { if (date) anchor = Math.max(anchor, date.getTime()); };
   const base: Reason[] = [];
+  if (row.cleanupAttempt && row.cleanupAttempt.id !== ignoredAttemptId) base.push("CLEANUP_REVIEW_REQUIRED");
   if (!policy) base.push("POLICY_REQUIRED");
   if (row.quarantine) base.push("QUARANTINED");
   if ((await holds(tx, id)).length) base.push("LEGAL_HOLD");
@@ -142,12 +144,12 @@ async function evaluate(tx: Tx, id: string, policy: Policy | null, now: Date, ho
   return now.getTime() >= due ? outcome(["READY_FOR_REVIEW"], "READY_FOR_REVIEW") : outcome(["RETENTION_RUNNING"], "WAITING");
 }
 
-export async function buildMediaReviewPreview(tx: Tx, raw: z.input<typeof mediaPreviewQuery>, holds: HoldReader) {
+export async function buildMediaReviewPreview(tx: Tx, raw: z.input<typeof mediaPreviewQuery>, holds: HoldReader, ignoredAttemptId?: string) {
   const query = mediaPreviewQuery.parse(raw);
   const [clock] = await tx.$queryRaw<Array<{ now: Date }>>`SELECT clock_timestamp()::timestamp(3) AS now`;
   const policy = await tx.privateMediaPolicy.findFirst({ orderBy: { sequence: "desc" }, select: { sequence: true, identityDays: true, inspectionDays: true, abandonedHours: true } });
   const uploads = await tx.privatePhotoUpload.findMany({ where: { ...(query.purpose === "all" ? {} : { purpose: query.purpose }), ...(query.uploadId ? { id: query.uploadId } : {}) }, orderBy: [{ updatedAt: "asc" }, { id: "asc" }], skip: (query.page - 1) * 10, take: 11, select: { id: true } });
   const rows = [];
-  for (const upload of uploads.slice(0, 10)) rows.push(await evaluate(tx, upload.id, policy, clock.now, holds));
+  for (const upload of uploads.slice(0, 10)) rows.push(await evaluate(tx, upload.id, policy, clock.now, holds, ignoredAttemptId));
   return { ...query, pageSize: 10, hasMore: uploads.length > 10, policySequence: policy?.sequence ?? null, evaluatedAt: clock.now, deletionEnabled: false as const, rows };
 }

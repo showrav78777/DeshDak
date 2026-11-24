@@ -236,3 +236,17 @@ to the web workload just to satisfy this unused prerequisite. Certify actual
 404/403 behavior, Object Lock, retention, conditional deletion and lost responses
 in staging. A version-absence receipt says nothing about backups or other copies.
 See [the protocol and official AWS references](../docs/PRIVATE_PHOTO_DELETION_PROTOCOL.md).
+
+## Internal abandoned-upload worker migration — 24 November
+
+The narrowly scoped internal worker is now implemented with simulated-storage
+verification. It is not connected to the production runtime or a scheduler.
+Apply reviewed migration 20261124190000_abandoned_photo_cleanup before deploying
+this version's Admin journal view. It adds immutable attempts/observations and
+removed-upload/link/intake fences. No owner database was targeted in development.
+
+Do not run cleanup against a customer bucket or change application data to make
+it eligible. The worker has no activation flag or execution page. Broader media
+execution, recovery, backups/replicas and live cloud/security acceptance remain
+engineering and staging work. Follow MEDIA_RETENTION_POLICY.md and
+[the limited worker contract](../docs/ABANDONED_PHOTO_CLEANUP.md).

@@ -748,6 +748,8 @@ model User {
   privateMediaHoldReleases    PrivateMediaHoldRelease[]
   privateMediaDeletionRequests PrivateMediaDeletionRequest[]
   privateMediaDeletionDecisions PrivateMediaDeletionDecision[]
+  privateMediaCleanupAttempts PrivateMediaCleanupAttempt[]
+  privateMediaCleanupObservations PrivateMediaCleanupObservation[]
   identityVerifications       IdentityVerification[]                @relation("IdentityVerificationCustomer")
   identityVerificationsReviewed IdentityVerification[]              @relation("IdentityVerificationReviewer")
   maintenanceRuns             MaintenanceJobRun[]                   @relation("MaintenanceRunActor")
@@ -3570,6 +3572,7 @@ model PrivatePhotoUpload {
   @@index([actorId, createdAt])
   privateMediaHolds PrivateMediaHold[]
   deletionRequests PrivateMediaDeletionRequest[]
+  cleanupAttempt PrivateMediaCleanupAttempt?
 
   @@index([updatedAt, id])
   @@index([purpose, updatedAt, id])
@@ -3722,6 +3725,7 @@ model PrivateMediaDeletionRequest {
   policy PrivateMediaPolicy @relation(fields: [policySequence], references: [sequence], onDelete: Restrict)
   actor User @relation(fields: [actorId], references: [id], onDelete: Restrict)
   decision PrivateMediaDeletionDecision?
+  cleanupAttempt PrivateMediaCleanupAttempt?
   @@unique([actorId, idempotencyKey])
   @@index([uploadId])
   @@index([createdAt, id])
@@ -3738,4 +3742,37 @@ model PrivateMediaDeletionDecision {
   request PrivateMediaDeletionRequest @relation(fields: [requestId], references: [id], onDelete: Restrict)
   actor User @relation(fields: [actorId], references: [id], onDelete: Restrict)
   @@unique([actorId, idempotencyKey])
+}
+
+model PrivateMediaCleanupAttempt {
+  id String @id @default(uuid())
+  requestId String @unique
+  uploadId String @unique
+  actorId String
+  idempotencyKey String @db.VarChar(36)
+  storageNamespace String @db.VarChar(64)
+  referenceSnapshot Json
+  createdAt DateTime @default(now())
+  deadlineAt DateTime
+  request PrivateMediaDeletionRequest @relation(fields: [requestId], references: [id], onDelete: Restrict)
+  upload PrivatePhotoUpload @relation(fields: [uploadId], references: [id], onDelete: Restrict)
+  actor User @relation(fields: [actorId], references: [id], onDelete: Restrict)
+  observations PrivateMediaCleanupObservation[]
+  @@unique([actorId, idempotencyKey])
+  @@index([createdAt, id])
+}
+
+model PrivateMediaCleanupObservation {
+  id String @id @default(uuid())
+  attemptId String
+  actorId String
+  idempotencyKey String @db.VarChar(36)
+  sequence Int
+  kind String @db.VarChar(16)
+  state String @db.VarChar(16)
+  createdAt DateTime @default(now())
+  attempt PrivateMediaCleanupAttempt @relation(fields: [attemptId], references: [id], onDelete: Restrict)
+  actor User @relation(fields: [actorId], references: [id], onDelete: Restrict)
+  @@unique([actorId, idempotencyKey])
+  @@unique([attemptId, sequence])
 }

@@ -33,6 +33,7 @@ export function createPrivateUploadLedger(db: PrismaClient, store: Store) {
       return created;
     });
     if (await db.privatePhotoQuarantine.findUnique({ where: { uploadId: row.id }, select: { id: true } })) return { state: "REVIEW_REQUIRED", uploadId: row.id };
+    if (row.status === "REMOVED" || await db.privateMediaCleanupAttempt.findUnique({ where: { uploadId: row.id }, select: { id: true } })) return { state: "REVIEW_REQUIRED", uploadId: row.id };
     if (row.status === "STORED") return { state: "STORED", uploadId: row.id, reference: row.storedReference as unknown as PrivatePhotoReference };
     if (row.attempts >= 5) return { state: "REVIEW_REQUIRED", uploadId: row.id };
     const leaseToken = randomUUID(); const now = new Date();

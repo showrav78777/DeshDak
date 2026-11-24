@@ -8,6 +8,7 @@ import "../../private-photos/private-photos.css";
 import "../private-media.css";
 export const dynamic = "force-dynamic";
 const workflows: Partial<Record<keyof typeof mediaPreviewReasons, { href: string; label: string }>> = {
+  CLEANUP_REVIEW_REQUIRED: { href: "/admin/private-media/deletion-reviews", label: "Cleanup journal" },
   POLICY_REQUIRED: { href: "/admin/private-media", label: "Record policy" }, LEGAL_HOLD: { href: "/admin/private-media", label: "Review holds" }, QUARANTINED: { href: "/admin/private-photos", label: "Photo safety" },
   SUPPORT_REVIEW_REQUIRED: { href: "/admin/support", label: "Customer support" }, RETURN_REVIEW_REQUIRED: { href: "/admin/rmas", label: "Returns and claims" }, REFUND_REVIEW_REQUIRED: { href: "/admin/refunds", label: "Refund review" }, WAREHOUSE_REVIEW_REQUIRED: { href: "/admin/warehouse-exceptions", label: "Parcel exceptions" }, SERVICE_REVIEW_REQUIRED: { href: "/admin/package-services", label: "Package handling" }, PAYMENT_REVIEW_REQUIRED: { href: "/admin/payment-risk", label: "Payment review" }, ORDER_REVIEW_REQUIRED: { href: "/admin/orders", label: "Order operations" }, COMPLIANCE_REVIEW: { href: "/admin/compliance", label: "Compliance review" }, FINANCE_REVIEW: { href: "/admin/payment-reconciliation", label: "Payment reconciliation" }, DELIVERY_REQUIRED: { href: "/admin/orders", label: "Delivery workflow" },
 };

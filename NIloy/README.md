@@ -57,7 +57,9 @@ readiness status. Supply credentials through the deployment secret manager:
   Neither a ready preview nor an approved review authorizes file deletion.
   See the selected provisional
   [media retention defaults](MEDIA_RETENTION_POLICY.md); destructive cleanup
-  remains disabled pending implementation and verification.
+  remains disabled. A limited internal abandoned-upload worker and redacted
+  journal are implemented; broader linked-media cleanup, production wiring and
+  acceptance are still required. See [worker scope and limits](../docs/ABANDONED_PHOTO_CLEANUP.md).
 - AI and suppliers: approved accounts, commercial rights, quotas and credentials.
 
 Some adapters still require engineering and certification; keys alone do not

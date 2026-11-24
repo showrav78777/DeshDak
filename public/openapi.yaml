@@ -19659,6 +19659,7 @@
                           "POLICY_REQUIRED",
                           "QUARANTINED",
                           "LEGAL_HOLD",
+                          "CLEANUP_REVIEW_REQUIRED",
                           "STORAGE_UNCONFIRMED",
                           "INVALID_TIME",
                           "CONTEXT_REQUIRED",
@@ -19894,7 +19895,8 @@
                     "expiresAt",
                     "expired",
                     "canDecide",
-                    "decision"
+                    "decision",
+                    "cleanup"
                   ],
                   "properties": {
                     "id": {
@@ -19961,6 +19963,41 @@
                       },
                       "additionalProperties": false,
                       "nullable": true
+                    },
+                    "cleanup": {
+                      "type": "object",
+                      "nullable": true,
+                      "required": [
+                        "attemptId",
+                        "createdAt",
+                        "state",
+                        "observedAt"
+                      ],
+                      "properties": {
+                        "attemptId": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "createdAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "state": {
+                          "type": "string",
+                          "enum": [
+                            "PENDING",
+                            "BLOCKED",
+                            "UNCERTAIN",
+                            "VERSION_ABSENT"
+                          ]
+                        },
+                        "observedAt": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
                     }
                   },
                   "additionalProperties": false

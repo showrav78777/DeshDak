@@ -1,6 +1,6 @@
 # DeshDak release handoff
 
-Reviewed 20 November 2026. The verified source was uploaded to the approved
+Reviewed 24 November 2026. The verified source was uploaded to the approved
 GitHub repository, showrav78777/DeshDak, on codex/deshdak-platform.
 
 Open https://github.com/showrav78777/DeshDak/tree/codex/deshdak-platform
@@ -46,10 +46,10 @@ certify live services or complete the engineering work below.
 
 ## Verified locally
 
-- The full launch runner passed all 114 current gates in one isolated run on
-  24 November, including independent deletion-review controls, retention preview
-  and legal holds. The dependency audit reported zero findings and the production
-  build passed. See the 24 November verification record.
+- The full launch runner passed all 115 current gates in one isolated run on
+  24 November, including the restricted internal abandoned-upload worker, independent
+  deletion-review controls, retention preview and legal holds. The dependency audit reported zero findings and the production
+  build passed. See docs/verification/20261124-abandoned-photo-cleanup.json.
 - A subsequent historical-shipment retention safeguard passed both media
   workflow suites, TypeScript, lint and the production build. That narrow fix
   followed the full run; see the 21 November claim-window verification record.
@@ -92,9 +92,11 @@ See docs/LAUNCH_READINESS_STATUS.md and docs/E2E_TESTING.md.
   and holds, with a read-only retention-review preview and immutable independent
   review requests/decisions (24 November migration). Approval never enables
   execution. The storage primitive now verifies exact-version deletion/absence
-  locally, including uncertainty reconciliation; it is not an executor. Complete
-  authoritative execution revalidation and the cleanup worker,
-  recovery, controlled
+  locally, including uncertainty reconciliation. A default-disabled internal worker
+  now handles narrowly scoped abandoned, unlinked identity uploads with durable
+  attempts, current authority/hold/context checks and read-only recovery. It has
+  no production runtime, scheduler or execution UI. Complete broader linked-media
+  execution/recovery, production wiring, controlled
   quarantine release, video handling and live acceptance. See
   PRIVATE_PHOTO_STORAGE_SETUP.md.
 - Finish live phone issuance/dispatch scheduling, delivery receipts and

@@ -355,3 +355,18 @@ Owned schema/container cleanup confirmed. Evidence:
 docs/verification/20261124-storage-deletion-protocol.json. Worker/journal,
 authoritative execution fencing, legacy data, backups/replicas, video and live
 security/provider acceptance remain unfinished; no cleanup was activated.
+
+24 November 2026 — abandoned identity-photo cleanup increment
+Implemented a default-disabled internal worker with committed immutable attempts,
+current authority/hold/context checks, exact-version receipt handling, cleared
+tombstones, no-repeat DELETE semantics and read-only reconciliation. Only unbound
+identity uploads for context-free personal customers qualify. Admin shows the
+redacted journal without execution controls. No production runtime/scheduler/API
+is wired; no activation setting exists. Broader linked media, transactional
+accounts, video, replicas/backups/full erasure and live storage/security/device
+acceptance remain engineering/operational work. Reviewed staging migration
+20261124190000_abandoned_photo_cleanup is required; no owner DB was migrated.
+See docs/ABANDONED_PHOTO_CLEANUP.md and NIloy/PRIVATE_PHOTO_STORAGE_SETUP.md.
+Final local verification passed all 115 gates in 6.6 minutes, zero audit findings,
+314 API operations and production build; disposable schema/container removed.
+Evidence: docs/verification/20261124-abandoned-photo-cleanup.json.

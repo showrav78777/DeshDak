@@ -6,9 +6,10 @@ Current summary: scanned identity/inspection photo routes and protected object
 downloads are implemented behind a disabled production switch. Admin provides
 versioned retention settings, scoped preservation holds, review scheduling and
 immutable independent deletion-review requests/decisions. Approval never queues
-cleanup or authorizes execution. All 114 launch gates and the production build passed on 24 November, with
+cleanup or authorizes execution. All 115 launch gates and the production build passed on 24 November, with
 zero dependency audit findings. Local acceptance does not certify live services.
-Authoritative execution revalidation/cleanup, video, messaging/supplier integration
+A limited default-disabled internal worker covers abandoned unlinked identity uploads;
+production wiring and broader linked-media execution/recovery, video, messaging/supplier integration
 and real staging/security acceptance remain unfinished. See the dated evidence
 and NIloy/. Live acceptance is not claimed.
 
@@ -502,3 +503,33 @@ switch. The worker's durable journal, authoritative case/hold/permission guards,
 subject/legacy-data transitions, backups/version reconciliation and live
 acceptance remain unfinished. The relevant AWS references and role prerequisites
 are recorded in PRIVATE_PHOTO_DELETION_PROTOCOL.md and the NIloy setup guide.
+
+
+## 24 November 2026 — internal abandoned-upload cleanup journal
+
+A default-disabled internal worker now supports only stored, unbound identity
+uploads belonging to personal customers without transactional or case history.
+It commits an immutable attempt and reservation audit before storage, rechecks
+current independent authority/MFA, policy, holds, scope and exact references,
+and fences changes with PostgreSQL locks. Duplicate execution never repeats
+DELETE. An uncertain or interrupted result requires read-only reconciliation;
+a confirmed exact-version absence atomically records an observation, audit and
+cleared immutable upload tombstone. Intake retries and direct links are fenced.
+
+Admin review history displays redacted journal state on desktop/mobile. No
+production runtime, scheduler, execution endpoint or activation setting is
+connected. Linked identity/inspection media, transactional accounts, replicas,
+backups, video and full erasure remain outside this worker. Actual provider
+credentials, staging security/failure/restore/load and device acceptance remain
+required. See ABANDONED_PHOTO_CLEANUP.md and NIloy/.
+
+The focused six-suite run passed using disposable PostgreSQL and simulated
+storage, including database fault injection and observed FK-lock contention.
+TypeScript and lint passed. Full-run acceptance is recorded separately after
+completion; no owner database or customer file was touched.
+
+Final acceptance: all 115 launch gates passed in 6.6 minutes, with zero dependency
+audit findings, 314 API operations and a successful production build. The owned
+disposable schema/container were removed. See
+verification/20261124-abandoned-photo-cleanup.json. This is local acceptance for
+the documented scope; no live-service certification or production activation.
