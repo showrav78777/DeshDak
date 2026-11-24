@@ -34,6 +34,8 @@
 /LINK.docx
 
 # misc
+# Local owner setup and development procedures
+/[Nn][Ii][Ll][Oo][Yy]/
 .DS_Store
 ~$*
 *.pem
