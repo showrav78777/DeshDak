@@ -1,0 +1,45 @@
+{
+  "date": "2026-11-24",
+  "baseRevision": "fba91565b852632d684731a7e93395e908e84135",
+  "result": "passed",
+  "targetedSuites": [
+    "test:abandoned-photo-cleanup"
+  ],
+  "combinedScenarios": [
+    "normal",
+    "lost-ack",
+    "storage-hold",
+    "bad-checksum",
+    "bucket-denied",
+    "audit-failure",
+    "historical-version"
+  ],
+  "actualAwsSdkUsed": true,
+  "storageEndpoint": "loopback-only synthetic HTTP server",
+  "database": "owned disposable PostgreSQL 16 with generated verification schema",
+  "productionApplicationCodeChanged": false,
+  "schemaChanged": false,
+  "apiOperationCount": 314,
+  "productionCleanupEnabled": false,
+  "productionAccepted": false,
+  "disposableSchemaRemoved": true,
+  "disposableDatabaseRemoved": true,
+  "syntaxChecksPassed": true,
+  "eslintPassed": true,
+  "fullLaunchRerun": false,
+  "productionBuildRerun": false,
+  "previousFullLaunchEvidence": "20261124-abandoned-photo-cleanup.json",
+  "logSha256": "1113acf65c864032fa61b3729a7187c5994c1483c5809b8dbdb39138d5e60e13",
+  "verifiedFilesSha256": {
+    "scripts/lib/abandoned-cleanup-sdk-acceptance.mjs": "aa9983db9e8434c3a7cc579648e26cbc9c29a26056bbdd242c9c4079014a4fc4",
+    "scripts/verify-abandoned-photo-cleanup.mjs": "3bdf2ca197cdec0784b582ee690489ee5f4a4f639a9100c7fa6ccf7ebd936b0a",
+    "src/modules/private-storage/abandoned-cleanup.ts": "7631cad3e78cc508d2363b8ab2b525c6e801f8ec13646b9d4ed85586fce53656",
+    "src/modules/private-storage/photos.ts": "b4c4a3e55a0efbca43bc9a598e214b085cd7474ae29d497c283341d705bc5c77"
+  },
+  "notes": [
+    "The temporary wrapper selected one worker suite; its default wrapper banner still printed the configured 42-suite count. This record claims one targeted suite only.",
+    "Post-test console wording was clarified to distinguish in-memory counts from separately reported SDK scenarios; assertions and behavior are unchanged.",
+    "No live AWS account or customer file was contacted; production runtime/API/scheduler remain unwired.",
+    "Broader linked-media/video handling and live service, independent security and physical-device acceptance remain unfinished."
+  ]
+}

@@ -370,3 +370,11 @@ See docs/ABANDONED_PHOTO_CLEANUP.md and NIloy/PRIVATE_PHOTO_STORAGE_SETUP.md.
 Final local verification passed all 115 gates in 6.6 minutes, zero audit findings,
 314 API operations and production build; disposable schema/container removed.
 Evidence: docs/verification/20261124-abandoned-photo-cleanup.json.
+
+24 November 2026 — combined cleanup SDK/PostgreSQL acceptance
+Closed the separate-component verification gap with seven actual-SDK loopback
+scenarios in the isolated worker suite. No production application/schema/API
+change or activation. Broader linked identity/inspection/video handling, runtime
+wiring and live-service/security/device acceptance still remain. Owner procedures
+are local-only under ignored NIloy; do not stage/upload them.
+Evidence: docs/verification/20261124-cleanup-sdk-database.json.

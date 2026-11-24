@@ -90,3 +90,22 @@ reservation/audit faults, uncertainty reconciliation, intake/link fences and
 responsive redacted history. Actual storage protocol tests remain separate.
 Independent production security, real storage/IAM, failure/restore/load and device
 acceptance, broader media scope and production service wiring remain unfinished.
+
+
+## Combined SDK/database acceptance — 24 November 2026
+
+The worker suite now also connects the actual S3 SDK and photo-store implementation
+to a loopback-only synthetic HTTP service while using disposable PostgreSQL. Seven
+scenarios cover normal removal, a lost acknowledgement, a storage legal hold, a
+checksum mismatch, bucket-access denial after removal, audit failure after removal,
+and preservation of a newer version at the same key. The simulator verifies signed
+requests, expected owner, conditional exact-version deletion and the committed
+reservation audit before DELETE. Replays/reconciliation must not repeat DELETE;
+object retention/absence must agree with the database journal and tombstone.
+
+The targeted worker suite, including its existing authorization, concurrency and
+responsive Admin checks, passed. This increment changes verification and corrects
+the storage protocol documentation; production application behavior is unchanged.
+It does not replace real S3/KMS/IAM, staging failure/restore/load, independent
+security or device acceptance. See
+verification/20261124-cleanup-sdk-database.json.

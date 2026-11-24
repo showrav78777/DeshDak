@@ -533,3 +533,20 @@ audit findings, 314 API operations and a successful production build. The owned
 disposable schema/container were removed. See
 verification/20261124-abandoned-photo-cleanup.json. This is local acceptance for
 the documented scope; no live-service certification or production activation.
+
+
+## 24 November 2026 — combined SDK/database cleanup verification
+
+The isolated abandoned-photo cleanup suite passed with seven additional scenarios
+using the actual AWS SDK/photo-store code, loopback synthetic S3 HTTP responses and
+real disposable PostgreSQL. It verifies journal-before-delete, storage hold and
+checksum preservation, lost acknowledgement/bucket denial/audit-failure recovery,
+no repeat deletion and preservation of a newer version. Existing worker RBAC,
+fault/concurrency, API redaction and desktop/mobile checks also passed. Syntax,
+ESLint and diff checks passed; schema/container cleanup was confirmed.
+
+No production application code, schema or API changed in this verification
+increment. The full 115-gate/build result above applies to its recorded revision;
+this increment ran the focused worker suite only. Production cleanup remains
+disabled. Broader linked-media/video engineering and live-service/security/device
+acceptance remain unfinished. See verification/20261124-cleanup-sdk-database.json.

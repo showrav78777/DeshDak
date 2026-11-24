@@ -18,8 +18,8 @@ cleanup worker, an execution approval, or a production activation switch.
    by a successful expected-owner/region bucket probe produces a receipt:
    `{ versionId, versionAbsent: true }`.
 
-`confirmRemoval(reference)` performs step 4 without sending DELETE. A future
-worker may use it only to reconcile an already-journalled uncertain attempt.
+`confirmRemoval(reference)` performs step 4 without sending DELETE. The limited
+internal worker uses it only to reconcile an already-journalled uncertain attempt.
 It may establish absence of that version; it cannot prove who removed it or that
 other copies were erased. A still-present version, denied access, missing bucket,
 wrong region or uncertain response remains an error. Invalid references do not
@@ -27,12 +27,13 @@ produce storage requests. A newer version at the same key remains untouched.
 
 ## Worker boundary
 
-The worker is still unimplemented and disabled. Before using these primitives it
-must persist an immutable attempt, acquire authoritative execution guards, and
-recheck current roles/approval/expiry, policy, exact upload binding, holds, cases,
-claims and quarantine. The metadata review snapshot alone is insufficient. It
-must handle uncertain requests/process crashes and safely finish database
-state/audit without treating a timeout as proof of failure or success.
+A limited default-disabled internal worker now supports abandoned, unbound
+identity uploads on context-free personal accounts. It persists an immutable
+attempt before storage, repeats current authority, policy, hold, scope and
+reference checks under database fences, and reconciles uncertainty without
+repeating DELETE. See [worker scope and recovery](ABANDONED_PHOTO_CLEANUP.md).
+No production runtime, execution API, scheduler or activation setting connects
+to it. Broader linked-media execution and recovery remain unfinished.
 
 The primitive covers one configured object version only. Legacy encrypted media,
 noncurrent versions, replication, backups, provider logs and subject tombstoning
