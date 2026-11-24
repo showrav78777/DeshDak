@@ -91,7 +91,9 @@ See docs/LAUNCH_READINESS_STATUS.md and docs/E2E_TESTING.md.
   settings and scoped legal holds are available under Admin → Media retention
   and holds, with a read-only retention-review preview and immutable independent
   review requests/decisions (24 November migration). Approval never enables
-  execution. Complete authoritative execution revalidation and the cleanup worker,
+  execution. The storage primitive now verifies exact-version deletion/absence
+  locally, including uncertainty reconciliation; it is not an executor. Complete
+  authoritative execution revalidation and the cleanup worker,
   recovery, controlled
   quarantine release, video handling and live acceptance. See
   PRIVATE_PHOTO_STORAGE_SETUP.md.

@@ -220,3 +220,19 @@ independent Compliance-authorized hold release, are implemented. Follow
 MEDIA_RETENTION_POLICY.md for roles, case references and safe retries. This does
 not enable deletion or release quarantine. The eligibility/deletion approval and
 worker, video handling, controlled recovery and live acceptance remain due.
+
+## Exact-version removal prerequisite — 24 November
+
+The internal storage removal primitive now validates exact-version metadata and
+uses an ETag-conditional DELETE, then confirms version absence and bucket
+owner/region access. It also supports read-only reconciliation of an uncertain
+attempt. It does not add a worker, execution permission or activation flag.
+
+Before a future cleanup service is enabled, have the operator review separate
+version metadata/checksum, KMS, exact-version deletion and bucket-probe permissions.
+The bucket probe requires ListBucket, which also grants listing access; review
+that expansion only for the separate cleanup role. Do not grant deletion/listing
+to the web workload just to satisfy this unused prerequisite. Certify actual
+404/403 behavior, Object Lock, retention, conditional deletion and lost responses
+in staging. A version-absence receipt says nothing about backups or other copies.
+See [the protocol and official AWS references](../docs/PRIVATE_PHOTO_DELETION_PROTOCOL.md).

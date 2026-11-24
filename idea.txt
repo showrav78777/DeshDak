@@ -337,3 +337,21 @@ scrolling; it now polls the same real unobscured-heading requirement, which pass
 Independent review requests/decisions are complete locally. Authoritative deletion
 execution/worker, video, live integrations and production security/device/provider
 acceptance remain open. See docs/verification/20261124-media-deletion-reviews.json.
+
+24 November storage deletion prerequisite: identified that remove() accepted a
+DELETE response without verifying version absence. Added exact-version metadata,
+checksum/KMS/ETag checks, retention/hold preservation, conditional version DELETE,
+strict acknowledgement checks and read-only absence reconciliation with an
+expected-owner/region bucket probe. Local signed-SDK tests, TypeScript and lint
+pass; the fresh full 114 gates/build are running. No new endpoint, migration,
+worker, approval execution or live storage activation was added. Authoritative
+journal/guards, subject/legacy-data transitions, replicas/backups, video and live
+acceptance remain engineering/deployment work. Setup/protocol notes are in
+NIloy/PRIVATE_PHOTO_STORAGE_SETUP.md and docs/PRIVATE_PHOTO_DELETION_PROTOCOL.md.
+
+24 November storage prerequisite final verification: all 114 launch gates passed
+in 5.4 minutes with zero dependency findings, followed by the production build.
+Owned schema/container cleanup confirmed. Evidence:
+docs/verification/20261124-storage-deletion-protocol.json. Worker/journal,
+authoritative execution fencing, legacy data, backups/replicas, video and live
+security/provider acceptance remain unfinished; no cleanup was activated.

@@ -113,3 +113,13 @@ versioned retention settings, scoped preservation holds, read-only review
 scheduling and independent review requests/decisions. Authoritative deletion
 execution, legacy-media/video handling and the deletion worker still require
 engineering. No automatic cleanup is enabled. Do not configure a broad S3 expiration rule as a substitute.
+
+## Storage prerequisite update — 24 November
+
+The internal exact-version removal/absence-reconciliation primitives are now
+verified locally with synthetic S3 responses. This closes the earlier unverified
+DELETE-acknowledgement gap, not worker execution. A review approval still cannot
+remove files. The journal, authoritative execution guards, subject/legacy-media
+state transitions and backup/version reconciliation remain required. Keep
+cleanup disabled; follow PRIVATE_PHOTO_STORAGE_SETUP.md for staging permissions
+and protocol acceptance.

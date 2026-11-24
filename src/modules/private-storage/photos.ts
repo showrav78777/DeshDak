@@ -1,6 +1,6 @@
 import "server-only";
 import { createCipheriv, createDecipheriv, createHash, createHmac, randomBytes } from "node:crypto";
-import { S3Client, PutObjectCommand, GetObjectCommand, HeadObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
+import { S3Client, PutObjectCommand, GetObjectCommand, HeadObjectCommand, HeadBucketCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
 import { z } from "zod";
 
 export const privateStorageConfigSchema = z.object({
@@ -109,12 +109,39 @@ export function createPrivatePhotoStore(input: { config: Configuration; keys: Re
     } catch { throw new PrivateStorageError(); }
     finally { clearTimeout(timer); removeAbort?.(); body?.destroy?.(); }
   }
+  // Read-only reconciliation for an already-journalled uncertain deletion. Absence
+  // is not deletion authorization, nor evidence about replicas, backups or other versions.
+  async function confirmRemoval(rawReference: PrivatePhotoReference) {
+    try {
+      const reference = validate(rawReference);
+      try {
+        await client.send(new HeadObjectCommand({ Bucket: config.bucket, Key: reference.key, VersionId: reference.versionId, ExpectedBucketOwner: config.expectedOwner }), { abortSignal: AbortSignal.timeout(12_000) });
+        throw new PrivateStorageError();
+      } catch (error) {
+        const status = error && typeof error === "object" && "$metadata" in error ? (error.$metadata as { httpStatusCode?: number })?.httpStatusCode : undefined;
+        if (status !== 404) throw new PrivateStorageError();
+      }
+      // HEAD's 404 alone cannot distinguish a missing version from a missing bucket.
+      const bucket = await client.send(new HeadBucketCommand({ Bucket: config.bucket, ExpectedBucketOwner: config.expectedOwner }), { abortSignal: AbortSignal.timeout(12_000) });
+      if (bucket.$metadata.httpStatusCode !== 200 || bucket.BucketRegion !== config.region) throw new PrivateStorageError();
+      return { versionId: reference.versionId, versionAbsent: true as const };
+    } catch { throw new PrivateStorageError(); }
+  }
+  // Internal storage primitive, not an approval/eligibility gate. The future worker
+  // must journal the attempt and fence live authorization, holds and cases first.
   async function remove(rawReference: PrivatePhotoReference) {
     try {
       const reference = validate(rawReference);
-      await client.send(new DeleteObjectCommand({ Bucket: config.bucket, Key: reference.key, VersionId: reference.versionId, ExpectedBucketOwner: config.expectedOwner }), { abortSignal: AbortSignal.timeout(12_000) });
+      const before = await client.send(new HeadObjectCommand({ Bucket: config.bucket, Key: reference.key, VersionId: reference.versionId, ExpectedBucketOwner: config.expectedOwner, ChecksumMode: "ENABLED" }), { abortSignal: AbortSignal.timeout(12_000) });
+      if (before.$metadata.httpStatusCode !== 200 || before.DeleteMarker || before.VersionId !== reference.versionId || before.ContentLength !== reference.sizeBytes + 16 || before.ContentType !== "application/octet-stream" || before.ServerSideEncryption !== "aws:kms" || before.SSEKMSKeyId !== config.kmsKeyArn || before.ChecksumSHA256 !== reference.ciphertextSha256 || !before.ETag || before.ETag === '"*"' || !/^"[\x21\x23-\x7e]{1,256}"$/.test(before.ETag)) throw new PrivateStorageError();
+      if (before.ObjectLockLegalHoldStatus !== undefined && before.ObjectLockLegalHoldStatus !== "OFF") throw new PrivateStorageError();
+      if (before.ObjectLockMode && !["GOVERNANCE", "COMPLIANCE"].includes(before.ObjectLockMode)) throw new PrivateStorageError();
+      if (before.ObjectLockMode && !before.ObjectLockRetainUntilDate || before.ObjectLockRetainUntilDate && (!Number.isFinite(before.ObjectLockRetainUntilDate.getTime()) || before.ObjectLockRetainUntilDate.getTime() > Date.now())) throw new PrivateStorageError();
+      const removed = await client.send(new DeleteObjectCommand({ Bucket: config.bucket, Key: reference.key, VersionId: reference.versionId, ExpectedBucketOwner: config.expectedOwner, IfMatch: before.ETag }), { abortSignal: AbortSignal.timeout(12_000) });
+      if (removed.$metadata.httpStatusCode !== 204 || removed.VersionId !== reference.versionId || removed.DeleteMarker) throw new PrivateStorageError();
+      return await confirmRemoval(reference);
     } catch { throw new PrivateStorageError(); }
   }
   const namespace = createHmac("sha256",keys.identity).update("deshdak:private-photo-namespace:v1:").update(JSON.stringify(config)).update(keys.inspection).digest("hex");
-  return { namespace, prepare, write, confirm, read, remove, close: () => client.destroy?.() };
+  return { namespace, prepare, write, confirm, read, remove, confirmRemoval, close: () => client.destroy?.() };
 }

@@ -474,3 +474,31 @@ verification/20261124-media-deletion-reviews.json for ordered gate and file-hash
 evidence. Source/role/transaction checks were manual; independent production
 security and live provider/device acceptance remain outstanding. No executor or
 live private-storage activation was added.
+
+## 24 November 2026 — exact-version storage deletion prerequisite
+
+Before connecting execution, source review found that the existing storage
+remove primitive accepted a DELETE acknowledgement without confirming version
+absence. It now checks exact-version metadata, checksum, ciphertext size/type,
+KMS key and a strong ETag, preserves reported holds/unexpired retention, sends an
+ETag-conditional version-specific request without retention bypass, validates the
+acknowledgement and confirms absence. A HEAD 404 must be followed by a successful
+expected-owner/region bucket probe. Read-only confirmRemoval supports later
+journalled uncertainty reconciliation without another DELETE. Its receipt is
+version absence only, not complete erasure or execution authorization.
+
+Expanded tests use real signed AWS SDK requests to a synthetic loopback server.
+They passed metadata/hold/retention rejection, ETag races, lying/failed/lost
+acknowledgements, retained versions, bucket/permission uncertainty, reconciliation
+without repeat deletion and preservation of a newer version at the same key.
+TypeScript and lint passed. A fresh full run then passed all 114 gates in 5.4
+minutes with zero dependency audit findings, followed by a successful production
+build under the same owned-disposable/disabled-provider environment. Schema and
+container cleanup were confirmed. See
+verification/20261124-storage-deletion-protocol.json for ordered/file-hash evidence.
+
+There is no new migration, public/Admin execution endpoint, worker or activation
+switch. The worker's durable journal, authoritative case/hold/permission guards,
+subject/legacy-data transitions, backups/version reconciliation and live
+acceptance remain unfinished. The relevant AWS references and role prerequisites
+are recorded in PRIVATE_PHOTO_DELETION_PROTOCOL.md and the NIloy setup guide.
