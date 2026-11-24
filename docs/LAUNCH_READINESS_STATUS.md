@@ -569,3 +569,23 @@ build (181 pages). API contract validation (314 operations), TypeScript, ESLint
 and diff checks passed. Disposable schema/container were removed. No owner DB
 was changed. Full launch/audit/device/live-provider acceptance was not rerun.
 See verification/20261124-media-readiness-guard.json. NIloy stays local-only.
+
+
+## 24 November 2026 — supported inspection capture options
+
+The assigned-package evidence API now exposes a bounded, non-secret upload
+capability description without changing existing evidence fields. Inspector and
+Warehouse camera/device controls wait for that check, hide video in secure-photo
+mode, reject unsupported video before POST, and handle unavailable, malformed and
+failed responses with a retry. Explicit local development may still offer video;
+production never uses that fallback. No production video processing was added.
+
+The isolated Inspector, Warehouse and scanned-private-intake suites passed,
+including actual assigned-staff API authorization and simulated capability/error
+states at desktop 1440px and mobile 390px. Six pure capability-policy cases passed.
+TypeScript, ESLint, API contract validation (314 operations), diff checks and the
+production build (181 pages) passed. Disposable schema/container were removed; no
+owner database/live provider was used. Full launch/audit and physical-device
+acceptance were not rerun. See verification/20261124-inspection-upload-options.json.
+Production video, broader linked-media cleanup/recovery and live acceptance
+remain unfinished. NIloy stays local-only and ignored.

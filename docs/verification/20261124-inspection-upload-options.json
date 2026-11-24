@@ -1,0 +1,47 @@
+{
+  "date": "2026-11-24",
+  "baseRevision": "0233e744f73503f8357986ab6f92e3c19f749ee7",
+  "result": "passed",
+  "targetedSuites": [
+    "test:inspector-portal",
+    "test:warehouse-portal",
+    "test:scanned-private-intake"
+  ],
+  "pureCapabilityPolicyCases": 6,
+  "browserWidths": [
+    1440,
+    390
+  ],
+  "browserCapabilityResponsesSimulated": true,
+  "assignedStaffApiAuthorizationReal": true,
+  "unsupportedVideoPostCount": 0,
+  "schemaChanged": false,
+  "apiOperationCount": 314,
+  "apiChange": "Additive uploads capability object on assigned-package evidence listing",
+  "apiContractPassed": true,
+  "typecheckPassed": true,
+  "eslintPassed": true,
+  "productionBuildPassed": true,
+  "generatedPageCount": 181,
+  "disposableSchemaRemoved": true,
+  "disposableDatabaseRemoved": true,
+  "fullLaunchRerun": false,
+  "productionAccepted": false,
+  "productionVideoImplemented": false,
+  "productionCleanupEnabled": false,
+  "logSha256": "98fef8c893af73738c7be32255e5f4ff02dd7243470274390e42288b412b9889",
+  "verifiedFilesSha256": {
+    "src/modules/operations/inspection-upload-capabilities.ts": "5d27bad912b49ace9144c7d143619d438db4e5b0de600aba06272c33b99fad63",
+    "src/components/warehouse-operations.tsx": "c5a795ec1334c5b4ea1acab4808f6ef22791fdd33f20988b7b1a4b91f00167a5",
+    "src/app/api/v1/operations/packages/[packageId]/inspection-evidence/route.ts": "0a7b7065b83b14b52795072196177a799cb7aa5309898bf1169655477ad5f16a",
+    "scripts/verify-inspector-portal.mjs": "ac4f891860bafd1b94573e40251cabe84867a7272d42fa6f8a2bf15aafaa5b09",
+    "scripts/lib/inspection-capture-acceptance.mjs": "e7ec93429858925a4786f5be4d731325c5a08064055773a65cd6284c9caf1a83",
+    "scripts/openapi-contract.mjs": "e5da1f25febd0a52dab6f3dc37011c1f486ce4ab2cb7592f9a83c4e640bce4a3",
+    "public/openapi.yaml": "a1eab7d4194197be8a8f37437b181a6d24cc33b1fb65ca8e359399aafc8ac9ba"
+  },
+  "limits": [
+    "Secure inspection video processing is not implemented; video is offered only by explicitly enabled local development intake.",
+    "Capabilities are descriptive; server upload authorization, limits, scanning and state checks still enforce access.",
+    "Broader linked-media cleanup/recovery and live-service/security/device acceptance remain unfinished."
+  ]
+}

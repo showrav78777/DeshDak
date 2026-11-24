@@ -4,20 +4,48 @@ import { useEffect, useId, useRef, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { useWarehouseReceiptRequest } from "@/components/warehouse-receipt-request";
 
+import type { InspectionUploadCapabilities } from "@/modules/operations/inspection-upload-capabilities";
+
 type Option = { id: string; label: string };
 
-function EvidenceCaptureInputs({ disabled, onFile }: { disabled: boolean; onFile: (file: File) => void }) {
+function EvidenceCaptureInputs({ packageId, disabled, onFile }: { packageId: string; disabled: boolean; onFile: (file: File) => void }) {
   const id = useId();
   const [error, setError] = useState("");
+  const [retry, setRetry] = useState(0);
+  const [state, setState] = useState<{ packageId: string; retry: number; uploads: InspectionUploadCapabilities | null; failed: boolean } | null>(null);
+  const current = state?.packageId === packageId && state.retry === retry ? state : null;
+  const uploads = current?.uploads;
+  useEffect(() => {
+    let active = true;
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 10_000);
+    fetch(`/api/v1/operations/packages/${packageId}/inspection-evidence`, { signal: controller.signal, credentials: "same-origin", cache: "no-store", redirect: "error" })
+      .then(async response => {
+        if (!response.ok) throw new Error("Unavailable");
+        const value = (await response.json())?.data?.uploads;
+        if (!value || typeof value.photos !== "boolean" || typeof value.videos !== "boolean" || value.maxPhotoBytes !== 8 * 1024 * 1024 || value.maxVideoBytes !== 30 * 1024 * 1024 || !["UNAVAILABLE", "PRIVATE_PHOTOS", "DEVELOPMENT"].includes(value.mode) || value.videos && value.mode !== "DEVELOPMENT") throw new Error("Invalid upload capabilities");
+        if (active && !controller.signal.aborted) setState({ packageId, retry, uploads: value, failed: false });
+      }).catch(() => { if (active) setState({ packageId, retry, uploads: null, failed: true }); }).finally(() => clearTimeout(timer));
+    return () => { active = false; clearTimeout(timer); controller.abort(); };
+  }, [packageId, retry]);
   function choose(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.currentTarget.files?.[0]; event.currentTarget.value = "";
     if (!file) return;
     const video = file.type === "video/mp4";
-    if (!["image/jpeg", "image/png", "image/webp", "video/mp4"].includes(file.type)) { setError("Choose a JPEG, PNG, WebP photo or MP4 video."); return; }
-    if (!file.size || file.size > (video ? 30 : 8) * 1024 * 1024) { setError(`${video ? "Video" : "Photo"} must be smaller than ${video ? 30 : 8} MB.`); return; }
+    if (!uploads?.photos || video && !uploads.videos) { setError("This evidence upload option is unavailable. Refresh before trying again."); return; }
+    if (!["image/jpeg", "image/png", "image/webp", ...(uploads.videos ? ["video/mp4"] : [])].includes(file.type)) { setError(uploads.videos ? "Choose a JPEG, PNG, WebP photo or MP4 video." : "Choose a JPEG, PNG or WebP photo."); return; }
+    if (!file.size || file.size > (video ? uploads.maxVideoBytes : uploads.maxPhotoBytes)) { setError(`${video ? "Video" : "Photo"} must be smaller than ${video ? 30 : 8} MB.`); return; }
     setError(""); onFile(file);
   }
-  return <fieldset className="evidence-capture-controls" disabled={disabled} aria-busy={disabled}><legend>Capture or choose evidence</legend><p id={`${id}-help`}>Photos: up to 8 MB. MP4 video: up to 30 MB. Check the product is clearly visible and keep personal information out of frame.</p><div className="evidence-capture-options">{[{ key: "photo", text: "Take a photo", accept: "image/jpeg,image/png,image/webp", capture: "environment" as const }, { key: "video", text: "Record a video", accept: "video/mp4", capture: "environment" as const }, { key: "file", text: "Choose from device", accept: "image/jpeg,image/png,image/webp,video/mp4", capture: undefined }].map(option => <label className="evidence-capture-option" key={option.key}><span>{option.text}</span><input aria-label={option.text} aria-describedby={`${id}-help`} type="file" accept={option.accept} capture={option.capture} onChange={choose} /></label>)}</div>{disabled ? <p role="status">Please wait while evidence is saved…</p> : null}{error ? <p className="form-error" role="alert">{error}</p> : null}</fieldset>;
+  const options = [
+    { key: "photo", text: "Take a photo", accept: "image/jpeg,image/png,image/webp", capture: "environment" as const },
+    ...(uploads?.videos ? [{ key: "video", text: "Record a video", accept: "video/mp4", capture: "environment" as const }] : []),
+    { key: "file", text: "Choose from device", accept: `image/jpeg,image/png,image/webp${uploads?.videos ? ",video/mp4" : ""}`, capture: undefined },
+  ];
+  return <div>
+    {!current ? <p role="status">Checking available evidence uploads…</p> : current.failed ? <p role="alert">Evidence upload options could not be checked. <button type="button" onClick={() => setRetry(value => value + 1)}>Retry upload options</button></p> : !uploads?.photos ? <p role="status">Secure evidence uploads are unavailable. Contact the administrator before capturing files.</p> : null}
+    <fieldset className="evidence-capture-controls" disabled={disabled || !uploads?.photos} aria-busy={disabled || !current}><legend>Capture or choose evidence</legend><p id={`${id}-help`}>Photos: up to 8 MB. {uploads?.videos ? "MP4 video: up to 30 MB. Development uploads only. " : "Video capture is unavailable until secure processing is ready. "}Check the product is clearly visible and keep personal information out of frame.</p><div className="evidence-capture-options">{options.map(option => <label className="evidence-capture-option" key={option.key}><span>{option.text}</span><input aria-label={option.text} aria-describedby={`${id}-help`} type="file" accept={option.accept} capture={option.capture} onChange={choose} /></label>)}</div>{disabled ? <p role="status">Please wait while evidence is saved…</p> : null}{error ? <p className="form-error" role="alert">{error}</p> : null}</fieldset>
+  </div>;
 }
 
 function ExistingInspectionEvidence({ packageId, onSelect, disabled }: { packageId: string; disabled?: boolean; onSelect: (reference: string, kind: "PHOTO" | "VIDEO") => void }) {
@@ -90,7 +118,7 @@ export function PackageInspectionForm({ packageId }: { packageId: string }) {
     } catch { setError("Inspection could not be confirmed; it may already have been saved. Keep the same details to retry safely, or refresh and review the recorded decision."); }
     finally { pending.current = false; setIsSaving(false); }
   }
-  return <form className="package-action-form" onSubmit={submit} aria-busy={isSaving}><div className="two-field"><div><label htmlFor={`${packageId}-inspection-type`}>1. Inspection type</label><select id={`${packageId}-inspection-type`} name="type" disabled={isSaving || completed} value={inspectionType} onChange={(event) => setInspectionType(event.target.value)}><option value="BASIC">Basic</option><option value="PHOTO">Photo evidence</option><option value="VIDEO">Video evidence</option></select></div><div><label htmlFor={`${packageId}-inspection-result`}>2. Inspection result</label><select id={`${packageId}-inspection-result`} name="result" disabled={isSaving || completed} defaultValue="PASSED"><option value="PASSED">Passed</option><option value="ATTENTION_REQUIRED">Attention required</option><option value="FAILED">Failed</option></select></div></div><label htmlFor={`${packageId}-inspection-notes`}>3. Inspection notes</label><textarea id={`${packageId}-inspection-notes`} name="notes" disabled={isSaving || completed} maxLength={2000} placeholder="Condition, quantity, packaging, visible damage…" /><ExistingInspectionEvidence disabled={isSaving || completed} packageId={packageId} onSelect={(reference, kind) => { setMediaReference(reference); setMediaKind(kind); setInspectionType(kind); }} /><EvidenceCaptureInputs disabled={isSaving || completed} onFile={(file) => { void upload(file); }} /><p className="form-help">Capture with the device camera or select one image/video. Evidence is private, attached to this package, and shown only to authorised staff and this order’s customer.</p>{mediaReference ? <p className="form-success" role="status">{mediaKind === "VIDEO" ? "Video" : "Photo"} captured securely and ready to attach.</p> : null}{completed ? <p role="status">Inspection saved. Refreshing the recorded task…</p> : null}{error ? <p className="form-error" role="alert">{error}</p> : null}<button className="button primary" disabled={isSaving || completed} type="submit">{completed ? "Inspection saved" : isSaving ? "Saving…" : "Complete inspection"}</button></form>;
+  return <form className="package-action-form" onSubmit={submit} aria-busy={isSaving}><div className="two-field"><div><label htmlFor={`${packageId}-inspection-type`}>1. Inspection type</label><select id={`${packageId}-inspection-type`} name="type" disabled={isSaving || completed} value={inspectionType} onChange={(event) => setInspectionType(event.target.value)}><option value="BASIC">Basic</option><option value="PHOTO">Photo evidence</option><option value="VIDEO">Video evidence</option></select></div><div><label htmlFor={`${packageId}-inspection-result`}>2. Inspection result</label><select id={`${packageId}-inspection-result`} name="result" disabled={isSaving || completed} defaultValue="PASSED"><option value="PASSED">Passed</option><option value="ATTENTION_REQUIRED">Attention required</option><option value="FAILED">Failed</option></select></div></div><label htmlFor={`${packageId}-inspection-notes`}>3. Inspection notes</label><textarea id={`${packageId}-inspection-notes`} name="notes" disabled={isSaving || completed} maxLength={2000} placeholder="Condition, quantity, packaging, visible damage…" /><ExistingInspectionEvidence disabled={isSaving || completed} packageId={packageId} onSelect={(reference, kind) => { setMediaReference(reference); setMediaKind(kind); setInspectionType(kind); }} /><EvidenceCaptureInputs packageId={packageId} disabled={isSaving || completed} onFile={(file) => { void upload(file); }} /><p className="form-help">Use the available capture options or select one supported file. Evidence is private, attached to this package, and shown only to authorised staff and this order’s customer.</p>{mediaReference ? <p className="form-success" role="status">{mediaKind === "VIDEO" ? "Video" : "Photo"} captured securely and ready to attach.</p> : null}{completed ? <p role="status">Inspection saved. Refreshing the recorded task…</p> : null}{error ? <p className="form-error" role="alert">{error}</p> : null}<button className="button primary" disabled={isSaving || completed} type="submit">{completed ? "Inspection saved" : isSaving ? "Saving…" : "Complete inspection"}</button></form>;
 }
 
 export function InspectionEvidenceCapture({ packageId }: { packageId: string }) {
@@ -118,7 +146,7 @@ export function InspectionEvidenceCapture({ packageId }: { packageId: string }) 
     } catch (caught) { setError(caught instanceof Error ? caught.message : "Could not upload evidence."); }
     finally { uploadPending.current = false; setSaving(false); }
   }
-  return <div className="package-action-form"><EvidenceCaptureInputs disabled={saving} onFile={(file) => { void upload(file); }} /><p className="form-help">Use this only for the physical package. The Inspector remains responsible for the pass/fail decision.</p>{success ? <p className="form-success" role="status">{success}</p> : null}{error ? <p className="form-error" role="alert">{error}</p> : null}</div>;
+  return <div className="package-action-form"><EvidenceCaptureInputs packageId={packageId} disabled={saving} onFile={(file) => { void upload(file); }} /><p className="form-help">Use this only for the physical package. The Inspector remains responsible for the pass/fail decision.</p>{success ? <p className="form-success" role="status">{success}</p> : null}{error ? <p className="form-error" role="alert">{error}</p> : null}</div>;
 }
 
 export function PackageMeasurementForm({ packageId }: { packageId: string }) {

@@ -11,6 +11,7 @@ import { getRequestSession } from "@/lib/request-session";
 import { consumeSecurityRateLimit, requestIp } from "@/modules/auth/rate-limit";
 import { encryptInspectionEvidence, inspectionEvidenceUploadsEnabled } from "@/modules/operations/inspection-evidence";
 import { canAccessWarehouse, getInspectorAccess, getWarehouseAccess } from "@/lib/warehouse-access";
+import { inspectionUploadCapabilities } from "@/modules/operations/inspection-upload-capabilities";
 
 export async function GET(request: NextRequest, context: RouteContext<"/api/v1/operations/packages/[packageId]/inspection-evidence">) {
   const session = await getRequestSession(request);
@@ -21,7 +22,7 @@ export async function GET(request: NextRequest, context: RouteContext<"/api/v1/o
   const pkg = await prisma.package.findUnique({ where: { id: packageId }, select: { warehouseId: true } });
   if (!pkg || !canAccessWarehouse(access, pkg.warehouseId)) return apiError("PACKAGE_NOT_FOUND", "Package was not found.", 404);
   const evidence = await prisma.inspectionEvidence.findMany({ where: { packageId }, select: { id: true, mediaKind: true, createdAt: true }, orderBy: { createdAt: "desc" }, take: 50 });
-  return apiSuccess({ evidence }, { headers: { "Cache-Control": "private, no-store, max-age=0" } });
+  return apiSuccess({ evidence, uploads: inspectionUploadCapabilities(process.env, privatePhotoStorageConfigured()) }, { headers: { "Cache-Control": "private, no-store, max-age=0" } });
 }
 
 export async function POST(request: NextRequest, context: RouteContext<"/api/v1/operations/packages/[packageId]/inspection-evidence">) {

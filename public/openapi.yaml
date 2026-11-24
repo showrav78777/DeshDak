@@ -13475,13 +13475,17 @@
         "tags": [
           "operations"
         ],
-        "summary": "GET /operations/packages/{packageId}/inspection-evidence",
+        "summary": "List assigned package evidence and non-secret supported upload capabilities",
         "security": [
           {
             "cookieSession": []
           }
         ],
         "x-crossly-access": "authenticated",
+        "x-crossly-error-codes": [
+          "EVIDENCE_ACCESS_REQUIRED",
+          "PACKAGE_NOT_FOUND"
+        ],
         "parameters": [
           {
             "name": "packageId",
@@ -13494,7 +13498,19 @@
         ],
         "responses": {
           "200": {
-            "$ref": "#/components/responses/Success"
+            "description": "Successful response.",
+            "headers": {
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InspectionEvidenceAvailabilityResponse"
+                }
+              }
+            }
           },
           "400": {
             "$ref": "#/components/responses/BadRequest"
@@ -19559,6 +19575,86 @@
       }
     },
     "schemas": {
+      "InspectionEvidenceAvailabilityResponse": {
+        "type": "object",
+        "required": [
+          "evidence",
+          "uploads"
+        ],
+        "properties": {
+          "evidence": {
+            "type": "array",
+            "maxItems": 50,
+            "items": {
+              "type": "object",
+              "required": [
+                "id",
+                "mediaKind",
+                "createdAt"
+              ],
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "mediaKind": {
+                  "type": "string",
+                  "enum": [
+                    "PHOTO",
+                    "VIDEO"
+                  ]
+                },
+                "createdAt": {
+                  "type": "string",
+                  "format": "date-time"
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "uploads": {
+            "type": "object",
+            "required": [
+              "photos",
+              "videos",
+              "maxPhotoBytes",
+              "maxVideoBytes",
+              "mode"
+            ],
+            "properties": {
+              "photos": {
+                "type": "boolean"
+              },
+              "videos": {
+                "type": "boolean",
+                "description": "True only for explicitly enabled local development uploads; production video processing remains unavailable."
+              },
+              "maxPhotoBytes": {
+                "type": "integer",
+                "enum": [
+                  8388608
+                ]
+              },
+              "maxVideoBytes": {
+                "type": "integer",
+                "enum": [
+                  31457280
+                ]
+              },
+              "mode": {
+                "type": "string",
+                "enum": [
+                  "UNAVAILABLE",
+                  "PRIVATE_PHOTOS",
+                  "DEVELOPMENT"
+                ]
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
       "MediaReviewPreviewResponse": {
         "type": "object",
         "required": [

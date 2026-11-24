@@ -386,3 +386,11 @@ audited. Historical VERIFIED evidence cannot override failed technical signals
 in the register/report, or the private-media engineering blocker on the dashboard.
 No schema changes, live activation or video implementation. Broader media and
 live-service/security/device acceptance still remain. NIloy remains ignored/local.
+
+24 November 2026 — inspection upload availability UX
+Added non-secret upload capabilities to the assigned-staff evidence listing API.
+Camera/device controls stay disabled until checked, hide video in secure-photo
+mode, reject unsupported video before POST, and provide unavailable/error/retry
+states. Video remains explicitly development-only; no production transcoding,
+video storage, broader deletion worker or live-provider acceptance was added.
+Owner instructions stay local in ignored NIloy.

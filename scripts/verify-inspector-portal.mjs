@@ -2,6 +2,22 @@ import { randomBytes } from "node:crypto";
 import { PrismaClient } from "@prisma/client";
 import { SignJWT } from "jose";
 import sharp from "sharp";
+import { readFile } from "node:fs/promises";
+import { stripTypeScriptTypes } from "node:module";
+import { verifyInspectionCapture } from "./lib/inspection-capture-acceptance.mjs";
+const capabilitySource = await readFile(new URL("../src/modules/operations/inspection-upload-capabilities.ts", import.meta.url), "utf8");
+const { inspectionUploadCapabilities } = await import(`data:text/javascript;base64,${Buffer.from(stripTypeScriptTypes(capabilitySource)).toString("base64")}`);
+for (const [env, configured, photos, videos, mode] of [
+  [{ NODE_ENV: "production" }, false, false, false, "UNAVAILABLE"],
+  [{ NODE_ENV: "production", ALLOW_DEV_INSPECTION_EVIDENCE_UPLOADS: "true" }, false, false, false, "UNAVAILABLE"],
+  [{ NODE_ENV: "production", PRIVATE_PHOTO_STORAGE_ENABLED: "true" }, true, true, false, "PRIVATE_PHOTOS"],
+  [{ NODE_ENV: "development", ALLOW_DEV_INSPECTION_EVIDENCE_UPLOADS: "true" }, false, true, true, "DEVELOPMENT"],
+  [{ NODE_ENV: "development", ALLOW_DEV_INSPECTION_EVIDENCE_UPLOADS: "true", PRIVATE_PHOTO_STORAGE_ENABLED: "true" }, false, false, false, "UNAVAILABLE"],
+  [{ NODE_ENV: "development", ALLOW_DEV_INSPECTION_EVIDENCE_UPLOADS: "true", PRIVATE_PHOTO_STORAGE_ENABLED: "true" }, true, true, false, "PRIVATE_PHOTOS"],
+]) {
+  const value = inspectionUploadCapabilities(env, configured);
+  if (value.photos !== photos || value.videos !== videos || value.mode !== mode) throw new Error("Inspection upload capability policy failed");
+}
 
 const prisma = new PrismaClient();
 const origin = new URL(process.env.TEST_BASE_URL ?? process.env.APP_BASE_URL ?? "http://localhost:3000").origin;
@@ -41,6 +57,9 @@ try {
   const customerAttempt = await request("/inspector", customerCookie, { redirect: "manual" }); assert([307, 308].includes(customerAttempt.status) && customerAttempt.headers.get("location")?.endsWith("/inspector/login"), "Customer entered Inspector portal.");
   const lookup = await post("/api/v1/operations/inspections/lookup", inspectorACookie, { code: pkg.packageCode }); const lookupBody = await lookup.json(); assert(lookup.status === 200 && lookupBody.data.destination.endsWith(pkg.packageCode) && !JSON.stringify(lookupBody).includes(customer.email), "Assigned Inspector scan or PII boundary failed.");
   assert((await post("/api/v1/operations/inspections/lookup", inspectorBCookie, { code: pkg.packageCode })).status === 404, "Foreign Inspector resolved package.");
+  assert((await request(`/api/v1/operations/packages/${pkg.id}/inspection-evidence`, customerCookie)).status === 403, "Customer accessed staff upload configuration.");
+  assert((await request(`/api/v1/operations/packages/${pkg.id}/inspection-evidence`, inspectorBCookie)).status === 404, "Foreign inspector accessed package upload configuration.");
+  await verifyInspectionCapture({ origin, pkg, inspectorCookie: inspectorACookie, workerCookie, capabilities: inspectionUploadCapabilities(process.env, false) });
   assert((await post(`/api/v1/operations/packages/${pkg.id}/inspect`, workerCookie, { type: "BASIC", result: "PASSED" })).status === 403, "Warehouse Worker inspected package.");
   assert((await post(`/api/v1/operations/packages/${pkg.id}/inspect`, inspectorBCookie, { type: "BASIC", result: "PASSED" })).status === 404, "Foreign Inspector inspected package.");
   assert((await post(`/api/v1/operations/packages/${pkg.id}/inspect`, inspectorACookie, { type: "PHOTO", result: "PASSED" })).status === 422, "Photo inspection lacked evidence.");
