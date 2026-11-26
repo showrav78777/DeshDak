@@ -2,7 +2,7 @@ import "server-only";
 import { createHash } from "node:crypto";
 import type { Prisma, PrismaClient } from "@prisma/client";
 import { z } from "zod";
-import { authorizePrivatePhotoAdmin } from "./quarantine";
+import { authorizePrivatePhotoAdmin, privatePhotoDatabaseNow } from "./quarantine";
 import { parsePrivatePhotoReference, type createPrivatePhotoStore } from "./photos";
 import { normalizePrivatePhoto } from "./photo-processing";
 import type { PrivatePhotoScanProof } from "./photo-scanner";
@@ -12,8 +12,8 @@ export class PrivatePhotoRescanError extends Error {
   constructor(code: "PRIVATE_RESCAN_DENIED" | "PRIVATE_RESCAN_CONFLICT" | "PRIVATE_RESCAN_UNAVAILABLE") { super(code); }
 }
 type Request = Prisma.PrivatePhotoRescanGetPayload<{ include: { result: true } }>;
-export function privatePhotoRescanDto(row: Request) {
-  return { id: row.id, state: row.result?.state ?? (row.deadlineAt <= new Date() ? "EXPIRED" : "PENDING"), createdAt: row.createdAt, completedAt: row.result?.completedAt ?? null, scope: "STORED_PHOTO" as const, quarantined: true as const };
+export function privatePhotoRescanDto(row: Request, now: Date) {
+  return { id: row.id, state: row.result?.state ?? (row.deadlineAt <= now ? "EXPIRED" : "PENDING"), createdAt: row.createdAt, completedAt: row.result?.completedAt ?? null, scope: "STORED_PHOTO" as const, quarantined: true as const };
 }
 function sameReference(left: unknown, right: unknown) {
   return JSON.stringify(parsePrivatePhotoReference(left)) === JSON.stringify(parsePrivatePhotoReference(right));
@@ -30,15 +30,15 @@ export function createPrivatePhotoRescanner(db: PrismaClient, store: Pick<Return
       const previous = await tx.privatePhotoRescan.findUnique({ where: { actorId_idempotencyKey: { actorId, idempotencyKey: input.idempotencyKey } }, include: { result: true, review: { select: { sequence: true } } } });
       if (previous) {
         if (previous.uploadId !== uploadId || previous.review.sequence !== input.expectedSequence) throw new PrivatePhotoRescanError("PRIVATE_RESCAN_CONFLICT");
-        return { fresh: false, row: previous };
+        return { fresh: false, row: previous, now: await privatePhotoDatabaseNow(tx) };
       }
       const upload = await tx.privatePhotoUpload.findUnique({ where: { id: uploadId }, include: { quarantine: true } });
       if (!upload?.quarantine || upload.status !== "STORED" || upload.storageNamespace !== store.namespace) throw new PrivatePhotoRescanError("PRIVATE_RESCAN_DENIED");
+      const now = await privatePhotoDatabaseNow(tx);
       const reference = parsePrivatePhotoReference(upload.storedReference);
-      if (reference.purpose !== upload.purpose || !upload.originalScanVerifiedAt || !/^[a-f0-9]{64}$/.test(upload.originalScanSha256 ?? "") || !upload.scanVerifiedAt || upload.scanVerifiedSha256 !== reference.plaintextSha256 || upload.originalScanVerifiedAt > upload.scanVerifiedAt || upload.scanVerifiedAt < upload.createdAt || upload.scanVerifiedAt.getTime() > Date.now() + 300_000) throw new PrivatePhotoRescanError("PRIVATE_RESCAN_DENIED");
+      if (reference.purpose !== upload.purpose || !upload.originalScanVerifiedAt || !/^[a-f0-9]{64}$/.test(upload.originalScanSha256 ?? "") || !upload.scanVerifiedAt || upload.scanVerifiedSha256 !== reference.plaintextSha256 || upload.originalScanVerifiedAt > upload.scanVerifiedAt || upload.scanVerifiedAt < upload.createdAt || upload.scanVerifiedAt.getTime() > now.getTime() + 300_000) throw new PrivatePhotoRescanError("PRIVATE_RESCAN_DENIED");
       const review = await tx.privatePhotoQuarantineReview.findFirst({ where: { quarantineId: upload.quarantine.id }, orderBy: { sequence: "desc" } });
       if (!review || review.sequence !== input.expectedSequence || review.decision !== "RESCAN_REQUIRED") throw new PrivatePhotoRescanError("PRIVATE_RESCAN_CONFLICT");
-      const now = new Date();
       const [usedReview, pending, count] = await Promise.all([
         tx.privatePhotoRescan.findUnique({ where: { reviewId: review.id }, select: { id: true } }),
         tx.privatePhotoRescan.findFirst({ where: { uploadId, deadlineAt: { gt: now }, result: { is: null } }, select: { id: true } }),
@@ -47,16 +47,16 @@ export function createPrivatePhotoRescanner(db: PrismaClient, store: Pick<Return
       if (usedReview || pending || count >= 5) throw new PrivatePhotoRescanError("PRIVATE_RESCAN_CONFLICT");
       const row = await tx.privatePhotoRescan.create({ data: { actorId, uploadId, quarantineId: upload.quarantine.id, reviewId: review.id, idempotencyKey: input.idempotencyKey, storageNamespace: store.namespace, referenceSnapshot: reference, deadlineAt: new Date(now.getTime() + 60_000) }, include: { result: true } });
       await tx.auditLog.create({ data: { actorId, action: "private_photo.rescan_requested", entityType: "PrivatePhotoRescan", entityId: row.id, metadata: { reviewSequence: review.sequence, scope: "STORED_PHOTO" } } });
-      return { fresh: true, row };
+      return { fresh: true, row, now };
     });
-    if (!prepared.fresh) return privatePhotoRescanDto(prepared.row);
+    if (!prepared.fresh) return privatePhotoRescanDto(prepared.row, prepared.now);
     const request = prepared.row;
     try {
       const reference = parsePrivatePhotoReference(request.referenceSnapshot);
       const bytes = await store.read(reference);
       if (bytes.length !== reference.sizeBytes || createHash("sha256").update(bytes).digest("hex") !== reference.plaintextSha256) throw new Error("Unconfirmed stored photo");
       const proof = await scan(Buffer.from(bytes));
-      if (proof?.sha256 !== reference.plaintextSha256 || !(proof.verifiedAt instanceof Date) || !Number.isFinite(proof.verifiedAt.getTime()) || proof.verifiedAt < request.createdAt || proof.verifiedAt.getTime() > Date.now() || Date.now() - proof.verifiedAt.getTime() > 60_000) throw new Error("Unconfirmed scan");
+      if (proof?.sha256 !== reference.plaintextSha256 || !(proof.verifiedAt instanceof Date) || !Number.isFinite(proof.verifiedAt.getTime()) || proof.verifiedAt < request.createdAt) throw new Error("Unconfirmed scan");
       // Scan before decoding a potentially suspect image; never alter the scan target.
       await normalizePrivatePhoto(bytes, reference.mimeType, reference.purpose);
       const row = await db.$transaction(async tx => {
@@ -64,25 +64,26 @@ export function createPrivatePhotoRescanner(db: PrismaClient, store: Pick<Return
         await tx.$queryRaw`SELECT "id" FROM "PrivatePhotoUpload" WHERE "id" = ${uploadId} FOR UPDATE`;
         const upload = await tx.privatePhotoUpload.findUnique({ where: { id: uploadId }, include: { quarantine: true } });
         const latest = await tx.privatePhotoQuarantineReview.findFirst({ where: { quarantineId: request.quarantineId }, orderBy: { sequence: "desc" }, select: { id: true } });
-        if (actorId !== request.actorId || request.deadlineAt <= new Date() || upload?.quarantine?.id !== request.quarantineId || upload.status !== "STORED" || upload.storageNamespace !== store.namespace || !sameReference(upload.storedReference, request.referenceSnapshot) || latest?.id !== request.reviewId) throw new Error("Changed rescan context");
+        const now = await privatePhotoDatabaseNow(tx);
+        if (actorId !== request.actorId || request.deadlineAt <= now || proof.verifiedAt > now || now.getTime() - proof.verifiedAt.getTime() > 60_000 || upload?.quarantine?.id !== request.quarantineId || upload.status !== "STORED" || upload.storageNamespace !== store.namespace || !sameReference(upload.storedReference, request.referenceSnapshot) || latest?.id !== request.reviewId) throw new Error("Changed rescan context");
         await tx.privatePhotoRescanResult.create({ data: { rescanId: request.id, state: "CLEAN", sha256: proof.sha256, verifiedAt: proof.verifiedAt } });
         await tx.auditLog.create({ data: { actorId, action: "private_photo.rescan_completed", entityType: "PrivatePhotoRescan", entityId: request.id, metadata: { state: "CLEAN", scope: "STORED_PHOTO" } } });
-        return tx.privatePhotoRescan.findUniqueOrThrow({ where: { id: request.id }, include: { result: true } });
+        return { row: await tx.privatePhotoRescan.findUniqueOrThrow({ where: { id: request.id }, include: { result: true } }), now: await privatePhotoDatabaseNow(tx) };
       });
-      return privatePhotoRescanDto(row);
+      return privatePhotoRescanDto(row.row, row.now);
     } catch {
       // A prior authorized request may record failure even if its session was revoked.
       // This never grants clean proof, new access or permission to retry provider I/O.
       const row = await db.$transaction(async tx => {
         await tx.$queryRaw`SELECT "id" FROM "PrivatePhotoUpload" WHERE "id" = ${uploadId} FOR UPDATE`;
         const current = await tx.privatePhotoRescan.findUniqueOrThrow({ where: { id: request.id }, include: { result: true } });
-        if (current.result) return current;
+        if (current.result) return { row: current, now: await privatePhotoDatabaseNow(tx) };
         await tx.privatePhotoRescanResult.create({ data: { rescanId: request.id, state: "UNCONFIRMED" } });
         await tx.auditLog.create({ data: { actorId: request.actorId, action: "private_photo.rescan_completed", entityType: "PrivatePhotoRescan", entityId: request.id, metadata: { state: "UNCONFIRMED", scope: "STORED_PHOTO" } } });
-        return tx.privatePhotoRescan.findUniqueOrThrow({ where: { id: request.id }, include: { result: true } });
+        return { row: await tx.privatePhotoRescan.findUniqueOrThrow({ where: { id: request.id }, include: { result: true } }), now: await privatePhotoDatabaseNow(tx) };
       });
       await db.$transaction(tx => authorizePrivatePhotoAdmin(tx, sessionId));
-      return privatePhotoRescanDto(row);
+      return privatePhotoRescanDto(row.row, row.now);
     }
   }
   return { rescan: async (sessionId: string, uploadId: string, raw: z.input<typeof privatePhotoRescanRequest>) => {

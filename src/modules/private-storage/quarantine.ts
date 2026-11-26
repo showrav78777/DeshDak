@@ -25,13 +25,19 @@ const reviewSelect = { id: true, sequence: true, decision: true, caseReference: 
 export class PhotoQuarantineError extends Error {
   constructor(code: "PHOTO_QUARANTINE_DENIED" | "PHOTO_QUARANTINE_CONFLICT" | "PHOTO_QUARANTINE_UNAVAILABLE") { super(code); }
 }
+export async function privatePhotoDatabaseNow(tx: Prisma.TransactionClient) {
+  const [row] = await tx.$queryRaw<Array<{ now: Date }>>`SELECT clock_timestamp()::timestamp(3) AS now`;
+  if (!(row?.now instanceof Date) || !Number.isFinite(row.now.getTime())) throw new PhotoQuarantineError("PHOTO_QUARANTINE_UNAVAILABLE");
+  return row.now;
+}
 export async function authorizePrivatePhotoAdmin(tx: Prisma.TransactionClient, sessionId: string) {
   const first = await tx.authSession.findUnique({ where: { id: sessionId }, select: { userId: true } });
   if (!first) throw new PhotoQuarantineError("PHOTO_QUARANTINE_DENIED");
   await tx.$queryRaw`SELECT "id" FROM "User" WHERE "id" = ${first.userId} FOR NO KEY UPDATE`;
   await tx.$queryRaw`SELECT "id" FROM "AuthSession" WHERE "id" = ${sessionId} FOR SHARE`;
   const session = await tx.authSession.findUnique({ where: { id: sessionId }, include: { user: { include: { roles: { include: { role: true } } } } } });
-  if (!session || session.revokedAt || session.expiresAt <= new Date() || session.user.status !== "ACTIVE" || session.user.deletedAt || session.portal !== "admin" || !session.mfaVerifiedAt || !session.user.roles.some(item => item.role.code === "admin")) throw new PhotoQuarantineError("PHOTO_QUARANTINE_DENIED");
+  const now = await privatePhotoDatabaseNow(tx);
+  if (!session || session.revokedAt || session.expiresAt <= now || session.user.status !== "ACTIVE" || session.user.deletedAt || session.portal !== "admin" || !session.mfaVerifiedAt || session.mfaVerifiedAt > now || !session.user.roles.some(item => item.role.code === "admin")) throw new PhotoQuarantineError("PHOTO_QUARANTINE_DENIED");
   return session.userId;
 }
 export function createPhotoQuarantine(db: PrismaClient) {
@@ -63,7 +69,8 @@ export function createPhotoQuarantine(db: PrismaClient) {
       const latest = await tx.privatePhotoQuarantineReview.findFirst({ where: { quarantineId: item.id }, orderBy: { sequence: "desc" }, select: { sequence: true, decision: true } });
       const rescans = await tx.privatePhotoRescan.findMany({ where: { uploadId }, select: { id: true, createdAt: true, deadlineAt: true, review: { select: { sequence: true } }, result: { select: { state: true, completedAt: true } } }, orderBy: [{ createdAt: "desc" }, { id: "asc" }], take: 10 });
       await tx.auditLog.create({ data: { actorId, action: "private_photo.review_history_viewed", entityType: "PrivatePhotoQuarantine", entityId: item.id, metadata: { page } } });
-      return { items: rows.slice(0, 50), page, hasMore: rows.length > 50, quarantined: true, latestSequence: latest?.sequence ?? 0, latestDecision: latest?.decision ?? null, rescans: rescans.map(row => ({ id: row.id, state: row.result?.state ?? (row.deadlineAt <= new Date() ? "EXPIRED" : "PENDING"), createdAt: row.createdAt, completedAt: row.result?.completedAt ?? null, reviewSequence: row.review.sequence })) };
+      const now = await privatePhotoDatabaseNow(tx);
+      return { items: rows.slice(0, 50), page, hasMore: rows.length > 50, quarantined: true, latestSequence: latest?.sequence ?? 0, latestDecision: latest?.decision ?? null, rescans: rescans.map(row => ({ id: row.id, state: row.result?.state ?? (row.deadlineAt <= now ? "EXPIRED" : "PENDING"), createdAt: row.createdAt, completedAt: row.result?.completedAt ?? null, reviewSequence: row.review.sequence })) };
     }),
     review: (sessionId: string, uploadId: string, raw: z.input<typeof photoReviewRequest>) => run(sessionId, async (tx, actorId) => {
       z.uuid().parse(uploadId); const input = photoReviewRequest.parse(raw);

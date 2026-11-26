@@ -59,6 +59,16 @@ async function fixture(owner, admin, decision = "RESCAN_REQUIRED") {
   await controls.review(admin.session.id, row.id, { decision, caseReference: "INC-2026-001", expectedSequence: 0, blockedConfirmed: true, idempotencyKey: randomUUID() });
   return { row, identity };
 }
+async function withHostClock(offset, action) {
+  const RealDate = globalThis.Date;
+  class ShiftedDate extends RealDate {
+    constructor(...args) { super(...(args.length ? args : [RealDate.now() + offset])); }
+    static now() { return RealDate.now() + offset; }
+    static [Symbol.hasInstance](value) { return value instanceof RealDate; }
+  }
+  globalThis.Date = ShiftedDate;
+  try { return await action(); } finally { globalThis.Date = RealDate; }
+}
 const input = () => ({ expectedSequence: 1, blockedConfirmed: true, idempotencyKey: randomUUID() });
 try {
   const admin = await actor("admin", "admin", "admin"), pending = await actor("pending", "admin", "admin", false), customer = await actor("customer", "customer_personal", "customer"), compliance = await actor("compliance", "compliance", "compliance");
@@ -101,6 +111,36 @@ try {
   const expired = await db.privatePhotoRescan.create({ data: { actorId: admin.user.id, uploadId: expiredCase.row.id, quarantineId: expiredBlock.id, reviewId: expiredReview.id, idempotencyKey: expiredInput.idempotencyKey, storageNamespace: store.namespace, referenceSnapshot: expiredCase.row.storedReference, createdAt: new Date(Date.now() - 120000), deadlineAt: new Date(Date.now() - 60000) } });
   const expiredReads = reads; assert.equal((await rescanner.rescan(admin.session.id, expiredCase.row.id, expiredInput)).state, "EXPIRED"); assert.equal(reads, expiredReads);
   await assert.rejects(() => db.privatePhotoRescanResult.create({ data: { rescanId: expired.id, state: "CLEAN", sha256: sha, verifiedAt: new Date() } }));
+  for (const offset of [-86_400_000, 86_400_000]) {
+    await withHostClock(offset, async () => {
+      const before = reads;
+      assert.equal((await rescanner.rescan(admin.session.id, expiredCase.row.id, expiredInput)).state, "EXPIRED");
+      assert.equal((await rescanner.rescan(admin.session.id, interruptedCase.row.id, interruptedInput)).state, "PENDING");
+      assert.equal((await controls.history(admin.session.id, expiredCase.row.id, { page: 1 })).rescans.find(row => row.id === expired.id).state, "EXPIRED");
+      assert.equal(reads, before, "Clock drift replay must not repeat provider I/O");
+    });
+    const stable = await fixture(customer, admin);
+    const databaseStampedScanner = async bytes => {
+      const proof = await scanner(bytes);
+      const [row] = await db.$queryRaw`SELECT clock_timestamp()::timestamp(3) AS now`;
+      return { ...proof, verifiedAt: row.now };
+    };
+    const stableRescanner = createPrivatePhotoRescanner(db, store, databaseStampedScanner);
+    const cleanUnderSkew = await withHostClock(offset, () => stableRescanner.rescan(admin.session.id, stable.row.id, input()));
+    assert.equal(cleanUnderSkew.state, "CLEAN");
+    assert.equal(cleanUnderSkew.quarantined, true);
+    const untrustedTime = await fixture(customer, admin);
+    assert.equal((await withHostClock(offset, () => rescanner.rescan(admin.session.id, untrustedTime.row.id, input()))).state, "UNCONFIRMED", "Skewed scanner timestamps must not certify CLEAN");
+  }
+  const sessionBeforeClock = await db.authSession.findUniqueOrThrow({ where: { id: admin.session.id } });
+  const guardedClock = await fixture(customer, admin), readsBeforeClockDenials = reads;
+  try {
+    await db.authSession.update({ where: { id: admin.session.id }, data: { expiresAt: new Date(Date.now() - 1000) } });
+    await assert.rejects(() => withHostClock(-86_400_000, () => rescanner.rescan(admin.session.id, guardedClock.row.id, input())), /PRIVATE_RESCAN_DENIED/);
+    await db.authSession.update({ where: { id: admin.session.id }, data: { expiresAt: sessionBeforeClock.expiresAt, mfaVerifiedAt: new Date(Date.now() + 3_600_000) } });
+    await assert.rejects(() => withHostClock(86_400_000, () => rescanner.rescan(admin.session.id, guardedClock.row.id, input())), /PRIVATE_RESCAN_DENIED/);
+    assert.equal(reads, readsBeforeClockDenials);
+  } finally { await db.authSession.update({ where: { id: admin.session.id }, data: { expiresAt: sessionBeforeClock.expiresAt, mfaVerifiedAt: sessionBeforeClock.mfaVerifiedAt } }); }
   const foreign = await fixture(customer, admin), wrongNamespace = createPrivatePhotoRescanner(db, { namespace: randomBytes(32).toString("hex"), read: store.read }, scanner); const foreignReads = reads;
   await assert.rejects(() => wrongNamespace.rescan(admin.session.id, foreign.row.id, input()), /PRIVATE_RESCAN_DENIED/); assert.equal(reads, foreignReads);
   const wrongDecision = await fixture(customer, admin, "KEEP_BLOCKED"), beforeWrong = reads; await assert.rejects(() => rescanner.rescan(admin.session.id, wrongDecision.row.id, input()), /PRIVATE_RESCAN_CONFLICT/); assert.equal(reads, beforeWrong);
@@ -132,5 +172,5 @@ try {
     }
   } finally { await browser.close(); }
   const audit = JSON.stringify(await db.auditLog.findMany({ where: { action: { startsWith: "private_photo.rescan_" } } })); for (const secret of ["private/v1/", "PRIVATE_PROVIDER_DETAIL", "referenceSnapshot", sha, store.namespace]) assert(!audit.includes(secret));
-  console.log("Private rescans passed: durable requests/results, one provider attempt per review/key, concurrent pending replay, exact-version encrypted read and digest-bound scan, rejected infection/digest/storage/corruption, fresh authority/review fencing, limits and immutable audit history. Quarantine/evidence stayed unchanged. PostgreSQL/encryption were real; S3/scanner responses were simulated. HTTP setup denial and desktop/mobile setup/history UI passed; configured live HTTP/provider acceptance remains staging work.");
+  console.log("Private rescans passed: database-clock expiry/proof/session checks with ±24-hour host drift, future MFA denial, durable requests/results, one provider attempt per review/key, concurrent pending replay, exact-version encrypted read and digest-bound scan, rejected infection/digest/storage/corruption, fresh authority/review fencing, limits and immutable audit history. Quarantine/evidence stayed unchanged. PostgreSQL/encryption were real; S3/scanner responses were simulated. HTTP setup denial and desktop/mobile setup/history UI passed; configured live HTTP/provider acceptance remains staging work.");
 } finally { store.close(); await db.$disconnect(); }

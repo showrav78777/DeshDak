@@ -79,7 +79,13 @@ try {
  const stale=await requestItem();await controls.savePolicy(author.session.id,{expectedSequence:sequence,identityDays:90,inspectionDays:180,abandonedHours:24,caseReference,confirmed:true,idempotencyKey:randomUUID()});sequence++;
  assert.equal((await post(reviewer,`/${stale.id}/decision`,decide())).status,409);assert.equal((await post(reviewer,`/${stale.id}/decision`,decide("REJECTED"))).status,200);
  const expiry=await requestItem();const clockDb=new Proxy(db,{get(target,property){if(property==="$transaction")return callback=>target.$transaction(tx=>callback(new Proxy(tx,{get(txTarget,key){if(key==="$queryRaw")return(strings,...values)=>strings[0].includes("clock_timestamp()")?Promise.resolve([{now:new Date(Date.now()+2*day)}]):txTarget.$queryRaw(strings,...values);const value=Reflect.get(txTarget,key);return typeof value==="function"?value.bind(txTarget):value;}})));const value=Reflect.get(target,property);return typeof value==="function"?value.bind(target):value;}});
- await assert.rejects(()=>createMediaLifecycle(clockDb).decideDeletionReview(reviewer.session.id,expiry.id,{...decide(),idempotencyKey:randomUUID()}),/MEDIA_LIFECYCLE_CONFLICT/);
+ // Advancing database time expires the one-hour session as well as the review.
+ await assert.rejects(()=>createMediaLifecycle(clockDb).decideDeletionReview(reviewer.session.id,expiry.id,{...decide(),idempotencyKey:randomUUID()}),/MEDIA_LIFECYCLE_DENIED/);
+ const expirySession=await db.authSession.findUniqueOrThrow({where:{id:reviewer.session.id}});
+ try {
+   await db.authSession.update({where:{id:reviewer.session.id},data:{expiresAt:new Date(Date.now()+3*day)}});
+   await assert.rejects(()=>createMediaLifecycle(clockDb).decideDeletionReview(reviewer.session.id,expiry.id,{...decide(),idempotencyKey:randomUUID()}),/MEDIA_LIFECYCLE_CONFLICT/);
+ } finally { await db.authSession.update({where:{id:reviewer.session.id},data:{expiresAt:expirySession.expiresAt}}); }
  await assert.rejects(()=>db.privateMediaDeletionDecision.create({data:{requestId:expiry.id,actorId:author.user.id,decision:"APPROVED",caseReference,idempotencyKey:randomUUID()}}));
  const guarded=await requestItem();await db.ticket.create({data:{reference:`REVIEW-${marker}`,idempotencyKey:randomUUID(),customerId:customer.user.id,category:"GENERAL",subject:"Synthetic preservation case",status:"OPEN",slaDueAt:new Date(now+day)}});
  assert.equal((await post(reviewer,`/${guarded.id}/decision`,decide())).status,409);

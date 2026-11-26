@@ -1,0 +1,48 @@
+{
+  "date": "2026-11-26",
+  "baseRevision": "494431d025c2592b02d41dbfad099d2c0a878598",
+  "result": "passed",
+  "targetedSuites": [
+    "test:private-photo-rescans",
+    "test:private-photo-quarantine",
+    "test:private-photo-reviews",
+    "test:private-media-eligibility",
+    "test:private-media-deletion-reviews",
+    "test:private-media-lifecycle",
+    "test:abandoned-photo-cleanup"
+  ],
+  "hostClockOffsetsHours": [
+    -24,
+    24
+  ],
+  "expiredSessionDeniedBeforeProviderIo": true,
+  "futureMfaDeniedBeforeProviderIo": true,
+  "expiredReviewCheckedWithSeparatelyValidSession": true,
+  "skewedScannerProofRemainsUnconfirmed": true,
+  "allRescansPreserveQuarantine": true,
+  "schemaChanged": false,
+  "apiShapeChanged": false,
+  "typecheckPassed": true,
+  "eslintPassed": true,
+  "productionBuildPassed": true,
+  "generatedPageCount": 181,
+  "disposableSchemaRemoved": true,
+  "disposableDatabaseRemoved": true,
+  "fullLaunchRerun": false,
+  "dependencyAuditRerun": false,
+  "productionCleanupEnabled": false,
+  "productionAccepted": false,
+  "logSha256": "f5a71f77a0049a6a67219fc1d24e63dc53ee068082845ab5e11f2a9515da0dc1",
+  "verifiedFilesSha256": {
+    "src/modules/private-storage/quarantine.ts": "fc76dbabbe78e0e733c6ceeca7de682f145b11674e6838895b84452f0157f16e",
+    "src/modules/private-storage/rescan.ts": "a8ebc2bd56ec94ca5ee00779cf7f6d650724a0b47446e3219c0d9e14ec842fd4",
+    "scripts/verify-private-photo-rescans.mjs": "3dde0be9daa381c2d8cd33ea2b4851a45c24e43f970f9b23d30ef6eca97b6b05",
+    "scripts/verify-private-media-deletion-reviews.mjs": "699aae16e71b027f8133353de2dcdf5f105ffb8d7a83db9f8c09860b61e0ec2e"
+  },
+  "limits": [
+    "Actual disposable PostgreSQL, encryption and browser workflows; storage/scanner services were simulated.",
+    "DB-valid proof timestamps were supplied by a separate test adapter for the host-drift success cases. The normal host-stamped scanner remains UNCONFIRMED under drift; timestamps are never silently replaced.",
+    "The initial dependent test expired the session and review together; final coverage independently asserts session denial and review conflict with valid authority.",
+    "No production video, broader linked-media execution/recovery or live-service/security/device acceptance was completed."
+  ]
+}

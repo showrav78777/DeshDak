@@ -408,3 +408,12 @@ See docs/INSPECTION_EVIDENCE_REVIEW.md. NIloy remains local-only.
 minutes, zero audit findings and production build (181 pages/314 API operations).
 Evidence: docs/verification/20261126-inspection-evidence-review.json. The run is
 historical; actual release still needs current audit and live acceptance.
+
+26 November 2026 — private photo rescan time authority
+Moved private-photo Admin session/MFA checks and rescan expiry/quota/history/proof
+validation to database time. Added ±24-hour host drift, expired-session, future-MFA
+and skewed-proof rejection cases. All outcomes preserve quarantine. No schema/API
+shape or production activation changed; broad video/lifecycle/live work remains.
+Owner notes remain local-only under ignored NIloy.
+Verified seven dependent media suites and production build; owned disposable
+schema/container removed. Evidence: docs/verification/20261126-rescan-database-clock.json.

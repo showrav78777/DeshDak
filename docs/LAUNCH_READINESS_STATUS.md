@@ -610,3 +610,21 @@ verification/20261126-inspection-evidence-review.json.
 Production video, broader linked-media cleanup/recovery and live-service/security/
 device acceptance are still unfinished. Cleanup remains disabled. Owner-only
 procedures and the final status summary stay in ignored NIloy and are not uploaded.
+
+
+## 26 November 2026 — database time for private photo recovery
+
+Private-photo Admin authorization now checks session expiry and future MFA against
+database time. Rescan quota/deadline checks, replay expiry, history and final proof
+freshness also use the database clock. A skewed adapter proof stays UNCONFIRMED;
+CLEAN never releases quarantine. The recovery DTO receives explicit database time.
+
+Seven isolated media suites passed, covering ±24-hour host drift, expired-session
+and future-MFA denial before provider I/O, independently tested review expiry,
+existing concurrency/audit boundaries and SDK cleanup recovery. TypeScript, ESLint,
+diff checks and the production build (181 pages) passed. Owned schema/container
+cleanup was confirmed. No schema/API shape change or owner/live service access.
+Full launch/dependency audit and real provider/device acceptance were not rerun.
+See verification/20261126-rescan-database-clock.json. Production video, broader
+linked-media cleanup/recovery and live acceptance remain unfinished. NIloy stays
+local-only; no production runtime was activated.
