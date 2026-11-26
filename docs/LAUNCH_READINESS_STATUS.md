@@ -589,3 +589,24 @@ owner database/live provider was used. Full launch/audit and physical-device
 acceptance were not rerun. See verification/20261124-inspection-upload-options.json.
 Production video, broader linked-media cleanup/recovery and live acceptance
 remain unfinished. NIloy stays local-only and ignored.
+
+
+## 26 November 2026 — inspection safety fix handoff
+
+The 24 November verification run passed all 115 launch gates in 7.3 minutes,
+including the new quarantined-evidence attachment regressions, with zero dependency
+audit findings and a successful production build (181 pages, 314 API operations).
+Owned disposable schema/container cleanup was confirmed. This handoff records that
+saved result; it is not a fresh 26 November dependency audit or live acceptance.
+
+New inspection decisions reject linked quarantined, non-stored, cleanup-fenced or
+wrong-purpose uploads inside the existing transaction. PHOTO and BASIC requests
+with blocked evidence preserve package/order/inspection/event state and record
+redacted denial audits. Staff selectors mark such records unavailable and disable
+view/attachment controls. Existing historical idempotent results remain unchanged.
+See INSPECTION_EVIDENCE_REVIEW.md and
+verification/20261126-inspection-evidence-review.json.
+
+Production video, broader linked-media cleanup/recovery and live-service/security/
+device acceptance are still unfinished. Cleanup remains disabled. Owner-only
+procedures and the final status summary stay in ignored NIloy and are not uploaded.

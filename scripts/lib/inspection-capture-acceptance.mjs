@@ -23,7 +23,7 @@ export async function verifyInspectionCapture({ origin, pkg, inspectorCookie, wo
         if (mode === "loading") await loading;
         if (mode === "error") { await route.fulfill({ status: 503, json: { error: { code: "UNAVAILABLE" } } }); return; }
         const uploads = { photos: mode !== "unavailable", videos: mode === "development", maxPhotoBytes: 8388608, maxVideoBytes: 31457280, mode: mode === "development" ? "DEVELOPMENT" : mode === "unavailable" ? "UNAVAILABLE" : "PRIVATE_PHOTOS" };
-        await route.fulfill({ json: { data: { evidence: [], uploads: mode === "malformed" ? {} : uploads } } });
+        await route.fulfill({ json: { data: { evidence: mode === "review" ? [{ id: pkg.id, mediaKind: "PHOTO", createdAt: new Date().toISOString(), availableForInspection: false }] : [], uploads: mode === "malformed" ? {} : uploads } } });
       });
       try {
         await page.goto(`${origin}/${portal}/packages/${pkg.packageCode}`, { waitUntil: "domcontentloaded" });
@@ -46,6 +46,12 @@ export async function verifyInspectionCapture({ origin, pkg, inspectorCookie, wo
         mode = "unavailable"; await page.reload();
         await expect(page.getByText("Secure evidence uploads are unavailable. Contact the administrator before capturing files.")).toBeVisible();
         await expect(page.getByLabel("Take a photo", { exact: true })).toBeDisabled();
+        if (portal === "inspector") {
+          mode = "review"; await page.reload();
+          await expect(page.getByText("Evidence unavailable or under safety review")).toBeVisible();
+          await expect(page.getByRole("button", { name: "Use this photo" })).toBeDisabled();
+          assert.equal(await page.getByRole("link", { name: "View photo", exact: true }).count(), 0);
+        }
         mode = "development"; await page.reload();
         await expect(page.getByLabel("Record a video", { exact: true })).toBeEnabled();
         mode = "photos"; await page.reload();

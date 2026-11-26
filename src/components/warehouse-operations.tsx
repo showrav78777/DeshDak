@@ -49,13 +49,13 @@ function EvidenceCaptureInputs({ packageId, disabled, onFile }: { packageId: str
 }
 
 function ExistingInspectionEvidence({ packageId, onSelect, disabled }: { packageId: string; disabled?: boolean; onSelect: (reference: string, kind: "PHOTO" | "VIDEO") => void }) {
-  const [items, setItems] = useState<Array<{ id: string; mediaKind: "PHOTO" | "VIDEO"; createdAt: string }>>([]);
+  const [items, setItems] = useState<Array<{ id: string; mediaKind: "PHOTO" | "VIDEO"; createdAt: string; availableForInspection: boolean }>>([]);
   useEffect(() => {
     const controller = new AbortController();
     fetch(`/api/v1/operations/packages/${packageId}/inspection-evidence`, { signal: controller.signal }).then(async response => { if (response.ok) setItems((await response.json()).data.evidence); }).catch(() => {});
     return () => controller.abort();
   }, [packageId]);
-  return items.length ? <fieldset><legend>Evidence captured by warehouse staff</legend>{items.map(item => <div key={item.id}><a href={`/api/v1/operations/inspection-evidence/${item.id}`} target="_blank" rel="noopener noreferrer">View {item.mediaKind.toLowerCase()}</a> <button type="button" disabled={disabled} onClick={() => onSelect(`inspection-evidence/${item.id}`, item.mediaKind)}>Use this {item.mediaKind.toLowerCase()}</button></div>)}</fieldset> : null;
+  return items.length ? <fieldset><legend>Evidence captured by warehouse staff</legend>{items.map(item => <div key={item.id}>{item.availableForInspection ? <a href={`/api/v1/operations/inspection-evidence/${item.id}`} target="_blank" rel="noopener noreferrer">View {item.mediaKind.toLowerCase()}</a> : <span>Evidence unavailable or under safety review</span>} <button type="button" disabled={disabled || !item.availableForInspection} onClick={() => { if (item.availableForInspection) onSelect(`inspection-evidence/${item.id}`, item.mediaKind); }}>Use this {item.mediaKind.toLowerCase()}</button></div>)}</fieldset> : null;
 }
 
 async function postForm(url: string, form: HTMLFormElement) {

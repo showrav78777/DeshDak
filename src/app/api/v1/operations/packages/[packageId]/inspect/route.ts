@@ -38,8 +38,15 @@ export async function POST(request: NextRequest, context: RouteContext<"/api/v1/
       if (await tx.package.count({ where: { orderId: current.orderId, isOutboundActive: true, status: "EXPECTED" } })) throw new Error("INSPECTION_CONFLICT");
       if (parsed.data.mediaReference) {
         if (!inspectionEvidencePattern.test(parsed.data.mediaReference)) throw new Error("INVALID_EVIDENCE");
-        const evidence = await tx.inspectionEvidence.findFirst({ where: { id: parsed.data.mediaReference.split("/")[1], packageId }, select: { mediaKind: true } });
+        const evidenceId = parsed.data.mediaReference.split("/")[1];
+        await tx.$queryRaw`SELECT "id" FROM "InspectionEvidence" WHERE "id"=${evidenceId} AND "packageId"=${packageId} FOR SHARE`;
+        const evidence = await tx.inspectionEvidence.findFirst({ where: { id: evidenceId, packageId }, select: { mediaKind: true, privatePhotoLink: { select: { uploadId: true } } } });
         if (!evidence || (parsed.data.type !== "BASIC" && evidence.mediaKind !== parsed.data.type)) throw new Error("INVALID_EVIDENCE");
+        if (evidence.privatePhotoLink) {
+          await tx.$queryRaw`SELECT "id" FROM "PrivatePhotoUpload" WHERE "id"=${evidence.privatePhotoLink.uploadId} FOR SHARE`;
+          const upload = await tx.privatePhotoUpload.findUnique({ where: { id: evidence.privatePhotoLink.uploadId }, select: { status: true, purpose: true, quarantine: { select: { id: true } }, cleanupAttempt: { select: { id: true } } } });
+          if (!upload || upload.status !== "STORED" || upload.purpose !== "inspection" || upload.quarantine || upload.cleanupAttempt) throw new Error("EVIDENCE_UNDER_REVIEW");
+        }
       }
       const packageLock = await tx.package.updateMany({ where: { id: packageId, status: "RECEIVED", isOutboundActive: true, warehouseId: current.warehouseId }, data: { status: "INSPECTED", qcStatus: parsed.data.result } });
       if (packageLock.count !== 1) throw new Error("INSPECTION_CONFLICT");
@@ -52,6 +59,10 @@ export async function POST(request: NextRequest, context: RouteContext<"/api/v1/
     }, { isolationLevel: "Serializable" });
     return apiSuccess({ inspection, idempotentReplay: false }, { status: 201, headers: privateHeaders });
   } catch (error) {
+    if ((error as Error).message === "EVIDENCE_UNDER_REVIEW") {
+      await prisma.auditLog.create({ data: { actorId: session.userId, action: "inspection.evidence_attachment_blocked", entityType: "Package", entityId: packageId, metadata: { outcome: "EVIDENCE_UNDER_REVIEW" } } });
+      return apiError("EVIDENCE_UNDER_REVIEW", "This evidence is unavailable or under safety review. Choose other approved evidence for this package.", 409);
+    }
     if ((error as Error).message === "INVALID_EVIDENCE") return apiError("INVALID_EVIDENCE", "Choose matching evidence captured for this package.", 422);
     if ((error as Error).message === "INSPECTION_CONFLICT" || ["P2002", "P2034"].includes((error as { code?: string }).code ?? "")) return await replayResult() ?? apiError("PACKAGE_NOT_READY_FOR_INSPECTION", "The package or order changed. Every parcel must arrive before inspection; refresh and review any existing decision.", 409);
     throw error;

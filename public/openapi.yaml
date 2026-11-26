@@ -13385,6 +13385,7 @@
           "VALIDATION_ERROR",
           "PACKAGE_NOT_FOUND",
           "INVALID_EVIDENCE",
+          "EVIDENCE_UNDER_REVIEW",
           "IDEMPOTENCY_KEY_CONFLICT",
           "PACKAGE_NOT_READY_FOR_INSPECTION"
         ],
@@ -19590,9 +19591,14 @@
               "required": [
                 "id",
                 "mediaKind",
-                "createdAt"
+                "createdAt",
+                "availableForInspection"
               ],
               "properties": {
+                "availableForInspection": {
+                  "type": "boolean",
+                  "description": "False for quarantined, non-stored or cleanup-fenced linked uploads. Never authorizes a mutation by itself."
+                },
                 "id": {
                   "type": "string",
                   "format": "uuid"

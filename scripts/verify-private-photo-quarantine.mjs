@@ -116,6 +116,18 @@ try {
   onRead = () => controls.block(admin.session.id, evidenceUpload.id, { reason: "PRIVACY_REVIEW", confirmed: true, idempotencyKey: randomUUID() });
   await assert.rejects(() => delivery.read({ sessionId: owner.session.id, kind: "inspection", subjectId: evidence.id }), /PRIVATE_PHOTO_ACCESS_DENIED/);
   assert.equal((await fetch(evidenceUrl, { headers: { Cookie: owner.cookie } })).status, 410);
+  const listEvidence = await fetch(`${origin}/api/v1/operations/packages/${parcel.id}/inspection-evidence`, { headers: { Cookie: inspector.cookie } });
+  assert.equal(listEvidence.status, 200);
+  const listedEvidence = (await listEvidence.json()).data.evidence;
+  assert.equal(listedEvidence.find(item => item.id === evidence.id).availableForInspection, false);
+  const inspectionBefore = { package: await db.package.findUniqueOrThrow({ where: { id: parcel.id } }), order: await db.order.findUniqueOrThrow({ where: { id: order.id } }), inspections: await db.inspection.count({ where: { packageId: parcel.id } }), events: await db.packageEvent.count({ where: { packageId: parcel.id } }) };
+  for (const type of ["PHOTO", "BASIC"]) {
+    const blockedInspection = await fetch(`${origin}/api/v1/operations/packages/${parcel.id}/inspect`, { method: "POST", headers: { Cookie: inspector.cookie, Origin: origin, "Content-Type": "application/json", "Idempotency-Key": `quarantined-evidence:${randomUUID()}` }, body: JSON.stringify({ type, result: "PASSED", mediaReference: `inspection-evidence/${evidence.id}` }) });
+    assert.equal(blockedInspection.status, 409);
+    assert.equal((await blockedInspection.json()).error.code, "EVIDENCE_UNDER_REVIEW");
+  }
+  assert.deepEqual({ package: await db.package.findUniqueOrThrow({ where: { id: parcel.id } }), order: await db.order.findUniqueOrThrow({ where: { id: order.id } }), inspections: await db.inspection.count({ where: { packageId: parcel.id } }), events: await db.packageEvent.count({ where: { packageId: parcel.id } }) }, inspectionBefore);
+  assert.equal(await db.auditLog.count({ where: { actorId: inspector.user.id, action: "inspection.evidence_attachment_blocked", entityId: parcel.id } }), 2);
   assert.equal((await db.identityVerification.findUniqueOrThrow({ where: { id: identity.id } })).documentPhotoCiphertext.length > 0, true);
   // Exercise the real client form on desktop and mobile, using synthetic records.
   const { chromium } = await import("@playwright/test");

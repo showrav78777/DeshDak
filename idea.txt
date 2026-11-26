@@ -394,3 +394,17 @@ mode, reject unsupported video before POST, and provide unavailable/error/retry
 states. Video remains explicitly development-only; no production transcoding,
 video storage, broader deletion worker or live-provider acceptance was added.
 Owner instructions stay local in ignored NIloy.
+
+24 November 2026 — inspection quarantine attachment gap
+Closed the gap where a linked quarantined photo could be attached to a new
+inspection despite delivery being blocked. Linked quarantined/non-stored/cleanup-
+fenced/wrong-purpose uploads are rejected inside the inspection transaction,
+including BASIC requests with evidence. Denials preserve package/order/events
+and are audited. Staff see unavailable evidence without view/use controls.
+No schema change, quarantine release, production video or deletion activation.
+See docs/INSPECTION_EVIDENCE_REVIEW.md. NIloy remains local-only.
+
+26 November 2026 handoff: saved 24 November run passed all 115 gates in 7.3
+minutes, zero audit findings and production build (181 pages/314 API operations).
+Evidence: docs/verification/20261126-inspection-evidence-review.json. The run is
+historical; actual release still needs current audit and live acceptance.
