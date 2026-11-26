@@ -1,0 +1,43 @@
+name: Private inspection video component
+
+on:
+  pull_request:
+    paths:
+      - services/inspection-video/**
+      - services/media-scanner/clamd.mjs
+      - src/modules/private-storage/video-processing.ts
+      - scripts/verify-inspection-video-component.mjs
+      - package.json
+      - .dockerignore
+      - .github/workflows/private-video.yml
+  push:
+    branches: [main, codex/deshdak-platform]
+    paths:
+      - services/inspection-video/**
+      - services/media-scanner/clamd.mjs
+      - src/modules/private-storage/video-processing.ts
+      - scripts/verify-inspection-video-component.mjs
+      - package.json
+      - .dockerignore
+      - .github/workflows/private-video.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: private-video-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      # The wrapper uses only Node built-ins; FFmpeg/client tests run in Docker.
+      # No database, cloud credentials, registry publishing or deployment occurs.
+      - name: Verify isolated video processing
+        run: npm run test:inspection-video-component

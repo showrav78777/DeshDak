@@ -1,0 +1,45 @@
+name: deshdak-private-video
+# Private component only: no web/runtime/scheduler or public ingress is connected.
+services:
+  processor:
+    image: ${DESHDAK_PRIVATE_VIDEO_IMAGE:?Supply the reviewed private processor image digest}
+    env_file:
+      - ${DESHDAK_PRIVATE_VIDEO_ENV_FILE:?Supply an external private token file}
+    environment: {CLAMD_HOST: clamd, CLAMD_PORT: "3310", PORT: "8080"}
+    depends_on:
+      clamd: {condition: service_healthy}
+    networks: [video_internal]
+    user: "1000:1000"
+    read_only: true
+    tmpfs: ["/tmp:rw,noexec,nosuid,nodev,size=134217728,mode=1777"]
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    init: true
+    restart: unless-stopped
+    mem_limit: 1g
+    cpus: 2
+    pids_limit: 64
+    logging:
+      driver: json-file
+      options: {max-size: "10m", max-file: "3"}
+  clamd:
+    platform: linux/amd64
+    image: ${DESHDAK_CLAMAV_IMAGE:?Supply the reviewed engine-wrapper image digest}
+    env_file: [./services/inspection-video/clamd.env]
+    volumes: [video_definitions:/var/lib/clamav]
+    networks: [video_internal, definitions_egress]
+    security_opt: [no-new-privileges:true]
+    init: true
+    restart: unless-stopped
+    mem_limit: 4g
+    cpus: 2
+    pids_limit: 128
+    logging:
+      driver: json-file
+      options: {max-size: "10m", max-file: "3"}
+networks:
+  video_internal: {internal: true}
+  # Restrict this at the hosting firewall to approved definition-update services.
+  definitions_egress: {}
+volumes:
+  video_definitions: {}

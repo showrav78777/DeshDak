@@ -151,7 +151,8 @@
     "test:private-media-lifecycle": "node --no-warnings scripts/verify-private-media-lifecycle.mjs",
     "test:private-media-eligibility": "node --no-warnings scripts/verify-private-media-eligibility.mjs",
     "test:private-media-deletion-reviews": "node --no-warnings scripts/verify-private-media-deletion-reviews.mjs",
-    "test:abandoned-photo-cleanup": "node --no-warnings scripts/verify-abandoned-photo-cleanup.mjs"
+    "test:abandoned-photo-cleanup": "node --no-warnings scripts/verify-abandoned-photo-cleanup.mjs",
+    "test:inspection-video-component": "node scripts/verify-inspection-video-component.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "3.1163.0",

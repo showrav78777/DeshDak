@@ -1,0 +1,69 @@
+{
+  "date": "2026-11-26",
+  "baseRevision": "74eba0da51d5308a75ee92ea9fb3988df93a68b6",
+  "result": "passed",
+  "actualFfmpegConversionAndPoster": true,
+  "clamavResponsesSimulated": true,
+  "strictHttpsClientVerifiedLocally": true,
+  "runtimeContainer": {
+    "network": "none",
+    "user": 1000,
+    "rootReadOnly": true,
+    "tmpfsNoexecBounded": true,
+    "capabilitiesDropped": "ALL",
+    "noNewPrivileges": true,
+    "memory": "1g",
+    "cpus": 2,
+    "pidsLimit": 64
+  },
+  "acceptanceImageId": "sha256:67ccba90ac83ccb7e963b80c31f889cb28218888d355d51c7984b633fdf908ee",
+  "componentChecks": [
+    "Three scans ordered before decoding and before artifact return",
+    "H264/AAC output, JPEG poster and metadata removal",
+    "Duration/size/type/digest/auth bounds",
+    "Input/video/poster infection and stale/unavailable engine rejection",
+    "Actual child-process cancellation with no FFmpeg/ffprobe orphan",
+    "HTTP busy response, client disconnect and admission recovery",
+    "Private temporary cleanup after success/failure/abort",
+    "HTTPS-only bounded client and tampered manifest/artifact rejection"
+  ],
+  "appRegressionSuites": [
+    "test:private-photo-scanner",
+    "test:scanned-private-intake",
+    "test:private-photo-delivery"
+  ],
+  "typecheckPassed": true,
+  "eslintPassed": true,
+  "workflowAndCompositionYamlPassed": true,
+  "productionBuildPassed": true,
+  "generatedPageCount": 181,
+  "apiOperationCount": 314,
+  "schemaChanged": false,
+  "ownedVideoContainerAndImageRemoved": true,
+  "disposableSchemaAndDatabaseRemoved": true,
+  "remoteCiVerified": false,
+  "fullLaunchRerun": false,
+  "dependencyAuditRerun": false,
+  "productionVideoEnabled": false,
+  "productionAccepted": false,
+  "videoLogSha256": "03c835b69c173e91171c590b6557f8b55118675c3698d3886d4acfbcd20a6c52",
+  "appLogSha256": "0264c385f97937c1baaee8d77e6636b501610d35f262ce11aa27a33fed98bc34",
+  "verifiedFilesSha256": {
+    "services/inspection-video/processor.mjs": "4ec883dc09ea1e09ddb21cf5995eb66b5aa329b915c110fa454c3ec1ee7c84bb",
+    "services/inspection-video/server.mjs": "afd3f0236a3787b5628e43f99a6cfc3e14bf6a57c7e1d9481ccc90c3c8b27d15",
+    "services/inspection-video/acceptance.mjs": "bc8da05e1d995cda2bbb38224fe7bb563907a3cc009e6830fa8523331573baf8",
+    "services/inspection-video/Dockerfile": "fabd3ff362f54b0fa5b4cce05eb58c5ccaf01c02a4e3e35dc9bd06eb30b73f63",
+    "services/inspection-video/clamd.env": "854db00d614dace17a03915fb96b28289a344f87bbc0f476b348ef1d2ae4c4f5",
+    "src/modules/private-storage/video-processing.ts": "f402cd7b90b361caf7c19059d4fc6295f73a103af3b3ea29597836242cdaee74",
+    "scripts/verify-inspection-video-component.mjs": "82e37bb653c99b30478292e6a5e6b71e1eda8bce8ab87dd3346b20bb14a1dbaf",
+    "compose.private-video.yml": "2ea9c2932d1ae283735611d2ac226900904a5adcff49ecbb4c551e45d165eb60",
+    ".github/workflows/private-video.yml": "71f9728d842fc1eeed8670d87e2cffeb2fc117f1612d724d3412f72aa5cc7baf",
+    "scripts/verify-launch-candidate.mjs": "a4e734b5bd8b3840ef0eaa1ef8cdd84feb490f413380b676236c092242407836"
+  },
+  "limits": [
+    "The component is unwired: no web upload/job/storage/evidence/delivery or lifecycle integration exists.",
+    "Actual ClamAV with the dedicated 30-MiB policy, real ingress, image vulnerability scanning/signing, decoder containment, device and load acceptance remain staging work.",
+    "No live provider, production database or customer file was accessed.",
+    "Temporary files were generated synthetic fixtures only. The default production application still rejects secure video uploads."
+  ]
+}

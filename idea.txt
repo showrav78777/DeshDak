@@ -427,3 +427,15 @@ media lifecycle/recovery and live acceptance remain unfinished. NIloy stays loca
 Fresh local acceptance passed all 115 gates in 5.8 minutes, zero audit findings,
 314 API operations and production build; schema/container removed.
 Evidence: docs/verification/20261126-private-read-database-clock.json.
+
+26 November 2026 — isolated inspection-video processing component
+Added a dedicated private authenticated processor and strict server-only HTTPS
+client: raw/derivative/poster scans, actual FFmpeg normalization, metadata stripping,
+bounded profile, private temporary cleanup and restricted Docker deployment.
+No web upload, evidence/storage/job binding or runtime activation is connected.
+Application integration, original/derivative lifecycle, delivery and real-service/
+security/device acceptance remain engineering work; video stays disabled.
+The owner procedure folder NIloy remains local-only and excluded from GitHub.
+Local actual-FFmpeg/container/client acceptance and three photo regression suites
+plus production build passed. Evidence: docs/verification/20261126-private-video-component.json.
+App integration and live acceptance remain unfinished; this is a processor component only.

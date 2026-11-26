@@ -651,3 +651,35 @@ Production video, broader linked-media lifecycle/recovery and live service,
 independent security and physical-device acceptance remain unfinished. Service
 clocks must still be synchronized; this is local acceptance for the stated scope.
 Owner-only procedures remain under ignored NIloy.
+
+
+## 26 November 2026 — isolated inspection-video processor component
+
+A separate authenticated private processor and strict HTTPS client now implement
+bounded MP4 conversion and JPEG poster generation, with raw/converted/poster scan
+checks and user-metadata removal. It runs in a dedicated non-root container with
+read-only root, bounded noexec tmpfs, dropped capabilities, resource limits and
+private networking. It does not accept caller filenames/URLs/FFmpeg options or
+inherit provider credentials into decoder children. No web route or feature flag
+connects it to inspection uploads; production video stays disabled.
+
+Local container acceptance passed with actual FFmpeg, synthetic fixtures and
+simulated ClamAV responses. It covers conversion/audio/poster, metadata stripping,
+format/resource/digest/auth bounds, all three infected scan positions, stale/error
+engines, concurrency, actual child cancellation, HTTP disconnect/admission recovery,
+temporary cleanup and client response tampering. The owned container/image tag
+were removed. Three existing photo-flow suites and production build (181 pages)
+passed in disposable PostgreSQL; schema/container cleanup was confirmed. Type/lint,
+workflow YAML and composition isolation checks passed. Full launch/audit and remote
+CI were not rerun. The public API still has 314 operations and no schema changed.
+
+A dedicated read-only GitHub verification workflow was added. The release runner
+can optionally include the container test with VERIFY_PRIVATE_VIDEO_COMPONENT=true
+(test-only; not activation). See services/inspection-video/README.md and
+verification/20261126-private-video-component.json.
+
+Engineering still must connect durable uploads/jobs, required original/derivative
+storage, scan provenance, current role/package/hold checks, atomic evidence/audit
+binding, recovery, authorized/range-safe delivery and retention. Real 30-MiB ClamAV,
+image/ingress/containment/load/device and live acceptance remain unverified. The
+Admin media engineering gate remains blocked; owner procedures stay in local NIloy.
