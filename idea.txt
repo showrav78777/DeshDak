@@ -439,3 +439,13 @@ The owner procedure folder NIloy remains local-only and excluded from GitHub.
 Local actual-FFmpeg/container/client acceptance and three photo regression suites
 plus production build passed. Evidence: docs/verification/20261126-private-video-component.json.
 App integration and live acceptance remain unfinished; this is a processor component only.
+
+26 November 2026 — real ClamAV/video acceptance harness
+Added owned real-engine acceptance for the video component, including definition
+freshness, 9/30-MiB inputs, real derivative scans, harmless antivirus rejection,
+oversize and engine outage; no customer files or production accounts. Added an
+optional local launch gate and manual read-only CI option. Video intake/storage/
+evidence/delivery/lifecycle integration and live deployment acceptance remain
+unimplemented/unverified; do not treat this harness as activation. NIloy stays local.
+
+Real-engine local acceptance passed, including exact 30-MiB and outage; evidence in docs/verification/20261126-private-video-real-engine.json. Fixed dedicated video scan budget without weakening website defaults. Test-only synthetic NDB is never production configuration. Application integration and live/security/device acceptance remain blocked.

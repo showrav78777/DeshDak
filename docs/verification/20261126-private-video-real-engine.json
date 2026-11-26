@@ -1,0 +1,62 @@
+{
+  "date": "2026-11-26",
+  "baseRevision": "50d7484d66e0df8c14e7f54c63ceed75bf42854a",
+  "result": "passed",
+  "realEngineVersion": "ClamAV 1.4.6/28194/Wed Nov 25 06:26:59 2026",
+  "processorImageId": "sha256:0a2404b896c99cee19b2795c2de317b04572c2893de8e4a54caa1f723d84a2b5",
+  "engineImageId": "sha256:83757772edacae9a27d443716c6ba60438f1cb35be272d1800fb0c12c3b8e3e5",
+  "checks": [
+    "Fresh real definitions required",
+    "Clean H264/AAC MP4 and JPEG poster scanned by actual engine",
+    "47165-byte, 9-MiB and exact 30-MiB raw inputs accepted; derivatives independently rescanned",
+    "Standalone EICAR detected with official definitions",
+    "Test-only NDB signature detects harmless marker within valid MP4; gateway rejects with no derivatives",
+    "Oversized input rejected",
+    "Stopped engine causes readiness and processing to fail closed",
+    "Synthetic component regression suite passed",
+    "Scanner protocol, default timeout and configurable timeout regression suite passed",
+    "ESLint, syntax and workflow YAML checks passed"
+  ],
+  "testSignature": "Harmless custom NDB copied into disposable engine only; not production and not a malware detection effectiveness assessment",
+  "fix": "Video engine MaxScanTime 25000ms and 30000ms client inactivity timeout; website/image default remains 9000ms and video overall deadline remains 90000ms",
+  "runtimeIsolation": {
+    "processorUser": 1000,
+    "internalNetworkOnly": true,
+    "rootReadOnly": true,
+    "tmpfsNoexecBounded": true,
+    "capabilitiesDropped": "ALL",
+    "noNewPrivileges": true,
+    "memory": "1g",
+    "cpus": 2,
+    "pidsLimit": 64,
+    "hostPortsPublished": false
+  },
+  "cleanupConfirmed": true,
+  "databaseAccessed": false,
+  "schemaChanged": false,
+  "productionVideoEnabled": false,
+  "productionAccepted": false,
+  "remoteCiVerified": false,
+  "fullLaunchAndBuildRerun": false,
+  "logsSha256": {
+    "deshdak-private-video-engine-final.log": "5b409b9fa612d467df16e56f33c99174f89cc610bb0b275548f39aa64e066533",
+    "deshdak-video-component-budget.log": "5ba17677e199b3cb515f73c3d386eebe86808194088c29a4bb49cb8f9b88a020",
+    "deshdak-video-scanner-budget.log": "912927e9f8c42cea63c8dc9b631f1a9a7185318b93b7073e380a33ae0a9b8404",
+    "deshdak-video-engine-lint.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "verifiedFilesSha256": {
+    "services/media-scanner/clamd.mjs": "3b9633dfc47a5837cabe4344e882d793adabbc9e991eb92b8376dc46e044448e",
+    "services/inspection-video/server.mjs": "ae8c9d7038018676602dddfe26dde4173cc82d1b22ded3d1f2c5d3393cdcee1f",
+    "services/inspection-video/clamd.env": "15de15390de8be6eaa954f3712728952e37ebcd40467726f6dd706ff6b363789",
+    "services/inspection-video/engine-acceptance.mjs": "5e85263eba9d017a3ff0d8c370b7a4133b0223d15b128ffe84580914776366ce",
+    "services/inspection-video/Dockerfile": "a232491c642206a56fdf9ddb0c8c0ec4880cecefe3780cb00052f60288974285",
+    "scripts/verify-inspection-video-engine.mjs": "40041a6235e934201364dc704942208b46c71e3166333ed9111834cc8006738a",
+    "scripts/verify-media-scanner.mjs": "54a280846eff5c47080a4a5804a1729a1c97458591a9c9273cb1debc23bcaab3",
+    ".github/workflows/private-video.yml": "f0831ca75b16c359b25557f423e9ff563ef8d56fa3b5305dafa7a35981220f98"
+  },
+  "remaining": [
+    "Durable upload/job integration, original/derivative private storage, provenance and atomic evidence binding",
+    "Authorized delivery, lifecycle/recovery, TLS/ingress and image vulnerability/signing acceptance",
+    "Independent security, load, physical device and live-service acceptance"
+  ]
+}

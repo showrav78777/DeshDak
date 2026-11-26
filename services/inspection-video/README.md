@@ -76,3 +76,31 @@ The dedicated GitHub workflow runs this synthetic component test for relevant
 pull requests and pushes with read-only repository permissions. It does not
 publish images, access credentials or deploy the service. Remote CI acceptance
 must be checked separately from the local result.
+
+
+## Real-engine local acceptance
+
+`npm run test:inspection-video-engine` uses owned real ClamAV and processor
+containers. The processor joins only an internal network; only the engine gets
+definition-update egress. It requires fresh definitions, exercises clean video
+and poster scans, 9-MiB and exact 30-MiB MP4 inputs, checks standalone EICAR
+detection, and rejects a valid MP4 containing an explicit harmless test-only NDB
+marker. The NDB is copied only into the disposable test engine, never production.
+The standard EICAR string is not expected to be detected at arbitrary offsets in
+MP4 padding. Oversized input is rejected; stopping the engine checks failure
+behavior. No production account, customer file, database or public port is used.
+
+The wrapper removes its containers, anonymous volumes, networks, tags and temporary
+token file. Shared base images/build caches remain. Official definition updates
+must work; do not bypass freshness or convert a download/startup failure into a
+passing test. The manual GitHub workflow input real_engine can run the same check.
+VERIFY_PRIVATE_VIDEO_ENGINE=true optionally includes it in a local launch run;
+this is a test flag, not video activation. A successful run does not certify TLS,
+image vulnerabilities/signing, decoder containment, live integration or devices.
+
+The dedicated video engine allows a 25-second scan with a 30-second client
+inactivity timeout, bounded by the unchanged 90-second processing deadline.
+The website/photo engine retains its 8-MiB policy and 9-second default client
+timeout. The shorter video scan budget rejected a clean 30-MiB test file with
+MaxScanTime; limit alerts remain enabled. Synthetic signature format follows
+https://docs.clamav.net/manual/Signatures/ExtendedSignatures.html.

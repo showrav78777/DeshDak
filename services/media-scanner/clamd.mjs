@@ -1,8 +1,9 @@
 import { createConnection } from "node:net";
 
 /** One framed command per bounded connection. Never send a client filename. */
-export function clamdCommand({ host, port, signal }, command, bytes) {
+export function clamdCommand({ host, port, signal, timeoutMs = 9000 }, command, bytes) {
   return new Promise((resolve, reject) => {
+    if (!Number.isInteger(timeoutMs) || timeoutMs < 100 || timeoutMs > 30_000) { reject(new Error("Scanner engine unavailable.")); return; }
     const socket = createConnection({ host, port });
     let response = Buffer.alloc(0); let settled = false;
     const finish = (error, value) => {
@@ -13,7 +14,7 @@ export function clamdCommand({ host, port, signal }, command, bytes) {
     const abort = () => finish(new Error("Aborted"));
     if (signal?.aborted) { abort(); return; }
     signal?.addEventListener("abort", abort, { once: true });
-    socket.setTimeout(9_000, abort);
+    socket.setTimeout(timeoutMs, abort);
     socket.on("error", abort);
     socket.on("close", () => { if (!settled) abort(); });
     socket.on("data", chunk => {

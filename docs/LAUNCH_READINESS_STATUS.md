@@ -683,3 +683,29 @@ storage, scan provenance, current role/package/hold checks, atomic evidence/audi
 binding, recovery, authorized/range-safe delivery and retention. Real 30-MiB ClamAV,
 image/ingress/containment/load/device and live acceptance remain unverified. The
 Admin media engineering gate remains blocked; owner procedures stay in local NIloy.
+
+
+## 26 November 2026 — real ClamAV video component acceptance
+
+The isolated component now passes actual ClamAV 1.4.6 with fresh official
+definitions: clean MP4/audio/poster, 9-MiB and exact 30-MiB inputs, independent
+derivative scans, standalone EICAR detection, oversized rejection and engine
+outage. A harmless custom NDB marker, loaded solely into the disposable engine,
+verifies FOUND rejection through a valid MP4; it is not proof of detection of
+arbitrary malware. The standard EICAR string inside MP4 padding was not detected.
+
+The prior 8-second video scan budget rejected clean 30-MiB files with MaxScanTime.
+Only dedicated video scanning now allows 25 seconds and a 30-second client
+inactivity timeout, under the unchanged 90-second job deadline. Limit alerts and
+30-MiB limits stay enabled; website/photo defaults remain unchanged. Scanner
+protocol/timeout and synthetic video regressions, ESLint, syntax and workflow YAML
+passed. Owned containers, anonymous volumes, networks, tags and token files were
+removed; shared caches remain. No database/customer file/provider account used.
+
+Evidence: verification/20261126-private-video-real-engine.json. Manual CI can
+include real-engine acceptance; remote CI, full launch/build and dependency audit
+were not rerun for this service-only increment. This supersedes only the earlier
+unverified local 30-MiB engine check. Application upload/job/storage/provenance/
+evidence/delivery/lifecycle integration, TLS/image/security/load/device and live
+acceptance remain unfinished. Production video and the Admin engineering gate
+remain disabled/blocked. Owner procedures stay in ignored local NIloy.

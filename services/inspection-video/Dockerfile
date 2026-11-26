@@ -15,5 +15,9 @@ COPY --chown=node:node services/inspection-video/acceptance.mjs ./inspection-vid
 COPY --chown=node:node src/modules/private-storage/video-processing.ts ./test-client.ts
 CMD ["node", "inspection-video/acceptance.mjs"]
 
+FROM runtime AS engine-acceptance
+COPY --chown=node:node services/inspection-video/engine-acceptance.mjs ./inspection-video/
+CMD ["node", "inspection-video/engine-acceptance.mjs"]
+
 # A plain production build must not select the test command by default.
 FROM runtime AS production

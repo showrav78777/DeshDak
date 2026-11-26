@@ -10,6 +10,7 @@ const checks = [
   "test:manual-purchase-review",
   "test:website-media-safety", "test:private-upload-safety", "test:private-photo-storage", "test:private-photo-scanner", "test:media-scanner",
   ...(process.env.VERIFY_PRIVATE_VIDEO_COMPONENT === "true" ? ["test:inspection-video-component"] : []),
+  ...(process.env.VERIFY_PRIVATE_VIDEO_ENGINE === "true" ? ["test:inspection-video-engine"] : []),
   "test:isolated-route-retention", "test:identifier-layout", "test:catalog-sorting",
   "test:source-settings-request", "test:source-readiness", "test:otapi-client", "test:supplier-candidate",
   "api:generate", "api:contract", "typecheck", "lint", "test:production-config", "test:operations-safety", "test:performance-policy", "test:security-regressions", "test:phone-verification-availability", "test:ssl-wireless-otp", "test:phone-otp-payload", "test:verification-cookie-portability", "test:dependency-integrity", "test:dependency-audit", "test:container-security", "db:migration:verify",

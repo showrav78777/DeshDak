@@ -13,7 +13,9 @@ export function createInspectionVideoServer(config) {
   let active = false;
   const tokenDigest = value => createHash("sha256").update(value).digest();
   const processor = createInspectionVideoProcessor(async (bytes, signal) => {
-    const engine = { host: config.host, port: config.port, signal };
+    // Dedicated video scans have a bounded larger-file budget. Image callers
+    // keep clamdCommand's existing nine-second default.
+    const engine = { host: config.host, port: config.port, signal, timeoutMs: 30_000 };
     try {
       requireFreshDefinitions(await clamdCommand(engine, "VERSION"));
       const result = await clamdCommand(engine, "INSTREAM", bytes);

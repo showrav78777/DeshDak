@@ -50,6 +50,10 @@ try{
   assert.equal((await upload({"X-Deshdak-Scan-Sha256":"0".repeat(64)})).status,400);
   for(const [state,status] of [["infected",422],["error",503],["malformed",503],["oversized-reply",503],["stale",503],["version-offline",503]]){mode=state;const response=await upload();assert.equal(response.status,status,state);assert(!JSON.stringify(await response.json()).includes("Synthetic.Test"));}
   mode="clean";const before=scanned;const oversized=new ReadableStream({start(controller){controller.enqueue(new Uint8Array(8*1024*1024+1));controller.close();}});assert.equal((await upload({},oversized)).status,413);assert.equal(scanned,before,"Oversized body reached engine scan.");
+  for (const timeoutMs of [0,99,30001,Infinity,"1000"]) await assert.rejects(clamdCommand({...config,timeoutMs},"VERSION"),/Scanner engine unavailable/);
+  mode="hang";const shortController=new AbortController();let fallbackFired=false;const fallback=setTimeout(()=>{fallbackFired=true;shortController.abort();},3000);
+  try { await assert.rejects(clamdCommand({...config,timeoutMs:100,signal:shortController.signal},"INSTREAM",bytes),/Scanner engine unavailable/);assert.equal(fallbackFired,false,"Per-command timeout did not fire before the fallback abort"); }
+  finally { clearTimeout(fallback);shortController.abort(); }
   mode="hang";const abort=new AbortController();const pending=clamdCommand({...config,signal:abort.signal},"INSTREAM",bytes);setTimeout(()=>abort.abort(),30);await assert.rejects(pending);
   // Saturate the two scan slots, then verify readiness/uploads fail closed.
   const a=upload();const b=upload();await new Promise(resolve=>setTimeout(resolve,80));assert.equal((await upload()).status,503);await Promise.all([a,b]).then(responses=>responses.forEach(response=>assert.equal(response.status,503)));

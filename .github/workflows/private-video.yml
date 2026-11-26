@@ -1,12 +1,20 @@
 name: Private inspection video component
 
 on:
+  workflow_dispatch:
+    inputs:
+      real_engine:
+        description: Include the real ClamAV engine and signature-update acceptance
+        type: boolean
+        required: false
+        default: false
   pull_request:
     paths:
       - services/inspection-video/**
       - services/media-scanner/clamd.mjs
       - src/modules/private-storage/video-processing.ts
       - scripts/verify-inspection-video-component.mjs
+      - scripts/verify-inspection-video-engine.mjs
       - package.json
       - .dockerignore
       - .github/workflows/private-video.yml
@@ -17,6 +25,7 @@ on:
       - services/media-scanner/clamd.mjs
       - src/modules/private-storage/video-processing.ts
       - scripts/verify-inspection-video-component.mjs
+      - scripts/verify-inspection-video-engine.mjs
       - package.json
       - .dockerignore
       - .github/workflows/private-video.yml
@@ -41,3 +50,17 @@ jobs:
       # No database, cloud credentials, registry publishing or deployment occurs.
       - name: Verify isolated video processing
         run: npm run test:inspection-video-component
+      - name: Check real-engine runner syntax
+        run: node --check scripts/verify-inspection-video-engine.mjs
+  real-engine:
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.real_engine }}
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Verify real ClamAV and video processing with synthetic data
+        run: npm run test:inspection-video-engine
