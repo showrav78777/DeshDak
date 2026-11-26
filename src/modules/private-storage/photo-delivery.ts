@@ -27,7 +27,8 @@ export function createPrivatePhotoDelivery(db: PrismaClient, store: Pick<ReturnT
     await tx.$queryRaw`SELECT "id" FROM "User" WHERE "id" = ${initial.userId} FOR NO KEY UPDATE`;
     await tx.$queryRaw`SELECT "id" FROM "AuthSession" WHERE "id" = ${input.sessionId} FOR SHARE`;
     const session = await tx.authSession.findUnique({ where: { id: input.sessionId }, include: { user: { include: { roles: { include: { role: true } } } } } });
-    if (!session || session.revokedAt || session.expiresAt <= new Date() || session.user.status !== "ACTIVE" || session.user.deletedAt) throw denied();
+    const [clock] = await tx.$queryRaw<Array<{ now: Date }>>`SELECT clock_timestamp()::timestamp(3) AS now`;
+    if (!(clock?.now instanceof Date) || !Number.isFinite(clock.now.getTime()) || !session || session.revokedAt || session.expiresAt <= clock.now || session.user.status !== "ACTIVE" || session.user.deletedAt || session.mfaVerifiedAt && session.mfaVerifiedAt > clock.now) throw denied();
     const roles = session.user.roles.map(item => item.role.code);
     const target = input.kind === "identity" ? { identityVerificationId: input.subjectId } : { inspectionEvidenceId: input.subjectId };
     const initialLink = await tx.privatePhotoLink.findFirst({ where: target, select: { id: true, uploadId: true } });
@@ -40,7 +41,7 @@ export function createPrivatePhotoDelivery(db: PrismaClient, store: Pick<ReturnT
     const upload = link.upload;
     if (upload.quarantine || upload.status !== "STORED" || upload.purpose !== input.kind || upload.storageNamespace !== store.namespace || link.linkedById !== upload.actorId) throw denied();
     const reference = parsePrivatePhotoReference(upload.storedReference);
-    if (reference.purpose !== input.kind || !upload.originalScanVerifiedAt || !/^[a-f0-9]{64}$/.test(upload.originalScanSha256 ?? "") || !upload.scanVerifiedAt || upload.originalScanVerifiedAt > upload.scanVerifiedAt || upload.scanVerifiedAt < upload.createdAt || upload.scanVerifiedAt.getTime() > Date.now() + 300_000 || upload.scanVerifiedSha256 !== reference.plaintextSha256) throw denied();
+    if (reference.purpose !== input.kind || !upload.originalScanVerifiedAt || !/^[a-f0-9]{64}$/.test(upload.originalScanSha256 ?? "") || !upload.scanVerifiedAt || upload.originalScanVerifiedAt > upload.scanVerifiedAt || upload.scanVerifiedAt < upload.createdAt || upload.scanVerifiedAt.getTime() > clock.now.getTime() + 300_000 || upload.scanVerifiedSha256 !== reference.plaintextSha256) throw denied();
     if (input.kind === "identity") {
       if (session.portal !== "compliance" || !roles.includes("compliance") || !session.mfaVerifiedAt) throw denied();
       await tx.$queryRaw`SELECT "id" FROM "IdentityVerification" WHERE "id" = ${input.subjectId} FOR SHARE`;
@@ -64,6 +65,8 @@ export function createPrivatePhotoDelivery(db: PrismaClient, store: Pick<ReturnT
         if (!assignments.length) throw denied();
       }
     }
+    const [finalClock] = await tx.$queryRaw<Array<{ now: Date }>>`SELECT clock_timestamp()::timestamp(3) AS now`;
+    if (!(finalClock?.now instanceof Date) || !Number.isFinite(finalClock.now.getTime()) || session.expiresAt <= finalClock.now || session.mfaVerifiedAt && session.mfaVerifiedAt > finalClock.now) throw denied();
     return { actorId: session.userId, linkId: link.id, reference };
   }
 

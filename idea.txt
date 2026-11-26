@@ -417,3 +417,13 @@ shape or production activation changed; broad video/lifecycle/live work remains.
 Owner notes remain local-only under ignored NIloy.
 Verified seven dependent media suites and production build; owned disposable
 schema/container removed. Evidence: docs/verification/20261126-rescan-database-clock.json.
+
+26 November 2026 — private-file delivery time authority
+Moved shared active-account mutation guards and object/legacy private-file expiry
+checks to database time. Added future-MFA rejection and fresh final checks after
+lock waits/provider I/O. Added ±24-hour host-drift, expired-session, future-MFA
+and mid-read expiry tests. No schema/API shape/activation change. Video, broader
+media lifecycle/recovery and live acceptance remain unfinished. NIloy stays local.
+Fresh local acceptance passed all 115 gates in 5.8 minutes, zero audit findings,
+314 API operations and production build; schema/container removed.
+Evidence: docs/verification/20261126-private-read-database-clock.json.

@@ -20,6 +20,18 @@ const photos = await source("../src/modules/private-storage/photos.ts");
 const { createPrivatePhotoStore } = await import(photos);
 const { createPrivatePhotoLinks } = await import(await source("../src/modules/private-storage/record-links.ts", { "./photos": photos }));
 const { createPrivatePhotoDelivery } = await import(await source("../src/modules/private-storage/photo-delivery.ts", { "./photos": photos }));
+const accountModule = await source("../src/modules/auth/account-mutation.ts");
+const { authorizeLegacyPhotoRead } = await import(await source("../src/modules/private-storage/legacy-read-authorization.ts", { "@/modules/auth/account-mutation": accountModule }));
+async function withHostClock(offset, action) {
+  const RealDate = globalThis.Date;
+  class ShiftedDate extends RealDate {
+    constructor(...args) { super(...(args.length ? args : [RealDate.now() + offset])); }
+    static now() { return RealDate.now() + offset; }
+    static [Symbol.hasInstance](value) { return value instanceof RealDate; }
+  }
+  globalThis.Date = ShiftedDate;
+  try { return await action(); } finally { globalThis.Date = RealDate; }
+}
 const db = new PrismaClient(), users = [], warehouses = [], orders = [], packages = [];
 const marker = randomBytes(8).toString("hex"), objects = new Map();
 const config = { bucket: "deshdak-private-test", region: "us-east-1", expectedOwner: "123456789012", kmsKeyArn: "arn:aws:kms:us-east-1:123456789012:key/11111111-1111-4111-8111-111111111111" };
@@ -79,6 +91,42 @@ try {
   for (const actor of [customer, inspector, warehouse]) assert((await delivery.read({ ...photoRead, sessionId: actor.session.id })).bytes.equals(image));
   await expectDenied({ ...photoRead, sessionId: other.session.id }); await expectDenied({ ...photoRead, sessionId: compliance.session.id }); await expectDenied({ ...photoRead, sessionId: admin.session.id });
   await db.authSession.update({ where: { id: admin.session.id }, data: { mfaVerifiedAt: new Date() } }); assert((await delivery.read({ ...photoRead, sessionId: admin.session.id })).bytes.equals(image));
+  const legacyPhoto = { userId: customer.user.id, sessionId: customer.session.id, kind: "inspection", subjectId: evidence.id, sha256: sha };
+  const legacyIdentity = { userId: compliance.user.id, sessionId: compliance.session.id, kind: "identity", subjectId: identity.id, sha256: sha };
+  for (const offset of [-86_400_000, 86_400_000]) {
+    await withHostClock(offset, async () => {
+      assert((await delivery.read(photoRead)).bytes.equals(image));
+      assert((await delivery.read(documentRead)).bytes.equals(image));
+      assert.equal(await authorizeLegacyPhotoRead(db, legacyPhoto), true);
+      assert.equal(await authorizeLegacyPhotoRead(db, legacyIdentity), true);
+    });
+  }
+  const clockOwnerSession = await db.authSession.findUniqueOrThrow({ where: { id: customer.session.id } });
+  const clockComplianceSession = await db.authSession.findUniqueOrThrow({ where: { id: compliance.session.id } });
+  try {
+    await db.authSession.update({ where: { id: customer.session.id }, data: { expiresAt: new Date(Date.now()-1000) } });
+    const beforeExpiredReads = gets;
+    await withHostClock(-86_400_000, async () => {
+      await expectDenied(photoRead);
+      assert.equal(await authorizeLegacyPhotoRead(db, legacyPhoto), false);
+    });
+    assert.equal(gets, beforeExpiredReads);
+    await db.authSession.update({ where: { id: customer.session.id }, data: { expiresAt: clockOwnerSession.expiresAt } });
+    await db.authSession.update({ where: { id: compliance.session.id }, data: { mfaVerifiedAt: new Date(Date.now()+3_600_000) } });
+    const beforeMfaReads = gets;
+    await withHostClock(86_400_000, async () => {
+      await expectDenied(documentRead);
+      assert.equal(await authorizeLegacyPhotoRead(db, legacyIdentity), false);
+    });
+    assert.equal(gets, beforeMfaReads);
+    await db.authSession.update({ where: { id: compliance.session.id }, data: { mfaVerifiedAt: clockComplianceSession.mfaVerifiedAt } });
+    duringRead = () => db.authSession.update({ where: { id: customer.session.id }, data: { expiresAt: new Date(clockOwnerSession.createdAt.getTime()-1000) } });
+    await assert.rejects(() => withHostClock(-86_400_000, () => delivery.read(photoRead)), denied);
+  } finally {
+    duringRead = null;
+    await db.authSession.update({ where: { id: customer.session.id }, data: { expiresAt: clockOwnerSession.expiresAt } });
+    await db.authSession.update({ where: { id: compliance.session.id }, data: { mfaVerifiedAt: clockComplianceSession.mfaVerifiedAt } });
+  }
   await db.package.update({ where: { id: parcel.id }, data: { warehouseId: warehouses[1] } }); await expectDenied({ ...photoRead, sessionId: inspector.session.id }); await db.package.update({ where: { id: parcel.id }, data: { warehouseId: warehouses[0] } });
   await db.privatePhotoUpload.update({ where: { id: evidenceUpload.id }, data: { status: "REVIEW_REQUIRED" } }); await expectDenied(photoRead); await db.privatePhotoUpload.update({ where: { id: evidenceUpload.id }, data: { status: "STORED" } });
   await db.privatePhotoUpload.update({ where: { id: evidenceUpload.id }, data: { originalScanSha256: null, originalScanVerifiedAt: null } }); await expectDenied(photoRead); await db.privatePhotoUpload.update({ where: { id: evidenceUpload.id }, data: { originalScanSha256: sha, originalScanVerifiedAt: evidenceUpload.createdAt } });
@@ -115,7 +163,7 @@ try {
   const audit = JSON.stringify(await db.auditLog.findMany({ where: { action: { in: ["private_photo.viewed", "private_photo.view_blocked"] } } }));
   for (const secret of ["private/v1/", "storedReference", "SECRET_PROVIDER_DIAGNOSTIC", "LEGACY_DO_NOT_FALL_BACK", store.namespace, sha]) assert(!audit.includes(secret));
   assert.equal((await db.identityVerification.findUniqueOrThrow({ where: { id: identity.id } })).documentPhotoCiphertext, "LEGACY_DO_NOT_FALL_BACK");
-  console.log("Private photo delivery passed: current Compliance/customer/staff/MFA boundaries, exact-version decryption, namespace/scan guards, denial before storage, in-flight session/role/assignment/ownership/status changes, storage corruption/failure, audit-write failure, expired/wrong-portal sessions, redacted audit and unchanged legacy evidence. PostgreSQL and encryption were real; S3 and scan proofs were simulated. No HTTP download route was activated.");
+  console.log("Private photo delivery passed: database-time checks under ±24-hour host drift, expired-session/future-MFA denial and expiry during provider I/O, current Compliance/customer/staff/MFA boundaries, exact-version decryption, namespace/scan guards, denial before storage, in-flight session/role/assignment/ownership/status changes, storage corruption/failure, audit-write failure, expired/wrong-portal sessions, redacted audit and unchanged legacy evidence. PostgreSQL and encryption were real; S3 and scan proofs were simulated. No HTTP download route was activated.");
 } finally {
   if (users.length) {
     await db.auditLog.deleteMany({ where: { actorId: { in: users } } });

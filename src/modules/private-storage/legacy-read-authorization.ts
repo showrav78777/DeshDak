@@ -35,7 +35,8 @@ export async function authorizeLegacyPhotoRead(db: PrismaClient, input: { userId
     }
     await tx.$queryRaw`SELECT "roleId" FROM "UserRole" WHERE "userId" = ${input.userId} FOR SHARE`;
     const roles = (await tx.userRole.findMany({ where: { userId: input.userId }, select: { role: { select: { code: true } } } })).map(row => row.role.code);
-    if (session.expiresAt <= new Date()) return deny();
+    const [clock] = await tx.$queryRaw<Array<{ now: Date }>>`SELECT clock_timestamp()::timestamp(3) AS now`;
+    if (!(clock?.now instanceof Date) || !Number.isFinite(clock.now.getTime()) || session.expiresAt <= clock.now || session.mfaVerifiedAt && session.mfaVerifiedAt > clock.now) return deny();
     const allowed = input.kind === "identity"
       ? session.portal === "compliance" && roles.includes("compliance") && Boolean(session.mfaVerifiedAt)
       : session.portal === "customer" && roles.includes("customer_personal") && ownerId === input.userId

@@ -1,12 +1,12 @@
 # DeshDak launch readiness status
 
-Status reviewed: 24 November 2026, Asia/Dhaka
+Status reviewed: 26 November 2026, Asia/Dhaka
 
 Current summary: scanned identity/inspection photo routes and protected object
 downloads are implemented behind a disabled production switch. Admin provides
 versioned retention settings, scoped preservation holds, review scheduling and
 immutable independent deletion-review requests/decisions. Approval never queues
-cleanup or authorizes execution. All 115 launch gates and the production build passed on 24 November, with
+cleanup or authorizes execution. All 115 launch gates and the production build passed on 26 November, with
 zero dependency audit findings. Local acceptance does not certify live services.
 A limited default-disabled internal worker covers abandoned unlinked identity uploads;
 production wiring and broader linked-media execution/recovery, video, messaging/supplier integration
@@ -628,3 +628,26 @@ Full launch/dependency audit and real provider/device acceptance were not rerun.
 See verification/20261126-rescan-database-clock.json. Production video, broader
 linked-media cleanup/recovery and live acceptance remain unfinished. NIloy stays
 local-only; no production runtime was activated.
+
+
+## 26 November 2026 — private file delivery and account mutation clock
+
+Shared active-account mutation locks now check expiry with database time. Object
+delivery checks expiry, future MFA and scan timestamps against database time,
+including a final check after its subject/assignment lock waits and the repeated
+authorization after storage. Legacy-file authorization uses the same account
+guard and database expiry/MFA checks. Existing role/ownership/quarantine/audit
+boundaries are preserved. See PRIVATE_PHOTO_DELIVERY_CLOCK.md.
+
+The fresh isolated run passed all 115 gates in 5.8 minutes, with zero dependency
+audit findings, 314 API operations and a successful production build (181 pages).
+TypeScript/ESLint/diff checks passed; schema/container cleanup was confirmed.
+Regressions cover ±24-hour host drift, expired-session/future-MFA denial before
+storage, mid-read expiry and legacy authorization. No schema/API shape change,
+owner-data access or live activation. Evidence:
+verification/20261126-private-read-database-clock.json.
+
+Production video, broader linked-media lifecycle/recovery and live service,
+independent security and physical-device acceptance remain unfinished. Service
+clocks must still be synchronized; this is local acceptance for the stated scope.
+Owner-only procedures remain under ignored NIloy.
