@@ -1,7 +1,7 @@
 # Private inspection video processing component
 
-This component is not connected to web uploads, private storage, evidence records,
-a scheduler or customer delivery. Existing production video capture stays disabled.
+The production runtime does not connect this component to web uploads, evidence
+records, a scheduler or customer delivery. Existing production capture stays disabled.
 It must run in its dedicated container, never inside the Next.js process.
 
 `POST /process` requires an independent bearer token, uncompressed `video/mp4`,
@@ -116,7 +116,8 @@ this is not durable multi-object job recovery. `test:private-video-artifacts`
 verifies the SDK protocol with synthetic loopback S3 responses, not live AWS.
 
 The store grants no scan approval or upload/evidence/delivery/deletion authority.
-It has no runtime flag and is not connected to this processor. Required work still
+It has no runtime flag. An internal authorized adapter now connects the processor
+and storage components for staging only. Required work still
 includes durable original/derivative jobs, scan provenance, atomic evidence
 binding, current authorization, customer delivery and lifecycle/hold recovery.
 Production activation remains blocked until that integration and live acceptance
@@ -142,3 +143,21 @@ The job ledger is not a processing queue, a role/session authorization service,
 a scan certificate or an evidence approval. It remains unwired. Authorized intake,
 processor provenance, evidence binding, customer delivery, retention/holds and
 controlled recovery remain required before production activation.
+
+## Authorized internal intake
+
+`video-intake.ts` connects the strict client and durable storage jobs. Only verified
+server authentication may supply actor/session IDs; this module is not an HTTP
+authentication mechanism. Warehouse workers/inspectors require matching portals,
+roles and active package-warehouse assignments. Admin requires MFA within 15
+minutes. Database-clock checks under locks run before processing and around
+storage commits. Idempotent requests bind the original digest/package/namespace;
+replay resumes the existing job without another processor call.
+
+`test:private-video-intake` exercises the actual client and PostgreSQL with
+synthetic media and simulated processor/cloud responses. It covers access changes
+during processing/storage, recovery, admin MFA, staff assignments, replay, and
+redacted errors. It does not verify live TLS/codec conversion, create evidence,
+release originals or enable production capture. Provenance, durable processing
+queue, evidence binding, public transport controls, customer delivery and lifecycle
+acceptance remain required. See docs/verification/20261127-private-video-intake.json.

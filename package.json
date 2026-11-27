@@ -155,7 +155,8 @@
     "test:inspection-video-component": "node scripts/verify-inspection-video-component.mjs",
     "test:inspection-video-engine": "node scripts/verify-inspection-video-engine.mjs",
     "test:private-video-artifacts": "node --no-warnings scripts/verify-private-video-artifacts.mjs",
-    "test:private-video-jobs": "node --no-warnings scripts/verify-private-video-jobs.mjs"
+    "test:private-video-jobs": "node --no-warnings scripts/verify-private-video-jobs.mjs",
+    "test:private-video-intake": "node --no-warnings scripts/verify-private-video-intake.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "3.1163.0",

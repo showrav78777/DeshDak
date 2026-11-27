@@ -761,3 +761,36 @@ workflow, evidence binding or customer delivery was enabled. Those integrations,
 original/derivative holds/retention/cleanup, controlled recovery UI and independent
 staging/security/device/live acceptance remain unfinished. Production video and
 the Admin engineering gate stay blocked; NIloy remains local-only.
+
+
+## 27 November 2026 — authorized processor-to-storage handoff
+
+The internal video intake adapter now connects the strict processor client to
+durable encrypted bundle storage. Actor/session IDs must come from verified
+server authentication; there is no HTTP route. Inspector/warehouse portals require
+matching roles and active warehouse assignments. Admin requires MFA within 15
+minutes. Locked session/account/package/role/assignment checks use the database
+clock and run before processing, around staging/storage transactions and before
+returning state. Role or session snapshots are not accepted as upload authority.
+
+Existing requests are bound to actor, package, original digest and namespace.
+Replays resume the stored job without invoking the processor again. Processor
+outages/tampering fail before staging; revocation during processing prevents job
+creation and revocation during storage prevents successful intake. Responses
+contain only opaque job state; failures use redacted audited reasons. Storage
+completion still does not approve or publish inspection evidence.
+
+Acceptance passed in owned disposable PostgreSQL with the actual strict client
+and simulated HTTPS/cloud responses: inspector/warehouse/admin access, missing/
+stale/future MFA, wrong portal/session ownership, session/role/assignment changes
+during processing/storage, replay, recovery, processor errors and tampering.
+The existing job recovery suite, TypeScript, ESLint, workflow YAML and 181-page
+production build passed. The owned database/schema/volume were removed. No schema
+changed and no owner database/provider account was used. Full launch/audit and
+remote CI were not rerun. Evidence: verification/20261127-private-video-intake.json.
+
+Still unfinished: pre-transcoding durable queue/provenance, atomic inspection
+evidence binding, public intake transport limits/CSRF/rate controls, customer
+playback/original access, retention/holds/cleanup/recovery UI and staging/security/
+device/live acceptance. Production capture and the Admin engineering gate remain
+blocked. The owner procedure folder NIloy stays local and ignored.

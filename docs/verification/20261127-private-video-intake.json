@@ -1,0 +1,50 @@
+{
+  "date": "2026-11-27",
+  "baseRevision": "b41576203770a0ce3d9cdd38089f74689be153f4",
+  "result": "passed",
+  "scope": "Authorized internal processor-to-storage staging handoff; no public upload or evidence release",
+  "checks": [
+    "Actual strict processor client connected to real PostgreSQL storage jobs with simulated HTTPS/cloud replies and synthetic bytes",
+    "Inspector and warehouse-worker roles require matching active warehouse assignments",
+    "Admin requires current MFA within 15 minutes; missing, stale and future MFA rejected",
+    "Session expiry, wrong actor/session binding and wrong portal rejected before processing",
+    "Session, role and assignment revocation during processing cannot create storage jobs",
+    "Assignment revocation during object storage cannot commit successful intake; recovery works after access restoration",
+    "Idempotent replay checks input digest/package/namespace and does not retranscode",
+    "Processor outage and tampered derivatives create no storage job",
+    "Opaque job-state responses; fixed redacted errors and failure audits",
+    "Existing storage-job recovery/fencing suite passed",
+    "TypeScript, ESLint, workflow YAML and 181-page production build passed"
+  ],
+  "generatedPageCount": 181,
+  "schemaChanged": false,
+  "cloudAndProcessorResponsesSimulated": true,
+  "liveTlsAndMediaNotVerifiedInThisIncrement": true,
+  "ownerDatabaseAccessed": false,
+  "ownedPostgresqlContainerSchemaAndVolumeRemoved": true,
+  "productionVideoEnabled": false,
+  "productionAccepted": false,
+  "remoteCiVerified": false,
+  "fullLaunchAndAuditRerun": false,
+  "sourceSha256": {
+    "src/modules/private-storage/video-intake.ts": "52b58558f3cafa0fc18b0381eefb4fcedc2236a1f7188151042e507308745b0b",
+    "src/modules/private-storage/video-authorization.ts": "85495183de48b38dfd86931e2fd9196700608488bbe62e74ab5d4987603725b0",
+    "src/modules/private-storage/video-jobs.ts": "c2e7a7be7539c841eda663a3bb85844b050f414996ab83976e1612b7d86d4e57",
+    "scripts/verify-private-video-intake.mjs": "09f07eaca753072cba267ca6aba61226669c8bf61d8d0afc6f143ac5f5ac71ed",
+    "package.json": "3fbe836d14f31536fffd7e211d87185dc2dccf848ad7c34a0f963d02c72981d0",
+    "scripts/verify-launch-candidate.mjs": "e7eac269a39ca721c2e1a5074288d8866193cb1cbc9cb399d93decfa97170050",
+    ".github/workflows/private-video.yml": "193efa42e609e8fd14bdaada9151197597e3157d360519a050a61c297b1d41a0"
+  },
+  "logsSha256": {
+    "deshdak-video-intake-acceptance.log": "7e24f5e2453c849048597c6805d70070ce6665abfd4e7b5f26ca5030c15326ac",
+    "deshdak-video-intake-types.log": "7684d584acb1a029f887ca8a5bbac4692e7de006fa95e4f60747cd6ee64b44ff",
+    "deshdak-video-intake-lint.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "remaining": [
+    "Durable pre-transcoding processing queue, permanent scan provenance and atomic inspection evidence binding",
+    "Public upload API with verified server authentication, CSRF, rate/admission and request limits",
+    "Customer-authorized playback, original access policy and range-safe delivery",
+    "Retention, holds, linked original/derivative cleanup and controlled recovery UI",
+    "Staging infrastructure, independent security, physical-device and live-service acceptance"
+  ]
+}

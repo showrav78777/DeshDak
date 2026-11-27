@@ -16,6 +16,9 @@ on:
       - src/modules/private-storage/video-artifacts.ts
       - src/modules/private-storage/photos.ts
       - scripts/verify-private-video-artifacts.mjs
+      - src/modules/private-storage/video-intake.ts
+      - src/modules/private-storage/video-authorization.ts
+      - scripts/verify-private-video-intake.mjs
       - src/modules/private-storage/video-jobs.ts
       - scripts/verify-private-video-jobs.mjs
       - prisma/schema.prisma
@@ -34,6 +37,9 @@ on:
       - src/modules/private-storage/video-artifacts.ts
       - src/modules/private-storage/photos.ts
       - scripts/verify-private-video-artifacts.mjs
+      - src/modules/private-storage/video-intake.ts
+      - src/modules/private-storage/video-authorization.ts
+      - scripts/verify-private-video-intake.mjs
       - src/modules/private-storage/video-jobs.ts
       - scripts/verify-private-video-jobs.mjs
       - prisma/schema.prisma
@@ -103,7 +109,9 @@ jobs:
           npx prisma generate
           npx prisma migrate deploy
       - name: Verify durable video jobs and interrupted-write recovery
-        run: npm run test:private-video-jobs
+        run: |
+          npm run test:private-video-jobs
+          npm run test:private-video-intake
   real-engine:
     if: ${{ github.event_name == 'workflow_dispatch' && inputs.real_engine }}
     needs: verify

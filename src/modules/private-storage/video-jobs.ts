@@ -20,8 +20,10 @@ async function clock(tx: Tx) {
   const [row] = await tx.$queryRaw<Array<{ now: Date }>>`SELECT clock_timestamp()::timestamp(3) AS "now"`;
   return row.now;
 }
-async function lockScope(tx: Tx, actorId: string, packageId: string) {
+type Authorization = (tx: Tx, actorId: string, packageId: string) => Promise<boolean>;
+async function lockScope(tx: Tx, actorId: string, packageId: string, authorize?: Authorization) {
   await tx.$queryRaw`SELECT "id" FROM "User" WHERE "id" = ${actorId} FOR NO KEY UPDATE`;
+  if (authorize && !await authorize(tx, actorId, packageId)) throw new PrivateVideoJobError();
   await tx.$queryRaw`SELECT "id" FROM "Package" WHERE "id" = ${packageId} FOR UPDATE`;
   const actor = await tx.user.findUnique({ where: { id: actorId }, select: { status: true, deletedAt: true } });
   const parcel = await tx.package.findUnique({ where: { id: packageId }, select: { status: true, isOutboundActive: true } });
@@ -29,7 +31,7 @@ async function lockScope(tx: Tx, actorId: string, packageId: string) {
 }
 
 /** Internal staging only. No public intake, scan approval, evidence binding or delivery authority. */
-export function createPrivateVideoJobs(db: PrismaClient, store: Store) {
+export function createPrivateVideoJobs(db: PrismaClient, store: Store, authorize?: Authorization) {
   async function stage(input: { actorId: string; packageId: string; idempotencyKey: string; profile: Profile; original: Buffer; video: Buffer; poster: Buffer }) {
     const scope = scopeSchema.parse({ actorId: input.actorId, packageId: input.packageId, idempotencyKey: input.idempotencyKey });
     const profile = profileSchema.parse(input.profile);
@@ -40,25 +42,29 @@ export function createPrivateVideoJobs(db: PrismaClient, store: Store) {
     // Encryption is outside database locks. Only encrypted candidates are persisted.
     const prepared = roles.map(role => ({ role, data: store.prepare(role, bytes[role], role === "poster" ? "image/jpeg" : "video/mp4") }));
     return db.$transaction(async tx => {
-      await lockScope(tx, scope.actorId, scope.packageId);
+      await lockScope(tx, scope.actorId, scope.packageId, authorize);
       const existing = await tx.privateVideoJob.findUnique({ where: { actorId_idempotencyKey: { actorId: scope.actorId, idempotencyKey: scope.idempotencyKey } } });
       if (existing) {
         if (existing.packageId !== scope.packageId || existing.fingerprint !== fingerprint || existing.storageNamespace !== store.namespace) throw new PrivateVideoJobError("PRIVATE_VIDEO_JOB_CONFLICT");
+        if (authorize && !await authorize(tx, scope.actorId, scope.packageId)) throw new PrivateVideoJobError();
         return { jobId: existing.id };
       }
       const job = await tx.privateVideoJob.create({ data: { ...scope, fingerprint, storageNamespace: store.namespace, profile, artifacts: { create: prepared.map(({ role, data }) => ({ role, preparedReference: data.reference, encryptedBody: data.encryptedBody })) } } });
       await tx.auditLog.create({ data: { actorId: scope.actorId, action: "private_video.prepared", entityType: "PrivateVideoJob", entityId: job.id, metadata: { profile: profile.profile } } });
+      if (authorize && !await authorize(tx, scope.actorId, scope.packageId)) throw new PrivateVideoJobError();
       return { jobId: job.id };
     });
   }
   async function locked<T>(jobId: string, callback: (tx: Tx, job: NonNullable<Awaited<ReturnType<Tx["privateVideoJob"]["findUnique"]>>>, now: Date) => Promise<T>) {
     const scope = await db.privateVideoJob.findUniqueOrThrow({ where: { id: jobId } });
     return db.$transaction(async tx => {
-      await lockScope(tx, scope.actorId, scope.packageId);
+      await lockScope(tx, scope.actorId, scope.packageId, authorize);
       await tx.$queryRaw`SELECT "id" FROM "PrivateVideoJob" WHERE "id" = ${jobId} FOR UPDATE`;
       const job = await tx.privateVideoJob.findUniqueOrThrow({ where: { id: jobId } });
       if (job.actorId !== scope.actorId || job.packageId !== scope.packageId || job.storageNamespace !== store.namespace) throw new PrivateVideoJobError();
-      return callback(tx, job, await clock(tx));
+      const result = await callback(tx, job, await clock(tx));
+      if (authorize && !await authorize(tx, scope.actorId, scope.packageId)) throw new PrivateVideoJobError();
+      return result;
     });
   }
   async function run(jobId: string): Promise<Result> {
