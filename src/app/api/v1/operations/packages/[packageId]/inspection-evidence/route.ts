@@ -1,3 +1,4 @@
+import { privateVideoRuntime } from "@/modules/private-storage/video-runtime";
 import { privatePhotoRuntime, privatePhotoStorageConfigured } from "@/modules/private-storage/runtime";
 import { createPrivatePhotoSubmissions } from "@/modules/private-storage/submissions";
 import { privatePhotoSubmissionError } from "@/modules/private-storage/submission-response";
@@ -22,7 +23,7 @@ export async function GET(request: NextRequest, context: RouteContext<"/api/v1/o
   const pkg = await prisma.package.findUnique({ where: { id: packageId }, select: { warehouseId: true } });
   if (!pkg || !canAccessWarehouse(access, pkg.warehouseId)) return apiError("PACKAGE_NOT_FOUND", "Package was not found.", 404);
   const evidence = await prisma.inspectionEvidence.findMany({ where: { packageId }, select: { id: true, mediaKind: true, createdAt: true, privateVideoLink: { select: { id: true } }, privatePhotoLink: { select: { upload: { select: { status: true, purpose: true, quarantine: { select: { id: true } }, cleanupAttempt: { select: { id: true } } } } } } }, orderBy: { createdAt: "desc" }, take: 50 });
-  return apiSuccess({ evidence: evidence.map(({ privatePhotoLink, privateVideoLink, ...item }) => ({ ...item, availableForInspection: !privateVideoLink && (!privatePhotoLink || privatePhotoLink.upload.status === "STORED" && privatePhotoLink.upload.purpose === "inspection" && !privatePhotoLink.upload.quarantine && !privatePhotoLink.upload.cleanupAttempt) })), uploads: inspectionUploadCapabilities(process.env, privatePhotoStorageConfigured()) }, { headers: { "Cache-Control": "private, no-store, max-age=0" } });
+  return apiSuccess({ evidence: evidence.map(({ privatePhotoLink, privateVideoLink, ...item }) => ({ ...item, availableForInspection: !privateVideoLink && (!privatePhotoLink || privatePhotoLink.upload.status === "STORED" && privatePhotoLink.upload.purpose === "inspection" && !privatePhotoLink.upload.quarantine && !privatePhotoLink.upload.cleanupAttempt) })), privateVideoUploadAvailable: ["inspector", "warehouse"].includes(session.portal) && Boolean(privateVideoRuntime()), uploads: inspectionUploadCapabilities(process.env, privatePhotoStorageConfigured()) }, { headers: { "Cache-Control": "private, no-store, max-age=0" } });
 }
 
 export async function POST(request: NextRequest, context: RouteContext<"/api/v1/operations/packages/[packageId]/inspection-evidence">) {

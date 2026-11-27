@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef, useState, type FormEvent } from "react";
+import { PrivateInspectionVideoUpload } from "./private-inspection-video-upload";
 import { useRouter } from "next/navigation";
 import { useWarehouseReceiptRequest } from "@/components/warehouse-receipt-request";
 
@@ -12,7 +13,7 @@ function EvidenceCaptureInputs({ packageId, disabled, onFile }: { packageId: str
   const id = useId();
   const [error, setError] = useState("");
   const [retry, setRetry] = useState(0);
-  const [state, setState] = useState<{ packageId: string; retry: number; uploads: InspectionUploadCapabilities | null; failed: boolean } | null>(null);
+  const [state, setState] = useState<{ packageId: string; retry: number; uploads: InspectionUploadCapabilities | null; failed: boolean; privateVideo?: boolean } | null>(null);
   const current = state?.packageId === packageId && state.retry === retry ? state : null;
   const uploads = current?.uploads;
   useEffect(() => {
@@ -22,9 +23,10 @@ function EvidenceCaptureInputs({ packageId, disabled, onFile }: { packageId: str
     fetch(`/api/v1/operations/packages/${packageId}/inspection-evidence`, { signal: controller.signal, credentials: "same-origin", cache: "no-store", redirect: "error" })
       .then(async response => {
         if (!response.ok) throw new Error("Unavailable");
-        const value = (await response.json())?.data?.uploads;
+        const data = (await response.json())?.data;
+        const value = data?.uploads;
         if (!value || typeof value.photos !== "boolean" || typeof value.videos !== "boolean" || value.maxPhotoBytes !== 8 * 1024 * 1024 || value.maxVideoBytes !== 30 * 1024 * 1024 || !["UNAVAILABLE", "PRIVATE_PHOTOS", "DEVELOPMENT"].includes(value.mode) || value.videos && value.mode !== "DEVELOPMENT") throw new Error("Invalid upload capabilities");
-        if (active && !controller.signal.aborted) setState({ packageId, retry, uploads: value, failed: false });
+        if (active && !controller.signal.aborted) setState({ packageId, retry, uploads: value, privateVideo: data.privateVideoUploadAvailable === true, failed: false });
       }).catch(() => { if (active) setState({ packageId, retry, uploads: null, failed: true }); }).finally(() => clearTimeout(timer));
     return () => { active = false; clearTimeout(timer); controller.abort(); };
   }, [packageId, retry]);
@@ -44,7 +46,8 @@ function EvidenceCaptureInputs({ packageId, disabled, onFile }: { packageId: str
   ];
   return <div>
     {!current ? <p role="status">Checking available evidence uploads…</p> : current.failed ? <p role="alert">Evidence upload options could not be checked. <button type="button" onClick={() => setRetry(value => value + 1)}>Retry upload options</button></p> : !uploads?.photos ? <p role="status">Secure evidence uploads are unavailable. Contact the administrator before capturing files.</p> : null}
-    <fieldset className="evidence-capture-controls" disabled={disabled || !uploads?.photos} aria-busy={disabled || !current}><legend>Capture or choose evidence</legend><p id={`${id}-help`}>Photos: up to 8 MB. {uploads?.videos ? "MP4 video: up to 30 MB. Development uploads only. " : "Video capture is unavailable until secure processing is ready. "}Check the product is clearly visible and keep personal information out of frame.</p><div className="evidence-capture-options">{options.map(option => <label className="evidence-capture-option" key={option.key}><span>{option.text}</span><input aria-label={option.text} aria-describedby={`${id}-help`} type="file" accept={option.accept} capture={option.capture} onChange={choose} /></label>)}</div>{disabled ? <p role="status">Please wait while evidence is saved…</p> : null}{error ? <p className="form-error" role="alert">{error}</p> : null}</fieldset>
+    <fieldset className="evidence-capture-controls" disabled={disabled || !uploads?.photos} aria-busy={disabled || !current}><legend>Capture or choose evidence</legend><p id={`${id}-help`}>Photos: up to 8 MB. {uploads?.videos ? "MP4 video: up to 30 MB. Development uploads only. " : current?.privateVideo ? "" : "Video capture is unavailable until secure processing is ready. "}Check the product is clearly visible and keep personal information out of frame.</p><div className="evidence-capture-options">{options.map(option => <label className="evidence-capture-option" key={option.key}><span>{option.text}</span><input aria-label={option.text} aria-describedby={`${id}-help`} type="file" accept={option.accept} capture={option.capture} onChange={choose} /></label>)}</div>{disabled ? <p role="status">Please wait while evidence is saved…</p> : null}{error ? <p className="form-error" role="alert">{error}</p> : null}</fieldset>
+    {current?.privateVideo ? <PrivateInspectionVideoUpload key={packageId} packageId={packageId} disabled={disabled} /> : null}
   </div>;
 }
 

@@ -19872,9 +19872,13 @@
         "type": "object",
         "required": [
           "evidence",
-          "uploads"
+          "uploads",
+          "privateVideoUploadAvailable"
         ],
         "properties": {
+          "privateVideoUploadAvailable": {
+            "type": "boolean"
+          },
           "evidence": {
             "type": "array",
             "maxItems": 50,
