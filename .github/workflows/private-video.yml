@@ -16,6 +16,10 @@ on:
       - src/modules/private-storage/video-artifacts.ts
       - src/modules/private-storage/photos.ts
       - scripts/verify-private-video-artifacts.mjs
+      - src/modules/private-storage/video-preview.ts
+      - src/modules/private-storage/video-preview-response.ts
+      - src/modules/private-storage/video-byte-range.ts
+      - scripts/lib/private-video-preview-acceptance.mjs
       - src/modules/private-storage/video-evidence.ts
       - src/modules/private-storage/video-provenance.ts
       - scripts/verify-private-video-evidence.mjs
@@ -40,6 +44,10 @@ on:
       - src/modules/private-storage/video-artifacts.ts
       - src/modules/private-storage/photos.ts
       - scripts/verify-private-video-artifacts.mjs
+      - src/modules/private-storage/video-preview.ts
+      - src/modules/private-storage/video-preview-response.ts
+      - src/modules/private-storage/video-byte-range.ts
+      - scripts/lib/private-video-preview-acceptance.mjs
       - src/modules/private-storage/video-evidence.ts
       - src/modules/private-storage/video-provenance.ts
       - scripts/verify-private-video-evidence.mjs

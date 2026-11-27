@@ -185,3 +185,29 @@ and live acceptance are implemented. Credentials alone do not activate video.
 It verifies binding/proof failures and real HTTP publication guards with synthetic
 media and processor/cloud replies. Local code/DB acceptance does not replace live
 TLS/image/scanner, independent security, load or physical-device acceptance.
+
+## Protected staged preview component
+
+`video-preview.ts` and its response adapter implement staff-only normalized
+MP4/poster previews. The caller must supply a session ID from verified server
+authentication. Current session/account/role/warehouse/MFA and proof/reference/
+ownership checks run before and after storage I/O. Originals are never selected.
+Owning customers receive an unpublished response; other customers are denied.
+No runtime route, UI or activation switch exposes this component.
+
+The HTTP policy follows [RFC 9110 sections 13.1.5 and 14](https://www.rfc-editor.org/rfc/rfc9110.html#name-range):
+single open/suffix/clamped ranges use 206; unsatisfiable ranges use 416 after
+authorization. Unknown units and multipart requests fall back to full GET. HEAD
+ignores Range. No validators are issued, so If-Range cannot match and selects a
+full response. Integer parsing is overflow-safe and bounded.
+
+The full encrypted object is authenticated before range bytes are returned,
+including for HEAD. Video is bounded to 8 MiB and poster to 512 KiB. Responses use
+private/no-store, nosniff and same-origin protections and fixed filenames. Audit
+failure blocks output. Ingress admission, cancellation and load acceptance remain
+required before wiring any public route. The HTTP fixture uses synthetic media
+and credential resolution; it is not live TLS or device/codec acceptance.
+
+The existing isolated evidence suite includes the preview checks. See
+docs/verification/20261127-private-video-preview.json. Customer publication,
+retention/holds/cleanup and production acceptance remain unfinished.

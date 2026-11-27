@@ -838,3 +838,38 @@ controls, approved publication/range-safe customer delivery/original access,
 retention/holds/cleanup and recovery UI. Staging service identity/TLS/image/scanner,
 independent security, load, physical-device and live acceptance also remain. The
 production media engineering gate stays blocked. NIloy remains local-only.
+
+
+## 27 November 2026 — protected staged preview component
+
+An internal staff preview service and response adapter now provide authenticated
+normalized MP4/JPEG delivery with GET/HEAD and single byte-range handling. Whole
+bounded encrypted objects are authenticated before slicing. Original artifacts
+are never selectable or read by preview. Permission and exact proof/reference/
+ownership snapshots are rechecked after storage reads; successful audit writes
+are required before returning bytes. Staff require current roles/warehouse
+assignments; admin requires MFA within 15 minutes. Database clocks govern expiry.
+
+Owning customers receive an unpublished response and other customers are denied,
+without storage reads or range-size disclosure. This is staff-preview backend
+code only: no public/runtime route, UI preview button or activation flag was
+installed. Existing staged-video download/inspection/customer-page guards remain
+unchanged, and production capture/customer playback remain disabled.
+
+Six targeted video/photo/security suites passed in owned disposable HTTP and
+PostgreSQL servers. Preview tests cover actual HTTP GET/HEAD/206/416, suffix/open/
+clamped ranges, oversized numerals, If-Range/unknown/multipart fallbacks, private
+headers, thumbnails, roles/MFA, no original reads, mid-read revocation/ownership/
+reference changes, tampering and audit failure. Existing quarantine desktop/mobile
+checks passed. TypeScript, ESLint, workflow YAML, migration consistency and the
+181-page production build pass. No schema changed. All owned test servers, schemas,
+container/volume were removed; generated tsconfig includes were cleaned. Full
+launch/audit and remote CI were not rerun.
+
+The quarantine abort/retry browser scenario again logged a destination-stream
+warning; assertions passed. Its association with deliberate abort is inferred.
+Synthetic preview bytes verify HTTP/security behavior, not live media rendering.
+Evidence: verification/20261127-private-video-preview.json. Remaining: durable
+processing queue, public ingress/admission/cancellation/runtime wiring, customer
+publication/playback/original-access policy, lifecycle/holds/recovery, and live/
+independent security/load/device acceptance. NIloy remains local and ignored.

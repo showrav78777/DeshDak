@@ -1,0 +1,64 @@
+{
+  "date": "2026-11-27",
+  "baseRevision": "8eb458611436ad39f6cf79e42737230025178c3f",
+  "result": "passed",
+  "scope": "Unwired staff-only staged preview service and HTTP response adapter; no customer publication",
+  "checks": [
+    "Actual local HTTP GET/HEAD/200/206/416 responses and correct content lengths/ranges",
+    "Open, suffix, clamped and overflow-sized numerals; invalid ranges rejected after authorization",
+    "Unknown units and multipart requests ignored; If-Range without issued validators falls back to full GET; HEAD ignores ranges",
+    "Only normalized MP4/poster selectable; no raw original S3 reads",
+    "Whole encrypted object authenticated before any partial bytes returned",
+    "Private/no-store, same-origin and nosniff headers; no public hashes/ETag or original filenames",
+    "Inspector/warehouse assignment and admin fresh MFA; missing/stale/future MFA rejected",
+    "Owned customer gets unpublished response; other customers and finance denied with no storage reads",
+    "Session, role, assignment, package activity, order ownership and exact reference changes during reads block output",
+    "Malformed provenance, ciphertext tampering and failed audit writes block output",
+    "Six video/photo/security suites and existing quarantine desktop/mobile checks passed",
+    "TypeScript, ESLint, workflow YAML, migration consistency and 181-page production build passed"
+  ],
+  "testSuites": [
+    "test:private-video-intake",
+    "test:private-video-evidence (includes staged preview HTTP acceptance)",
+    "test:private-video-jobs",
+    "test:private-photo-submissions",
+    "test:private-photo-quarantine",
+    "test:security-regressions"
+  ],
+  "generatedPageCount": 181,
+  "schemaChanged": false,
+  "newPublicRoutes": false,
+  "cloudMediaAndCredentialTransportSimulated": true,
+  "actualLocalHttpAndPostgresql": true,
+  "ownerDatabaseAccessed": false,
+  "ownedServersSchemasPostgresqlContainerAndVolumeRemoved": true,
+  "productionVideoEnabled": false,
+  "customerPlaybackEnabled": false,
+  "productionAccepted": false,
+  "remoteCiVerified": false,
+  "fullLaunchAndAuditRerun": false,
+  "sourceSha256": {
+    "src/modules/private-storage/video-byte-range.ts": "478e859daca1711c8532968144b18dd3b6b25693eeab086628ca785b2222ab80",
+    "src/modules/private-storage/video-preview.ts": "6f765645f1e13ffbff2f17bed5ae5c7becdd550a9e377cefee25fa135116a27e",
+    "src/modules/private-storage/video-preview-response.ts": "5194786c98117252d5ff9a8e69a224edcf333ca56ecc9affab4f535348623640",
+    "scripts/lib/private-video-preview-acceptance.mjs": "20861658f753a7336a8f80fad53f203ef4214cdd58a094898752ab567365de3f",
+    "scripts/verify-private-video-evidence.mjs": "1de01a9b32a77a4b431d19d7ad948fb499e480ad90d089ccd73684f6d030f236",
+    ".github/workflows/private-video.yml": "17abc95bf61e5aa92c6a8ce3b5700ce34b8944d3180257893ad0515bf0d578c8"
+  },
+  "logsSha256": {
+    "deshdak-video-preview-acceptance.log": "3eb567c5740a44c277d813a6674b67c0477523dd7a7a56af73fbf5ae183d72b5",
+    "deshdak-video-preview-types.log": "7684d584acb1a029f887ca8a5bbac4692e7de006fa95e4f60747cd6ee64b44ff",
+    "deshdak-video-preview-lint.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "observations": [
+    "The existing quarantine browser abort/retry scenario again logged a destination-stream warning; its browser assertions passed. The causal association is inferred, not a production acceptance result.",
+    "Preview GET ranges and HEAD authenticate the whole bounded object; this is not ciphertext range streaming. Public ingress admission/cancellation/load controls remain required.",
+    "HTTP byte delivery was tested with synthetic media; actual preview codec/device rendering was not certified."
+  ],
+  "remaining": [
+    "Durable pre-transcoding queue and public intake/preview runtime wiring",
+    "Approved customer publication, playback and original access policy",
+    "Retention, holds, linked cleanup and controlled recovery UI",
+    "Live TLS/service/image/scanner, independent security, load and physical-device acceptance"
+  ]
+}
