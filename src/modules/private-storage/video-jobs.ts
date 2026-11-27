@@ -32,7 +32,7 @@ async function lockScope(tx: Tx, actorId: string, packageId: string, authorize?:
 
 /** Internal staging only. No public intake, scan approval, evidence binding or delivery authority. */
 export function createPrivateVideoJobs(db: PrismaClient, store: Store, authorize?: Authorization) {
-  async function stage(input: { actorId: string; packageId: string; idempotencyKey: string; profile: Profile; original: Buffer; video: Buffer; poster: Buffer }) {
+  async function stage(input: { actorId: string; packageId: string; idempotencyKey: string; profile: Profile; original: Buffer; video: Buffer; poster: Buffer }, recordProcessing?: (tx: Tx, jobId: string) => Promise<void>) {
     const scope = scopeSchema.parse({ actorId: input.actorId, packageId: input.packageId, idempotencyKey: input.idempotencyKey });
     const profile = profileSchema.parse(input.profile);
     if (roles.some(role => !Buffer.isBuffer(input[role]))) throw new PrivateVideoJobError();
@@ -46,11 +46,13 @@ export function createPrivateVideoJobs(db: PrismaClient, store: Store, authorize
       const existing = await tx.privateVideoJob.findUnique({ where: { actorId_idempotencyKey: { actorId: scope.actorId, idempotencyKey: scope.idempotencyKey } } });
       if (existing) {
         if (existing.packageId !== scope.packageId || existing.fingerprint !== fingerprint || existing.storageNamespace !== store.namespace) throw new PrivateVideoJobError("PRIVATE_VIDEO_JOB_CONFLICT");
+        if (recordProcessing) await recordProcessing(tx, existing.id);
         if (authorize && !await authorize(tx, scope.actorId, scope.packageId)) throw new PrivateVideoJobError();
         return { jobId: existing.id };
       }
-      const job = await tx.privateVideoJob.create({ data: { ...scope, fingerprint, storageNamespace: store.namespace, profile, artifacts: { create: prepared.map(({ role, data }) => ({ role, preparedReference: data.reference, encryptedBody: data.encryptedBody })) } } });
+      const job = await tx.privateVideoJob.create({ data: { ...scope, createdAt: await clock(tx), fingerprint, storageNamespace: store.namespace, profile, artifacts: { create: prepared.map(({ role, data }) => ({ role, preparedReference: data.reference, encryptedBody: data.encryptedBody })) } } });
       await tx.auditLog.create({ data: { actorId: scope.actorId, action: "private_video.prepared", entityType: "PrivateVideoJob", entityId: job.id, metadata: { profile: profile.profile } } });
+      if (recordProcessing) await recordProcessing(tx, job.id);
       if (authorize && !await authorize(tx, scope.actorId, scope.packageId)) throw new PrivateVideoJobError();
       return { jobId: job.id };
     });
@@ -135,5 +137,5 @@ export function createPrivateVideoJobs(db: PrismaClient, store: Store, authorize
     try { return await operation(); }
     catch (error) { if (error instanceof PrivateVideoJobError) throw error; throw new PrivateVideoJobError(); }
   }
-  return { stage: (input: Parameters<typeof stage>[0]) => safe(() => stage(input)), run: (jobId: string) => safe(() => run(jobId)) };
+  return { stage: (input: Parameters<typeof stage>[0], recordProcessing?: Parameters<typeof stage>[1]) => safe(() => stage(input, recordProcessing)), run: (jobId: string) => safe(() => run(jobId)) };
 }

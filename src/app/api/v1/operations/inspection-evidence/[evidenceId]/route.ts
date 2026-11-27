@@ -13,12 +13,13 @@ export async function GET(request: NextRequest, context: RouteContext<"/api/v1/o
   const session = await getRequestSession(request);
   if (!session) return apiError("AUTHENTICATION_REQUIRED", "Sign in to view private inspection evidence.", 401);
   const { evidenceId } = await context.params;
-  const evidence = await prisma.inspectionEvidence.findUnique({ where: { id: evidenceId }, include: { package: { select: { warehouseId: true, order: { select: { customerId: true } } } } } });
+  const evidence = await prisma.inspectionEvidence.findUnique({ where: { id: evidenceId }, include: { privateVideoLink: { select: { id: true } }, package: { select: { warehouseId: true, order: { select: { customerId: true } } } } } });
   if (!evidence) return apiError("EVIDENCE_NOT_FOUND", "Inspection evidence was not found.", 404);
   const customerAllowed = session.roles.includes(ROLE.CUSTOMER_PERSONAL) && evidence.package.order.customerId === session.userId;
   const [inspectorAccess, warehouseAccess] = customerAllowed ? [null, null] : await Promise.all([getInspectorAccess(session), getWarehouseAccess(session)]);
   const staffAllowed = Boolean((inspectorAccess ?? warehouseAccess) && canAccessWarehouse(inspectorAccess ?? warehouseAccess!, evidence.package.warehouseId));
   if (!customerAllowed && !staffAllowed) return apiError("EVIDENCE_ACCESS_DENIED", "You do not have access to this inspection evidence.", 403);
+  if (evidence.privateVideoLink) return apiError("VIDEO_EVIDENCE_NOT_READY", "This video is not available yet.", 409);
   if (await blockQuarantinedPrivateRecord(prisma, "inspection", evidenceId, session.userId)) return apiError("PHOTO_QUARANTINED", "This photo is blocked pending a controlled security review.", 410);
   const objectResponse = await privatePhotoDeliveryResponse({ sessionId: session.sessionId, kind: "inspection", subjectId: evidenceId });
   if (objectResponse) return objectResponse;

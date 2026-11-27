@@ -147,7 +147,7 @@
     "test:screening-review-authorization": "node scripts/verify-screening-review-authorization.mjs",
     "test:compliance-rule-controls": "node scripts/verify-compliance-rule-controls.mjs",
     "test:compliance-catalog-controls": "node scripts/verify-compliance-catalog-controls.mjs",
-    "test:private-photo-submissions": "node --no-warnings scripts/verify-private-photo-submissions.mjs",
+    "test:private-photo-submissions": "node --no-warnings --input-type=module -e 'import(\"./scripts/verify-private-photo-submissions.mjs\").catch(error => { console.error(error.name + \": \" + String(error.message).slice(-2000)); process.exit(1); })'",
     "test:private-media-lifecycle": "node --no-warnings scripts/verify-private-media-lifecycle.mjs",
     "test:private-media-eligibility": "node --no-warnings scripts/verify-private-media-eligibility.mjs",
     "test:private-media-deletion-reviews": "node --no-warnings scripts/verify-private-media-deletion-reviews.mjs",
@@ -156,7 +156,8 @@
     "test:inspection-video-engine": "node scripts/verify-inspection-video-engine.mjs",
     "test:private-video-artifacts": "node --no-warnings scripts/verify-private-video-artifacts.mjs",
     "test:private-video-jobs": "node --no-warnings scripts/verify-private-video-jobs.mjs",
-    "test:private-video-intake": "node --no-warnings scripts/verify-private-video-intake.mjs"
+    "test:private-video-intake": "node --no-warnings --input-type=module -e 'import(\"./scripts/verify-private-video-intake.mjs\").catch(error => { console.error(error.name + \": \" + String(error.message).slice(-2000)); process.exit(1); })'",
+    "test:private-video-evidence": "node --no-warnings --input-type=module -e 'import(\"./scripts/verify-private-video-evidence.mjs\").catch(error => { console.error(error.name + \": \" + String(error.message).slice(-2000)); process.exit(1); })'"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "3.1163.0",

@@ -16,6 +16,9 @@ on:
       - src/modules/private-storage/video-artifacts.ts
       - src/modules/private-storage/photos.ts
       - scripts/verify-private-video-artifacts.mjs
+      - src/modules/private-storage/video-evidence.ts
+      - src/modules/private-storage/video-provenance.ts
+      - scripts/verify-private-video-evidence.mjs
       - src/modules/private-storage/video-intake.ts
       - src/modules/private-storage/video-authorization.ts
       - scripts/verify-private-video-intake.mjs
@@ -37,6 +40,9 @@ on:
       - src/modules/private-storage/video-artifacts.ts
       - src/modules/private-storage/photos.ts
       - scripts/verify-private-video-artifacts.mjs
+      - src/modules/private-storage/video-evidence.ts
+      - src/modules/private-storage/video-provenance.ts
+      - scripts/verify-private-video-evidence.mjs
       - src/modules/private-storage/video-intake.ts
       - src/modules/private-storage/video-authorization.ts
       - scripts/verify-private-video-intake.mjs

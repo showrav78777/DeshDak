@@ -18,11 +18,12 @@ async function source(file, replacements = {}) {
 const photo = await source("modules/private-storage/photos");
 const artifacts = await source("modules/private-storage/video-artifacts", { "./photos": photo });
 const jobsUrl = await source("modules/private-storage/video-jobs", { "./video-artifacts": artifacts });
+const provenance = await source("modules/private-storage/video-provenance", { "./video-artifacts": artifacts });
 const account = await source("modules/auth/account-mutation");
 const authorization = await source("modules/private-storage/video-authorization", { "@/modules/auth/account-mutation": account });
 const { createPrivateVideoArtifactStore } = await import(artifacts);
 const { createPrivateInspectionVideoProcessor } = await import(await source("modules/private-storage/video-processing"));
-const { createPrivateVideoIntake } = await import(await source("modules/private-storage/video-intake", { "./video-jobs": jobsUrl, "./video-authorization": authorization }));
+const { createPrivateVideoIntake } = await import(await source("modules/private-storage/video-intake", { "./video-jobs": jobsUrl, "./video-authorization": authorization, "./video-provenance": provenance }));
 const db = new PrismaClient(), marker = randomBytes(8).toString("hex"), users = [], orders = [], parcels = [], warehouses = [];
 const objects = new Map(); let processCalls = 0, puts = 0, onProcess = null, onPut = null, mode = "normal";
 const config = { bucket: "deshdak-private-test", region: "us-east-1", expectedOwner: "123456789012", kmsKeyArn: "arn:aws:kms:us-east-1:123456789012:key/11111111-1111-4111-8111-111111111111" };
@@ -118,6 +119,14 @@ try {
   } assert.equal(processCalls, adminBefore);
   await db.authSession.update({ where: { id: sessionId }, data: { mfaVerifiedAt: new Date() } });
   assert.equal((await submit("admin")).state, "STORED");
+  // Proof chronology must use the same database clock as session authorization.
+  const SystemDate = globalThis.Date;
+  globalThis.Date = class extends SystemDate {
+    constructor(...args) { super(...(args.length ? args : [SystemDate.now() + 2000])); }
+    static now() { return SystemDate.now() + 2000; }
+  };
+  try { assert.equal((await submit("clock-skew")).state, "STORED"); }
+  finally { globalThis.Date = SystemDate; }
   const audits = await db.auditLog.findMany({ where: { actorId } });
   assert(audits.some(row => row.action === "private_video.intake_failed"));
   assert(!JSON.stringify(audits).includes("PRIVATE_EMPLOYEE_FILENAME")); assert(!JSON.stringify(audits).includes("PRIVATE_PROVIDER_DIAGNOSTIC"));
@@ -127,6 +136,7 @@ try {
   onProcess = null; onPut = null; store.close();
   const ids = (await db.privateVideoJob.findMany({ where: { actorId: { in: users } }, select: { id: true } })).map(row => row.id);
   await db.auditLog.deleteMany({ where: { OR: [{ actorId: { in: users } }, { entityType: "PrivateVideoJob", entityId: { in: ids } }, { entityType: "Package", entityId: { in: parcels } }] } });
+  await db.privateVideoProcessingProof.deleteMany({ where: { jobId: { in: ids } } });
   await db.privateVideoArtifact.deleteMany({ where: { jobId: { in: ids } } }); await db.privateVideoJob.deleteMany({ where: { id: { in: ids } } });
   await db.package.deleteMany({ where: { id: { in: parcels } } }); await db.order.deleteMany({ where: { id: { in: orders } } });
   await db.warehouseStaffAssignment.deleteMany({ where: { userId: { in: users } } }); await db.warehouse.deleteMany({ where: { id: { in: warehouses } } });

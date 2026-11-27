@@ -36,7 +36,7 @@ export default async function OrderDetailsPage({ params }: PageProps<"/orders/[o
         statusHistory: { orderBy: { createdAt: "asc" } },
         shippingQuotes: { orderBy: { version: "desc" }, take: 1 },
         rmas: { select: { id: true, reference: true, shipmentId: true, status: true }, orderBy: { createdAt: "desc" } },
-        packages: { include: { warehouse: { select: { name: true, country: true } }, inspectionEvidence: { select: { id: true, mediaKind: true, createdAt: true }, orderBy: { createdAt: "desc" } }, shipmentPackages: { include: { shipment: { include: { events: { orderBy: { occurredAt: "desc" } } } } } } } },
+        packages: { include: { warehouse: { select: { name: true, country: true } }, inspectionEvidence: { where: { privateVideoLink: { is: null } }, select: { id: true, mediaKind: true, createdAt: true }, orderBy: { createdAt: "desc" } }, shipmentPackages: { include: { shipment: { include: { events: { orderBy: { occurredAt: "desc" } } } } } } } },
       },
     }),
     prisma.wallet.findUnique({ where: { userId_currency: { userId: session.userId, currency: "BDT" } }, select: { availableBalance: true } }),

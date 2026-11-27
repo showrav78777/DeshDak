@@ -38,7 +38,8 @@ const submissions=createPrivatePhotoSubmissions(db,{store,scan:scanner});
 async function actor(label,roleCode,portal){
  const role=await db.role.findUniqueOrThrow({where:{code:roleCode}});
  const user=await db.user.create({data:{email:`photo-http-${label}-${marker}@example.test`,fullName:"Synthetic photo workflow",status:"ACTIVE",passwordHash:"unused",roles:{create:{roleId:role.id}}}});users.push(user.id);
- const session=await db.authSession.create({data:{userId:user.id,portal,expiresAt:new Date(Date.now()+3600000),mfaVerifiedAt:portal==="compliance"?new Date():null,clientType:"WEB",clientName:"Synthetic photo workflow"}});
+ const [clock]=await db.$queryRaw`SELECT clock_timestamp()::timestamp(3) AS "now"`;
+ const session=await db.authSession.create({data:{userId:user.id,portal,expiresAt:new Date(clock.now.getTime()+3600000),mfaVerifiedAt:portal==="compliance"?clock.now:null,clientType:"WEB",clientName:"Synthetic photo workflow"}});
  return {user,session};
 }
 const details={documentType:"PASSPORT",issuingCountryCode:"BD",documentNumberLast4:"AB12"};

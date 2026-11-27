@@ -4,6 +4,7 @@ import type { PrismaClient } from "@prisma/client";
 import { z } from "zod";
 import { createPrivateVideoJobs } from "./video-jobs";
 import { authorizeVideoStaging } from "./video-authorization";
+import { recordVideoProcessingProof, matchVideoManifest, videoManifestSchema, videoManifestHash } from "./video-provenance";
 import type { createPrivateVideoArtifactStore } from "./video-artifacts";
 import type { createPrivateInspectionVideoProcessor } from "./video-processing";
 
@@ -28,17 +29,22 @@ export function createPrivateVideoIntake(db: PrismaClient, store: ReturnType<typ
       const originalSha256 = hash(original);
       const idempotencyKey = hash(Buffer.from(JSON.stringify(["inspection-video-intake:v1", scope.requestKey])));
       const jobs = createPrivateVideoJobs(db, store, (tx, actorId, packageId) => authorizeVideoStaging(tx, { actorId, packageId, sessionId: scope.sessionId }));
-      const existing = await db.privateVideoJob.findUnique({ where: { actorId_idempotencyKey: { actorId: scope.actorId, idempotencyKey } } });
+      const existing = await db.privateVideoJob.findUnique({ where: { actorId_idempotencyKey: { actorId: scope.actorId, idempotencyKey } }, include: { processingProof: true, artifacts: { select: { role: true, preparedReference: true } } } });
       let jobId: string;
       if (existing) {
         const profile = existing.profile as { originalSha256?: string };
         if (existing.packageId !== scope.packageId || existing.storageNamespace !== store.namespace || profile?.originalSha256 !== originalSha256) throw new PrivateVideoIntakeError("PRIVATE_VIDEO_INTAKE_CONFLICT");
+        if (!existing.processingProof) throw new PrivateVideoIntakeError();
+        const manifest = videoManifestSchema.parse(existing.processingProof.manifest);
+        if (videoManifestHash(manifest) !== existing.processingProof.manifestSha256 || manifest.originalBytes !== original.length) throw new PrivateVideoIntakeError();
+        matchVideoManifest(manifest, existing.profile, existing.artifacts);
         jobId = existing.id;
       } else {
         const result = await processVideo(Buffer.from(original));
         if (result.originalSha256 !== originalSha256 || result.video.sha256 !== hash(result.video.bytes) || result.poster.sha256 !== hash(result.poster.bytes)) throw new PrivateVideoIntakeError();
         const { video, poster, ...profile } = result;
-        ({ jobId } = await jobs.stage({ actorId: scope.actorId, packageId: scope.packageId, idempotencyKey, profile, original, video: video.bytes, poster: poster.bytes }));
+        const manifest = videoManifestSchema.parse({ ...profile, videoSha256: video.sha256, posterSha256: poster.sha256, originalBytes: original.length, videoBytes: video.bytes.length, posterBytes: poster.bytes.length });
+        ({ jobId } = await jobs.stage({ actorId: scope.actorId, packageId: scope.packageId, idempotencyKey, profile, original, video: video.bytes, poster: poster.bytes }, (tx, id) => recordVideoProcessingProof(tx, { jobId: id, actorId: scope.actorId, sessionId: scope.sessionId, manifest })));
       }
       const stored = await jobs.run(jobId);
       if (!await db.$transaction(tx => authorizeVideoStaging(tx, scope))) throw new PrivateVideoIntakeError("PRIVATE_VIDEO_INTAKE_ACCESS_CHANGED");

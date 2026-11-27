@@ -118,8 +118,8 @@ verifies the SDK protocol with synthetic loopback S3 responses, not live AWS.
 The store grants no scan approval or upload/evidence/delivery/deletion authority.
 It has no runtime flag. An internal authorized adapter now connects the processor
 and storage components for staging only. Required work still
-includes durable original/derivative jobs, scan provenance, atomic evidence
-binding, current authorization, customer delivery and lifecycle/hold recovery.
+includes a durable pre-transcoding queue, public transport controls, approved
+publication, customer delivery and lifecycle/hold recovery.
 Production activation remains blocked until that integration and live acceptance
 are complete. See docs/verification/20261127-private-video-artifacts.json.
 
@@ -139,10 +139,10 @@ The dedicated CI job supplies an ephemeral database; local tests must never use
 the owner's database. Tests use synthetic bytes/cloud replies and do not certify
 media codecs or actual AWS. See docs/verification/20261127-private-video-jobs.json.
 
-The job ledger is not a processing queue, a role/session authorization service,
-a scan certificate or an evidence approval. It remains unwired. Authorized intake,
-processor provenance, evidence binding, customer delivery, retention/holds and
-controlled recovery remain required before production activation.
+Storage completion is not a processing queue, scan certificate or publication
+approval. Internal adapters now provide authorized intake, local processing
+receipts and STAGED evidence bindings. Public runtime wiring, durable processing,
+publication, customer delivery and lifecycle/recovery remain required.
 
 ## Authorized internal intake
 
@@ -158,6 +158,30 @@ replay resumes the existing job without another processor call.
 synthetic media and simulated processor/cloud responses. It covers access changes
 during processing/storage, recovery, admin MFA, staff assignments, replay, and
 redacted errors. It does not verify live TLS/codec conversion, create evidence,
-release originals or enable production capture. Provenance, durable processing
-queue, evidence binding, public transport controls, customer delivery and lifecycle
-acceptance remain required. See docs/verification/20261127-private-video-intake.json.
+release originals or enable production capture. Durable processing, public
+transport controls, publication, customer delivery and lifecycle acceptance
+remain required. See docs/verification/20261127-private-video-intake.json.
+
+## Processing receipts and staged evidence
+
+The verified processor handoff records a local receipt in the same transaction
+as encrypted staging. It binds the profile, source/video/poster digests and sizes
+and uses a database timestamp. Storage completion alone supplies no receipt and cannot approve evidence. Receipts are local provenance, not provider-signed scan
+certificates or proof that deployment/service identity has been accepted.
+
+`video-evidence.ts` checks current uploader authorization, the receipt, namespace,
+all three exact references and their authentic bytes before atomically creating
+InspectionEvidence and its STAGED link. It rechecks authority and references after
+storage reads; retries/concurrent requests reuse one binding. A deferred database
+constraint rejects external video rows without a complete staged binding and
+prevents detaching a link by itself. The schema permits only STAGED links.
+
+Existing list, download, inspection and customer-order paths fail closed for these
+records. There is no publication toggle or upload runtime factory. Evidence cannot
+be used for a passed inspection or played by a customer until delivery, lifecycle
+and live acceptance are implemented. Credentials alone do not activate video.
+
+`test:private-video-evidence` runs against the isolated test web server/database.
+It verifies binding/proof failures and real HTTP publication guards with synthetic
+media and processor/cloud replies. Local code/DB acceptance does not replace live
+TLS/image/scanner, independent security, load or physical-device acceptance.

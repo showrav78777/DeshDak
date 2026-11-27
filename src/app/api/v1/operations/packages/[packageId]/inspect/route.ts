@@ -40,8 +40,9 @@ export async function POST(request: NextRequest, context: RouteContext<"/api/v1/
         if (!inspectionEvidencePattern.test(parsed.data.mediaReference)) throw new Error("INVALID_EVIDENCE");
         const evidenceId = parsed.data.mediaReference.split("/")[1];
         await tx.$queryRaw`SELECT "id" FROM "InspectionEvidence" WHERE "id"=${evidenceId} AND "packageId"=${packageId} FOR SHARE`;
-        const evidence = await tx.inspectionEvidence.findFirst({ where: { id: evidenceId, packageId }, select: { mediaKind: true, privatePhotoLink: { select: { uploadId: true } } } });
+        const evidence = await tx.inspectionEvidence.findFirst({ where: { id: evidenceId, packageId }, select: { mediaKind: true, privateVideoLink: { select: { id: true } }, privatePhotoLink: { select: { uploadId: true } } } });
         if (!evidence || (parsed.data.type !== "BASIC" && evidence.mediaKind !== parsed.data.type)) throw new Error("INVALID_EVIDENCE");
+        if (evidence.privateVideoLink) throw new Error("EVIDENCE_UNDER_REVIEW");
         if (evidence.privatePhotoLink) {
           await tx.$queryRaw`SELECT "id" FROM "PrivatePhotoUpload" WHERE "id"=${evidence.privatePhotoLink.uploadId} FOR SHARE`;
           const upload = await tx.privatePhotoUpload.findUnique({ where: { id: evidence.privatePhotoLink.uploadId }, select: { status: true, purpose: true, quarantine: { select: { id: true } }, cleanupAttempt: { select: { id: true } } } });

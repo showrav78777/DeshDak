@@ -737,6 +737,7 @@ model User {
   advertisementsCreated       Advertisement[]                       @relation("AdvertisementCreator")
   marketingCampaignRecipients MarketingCampaignRecipient[]          @relation("MarketingCampaignRecipientUser")
   securityTokens              SecurityToken[]
+  privateVideoEvidenceLinks   PrivateVideoEvidenceLink[]
   privateVideoJobs            PrivateVideoJob[]
   privatePhotoUploads         PrivatePhotoUpload[]
   privatePhotoLinks           PrivatePhotoLink[]
@@ -1891,6 +1892,7 @@ model InspectionEvidence {
   package        Package  @relation(fields: [packageId], references: [id], onDelete: Restrict)
   uploadedBy     User     @relation("InspectionEvidenceUploader", fields: [uploadedById], references: [id], onDelete: Restrict)
   privatePhotoLink PrivatePhotoLink?
+  privateVideoLink PrivateVideoEvidenceLink?
 
   @@index([packageId, createdAt])
   @@index([uploadedById, createdAt])
@@ -3797,6 +3799,8 @@ model PrivateVideoJob {
   actor User @relation(fields: [actorId], references: [id], onDelete: Restrict)
   package Package @relation(fields: [packageId], references: [id], onDelete: Restrict)
   artifacts PrivateVideoArtifact[]
+  processingProof PrivateVideoProcessingProof?
+  evidenceLink PrivateVideoEvidenceLink?
   @@unique([actorId, idempotencyKey])
   @@index([status, leaseExpiresAt])
   @@index([packageId, createdAt])
@@ -3814,4 +3818,30 @@ model PrivateVideoArtifact {
   updatedAt DateTime @updatedAt
   job PrivateVideoJob @relation(fields: [jobId], references: [id], onDelete: Restrict)
   @@unique([jobId, role])
+}
+
+model PrivateVideoProcessingProof {
+  id String @id @default(uuid())
+  jobId String @unique
+  sessionId String @db.VarChar(36)
+  manifest Json
+  manifestSha256 String @db.VarChar(64)
+  verifiedAt DateTime
+  evidenceLink PrivateVideoEvidenceLink?
+  job PrivateVideoJob @relation(fields: [jobId], references: [id], onDelete: Restrict)
+}
+
+// Staged bindings are intentionally unavailable to inspection and delivery.
+model PrivateVideoEvidenceLink {
+  id String @id @default(uuid())
+  jobId String @unique
+  evidenceId String @unique
+  processingProofId String @unique
+  linkedById String
+  status String @default("STAGED") @db.VarChar(16)
+  createdAt DateTime @default(now())
+  job PrivateVideoJob @relation(fields: [jobId], references: [id], onDelete: Restrict)
+  evidence InspectionEvidence @relation(fields: [evidenceId], references: [id], onDelete: Restrict)
+  processingProof PrivateVideoProcessingProof @relation(fields: [processingProofId], references: [id], onDelete: Restrict)
+  linkedBy User @relation(fields: [linkedById], references: [id], onDelete: Restrict)
 }

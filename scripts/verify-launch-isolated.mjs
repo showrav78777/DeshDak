@@ -64,7 +64,9 @@ function run(command, args, options = {}) {
     stdio: "pipe",
     encoding: "utf8",
   });
-  const output = `${result.stdout ?? ""}${result.stderr ?? ""}`;
+  const output = `${result.stdout ?? ""}${result.stderr ?? ""}`
+    .replace(/data:text\/javascript;base64,[A-Za-z0-9+/=]+/g, "[inline-test-module]")
+    .replace(/postgres(?:ql)?:\/\/[^\s]+/gi, "[REDACTED_DATABASE_URL]");
   if (!options.quiet && output) process.stdout.write(output);
   if (result.error || result.status !== 0) {
     const safeOutput = output

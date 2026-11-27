@@ -1,0 +1,78 @@
+{
+  "date": "2026-11-27",
+  "baseRevision": "200d2a2b958830a903b9139779c6bba87ac95ca0",
+  "result": "passed",
+  "scope": "Local processing receipts and atomic STAGED inspection evidence; no publication or capture activation",
+  "checks": [
+    "Receipt written atomically with encrypted staging, binding profile and all three digests/sizes",
+    "Database-clock receipt/job chronology, including simulated application clock skew",
+    "Raw unproven jobs, altered/future/old receipts, wrong namespace and wrong actor/session rejected",
+    "All three exact object versions authenticated before binding; grants and references checked again afterward",
+    "Concurrent/idempotent binding creates one normalized VIDEO evidence record with no original filename or inline ciphertext",
+    "Deferred database constraints reject unbound external videos and detached links; only STAGED state permitted",
+    "Actual HTTP list marks staged videos unavailable; owner/staff downloads blocked and other customers denied",
+    "VIDEO and BASIC inspection attachment attempts rejected without order/package/inspection changes",
+    "Customer order page excludes staged records",
+    "Private video intake and job recovery regressions passed",
+    "Existing photo submission and quarantine regressions passed, including desktop/mobile browser flows",
+    "Security regression checks passed",
+    "Clean migration deploy, zero drift, reference seed, repeat deploy and cleanup passed",
+    "Prisma schema/client, TypeScript, ESLint, workflow YAML, 314-operation API contract and 181-page production build passed"
+  ],
+  "testSuites": [
+    "test:private-video-intake",
+    "test:private-video-evidence",
+    "test:private-video-jobs",
+    "test:private-photo-submissions",
+    "test:private-photo-quarantine",
+    "test:security-regressions"
+  ],
+  "generatedPageCount": 181,
+  "apiOperationCount": 314,
+  "schemaChanged": true,
+  "mediaProcessorAndS3ResponsesSimulated": true,
+  "actualHttpAndPostgresql": true,
+  "ownerDatabaseAccessed": false,
+  "ownedServerSchemasContainerAndVolumeRemoved": true,
+  "productionVideoEnabled": false,
+  "productionAccepted": false,
+  "remoteCiVerified": false,
+  "fullLaunchAndAuditRerun": false,
+  "observations": [
+    "A destination-stream warning was logged during the existing quarantine browser abort/retry scenario. Browser assertions passed. The association with the deliberate abort is an inference; production stream behavior is not certified by this run.",
+    "The positive photo MFA fixture now uses the authoritative database clock; production access checks were not relaxed.",
+    "Inline test module stack data and database URLs are redacted from isolated-run diagnostics."
+  ],
+  "sourceSha256": {
+    "src/modules/private-storage/video-provenance.ts": "a8717d997022fbc353e5dea2ca92a12c5cda7d1ecc22c3d332a7de949203c205",
+    "src/modules/private-storage/video-evidence.ts": "fd8dc867da5ea49f97ff31a19535518b4271c2ee9969a48e14497ac759ec1105",
+    "src/modules/private-storage/video-intake.ts": "1b4adba500a28c8200f06e0875cc81890defcd81635398af0d51951250742a5c",
+    "src/modules/private-storage/video-jobs.ts": "72a18b8915c3b4377fde81fb3876d06e2e0dd134adf162609eafa2c61eca473c",
+    "prisma/schema.prisma": "7111b842990f9c2ae12744fd6caa2e5d852f26e684f32908af2b66282124c845",
+    "prisma/migrations/20261127160000_private_video_evidence_staging/migration.sql": "bf8885830bd25547c9f1f5db223db93d5c6921b3bfe190abdf0c926596fc23a5",
+    "scripts/verify-private-video-evidence.mjs": "b807a0f751082e902632312f89e0325f13829c1a87bb5c9c8dab70c7fe945421",
+    "scripts/verify-private-video-intake.mjs": "387baf233a62cd6c2bc2d1a2d3139a690f952f7dc56ae46666520eef5fc600d8",
+    "scripts/verify-private-photo-submissions.mjs": "6b29c9d077629d8a66fcb39d4f8edae5f6a3b761a1af7a349ca04cb51659f563",
+    "scripts/verify-launch-isolated.mjs": "a73b84316d9f45ecce698b0c8d84ba6039ca5c131b4ea135b9656a91c580de95",
+    "scripts/verify-launch-candidate.mjs": "83f9e75df62390949ca58071b00345f7c8770f9d1df4b943cac08e4155567e54",
+    "package.json": "e622e8510c5a9835e980e34b8cd76cbf072413a073b188fb0df9c9037be6b606",
+    ".github/workflows/private-video.yml": "306c476e6875583ec2bb78e54ced95a1e90c50db45270507ea3773c52e51a5ca",
+    "src/app/api/v1/operations/packages/[packageId]/inspection-evidence/route.ts": "8a48edbc61428e8064de95e82d1b2800f51d4b3d3b427c57b94d6035bc68f3e5",
+    "src/app/api/v1/operations/packages/[packageId]/inspect/route.ts": "a89b35978b3ec66dcc6028c65193b7fffa647e8d1dde451300dde7cc5539eb49",
+    "src/app/api/v1/operations/inspection-evidence/[evidenceId]/route.ts": "df75fa89d8038bb0a6d8b0a8ab2237a2ffd2a50ac5de7959da430b810acf892c",
+    "src/app/orders/[orderId]/page.tsx": "2a032bcfb7c674c5756ae8c05e6c1906d953f17feb6aef8d462716b074fdf645"
+  },
+  "logsSha256": {
+    "deshdak-video-binding-final.log": "30354e0eadb7c2c8e938e3cdbd2d6446a193ce058fb87eb89cdaa8915ca257e0",
+    "deshdak-video-binding-types.log": "7684d584acb1a029f887ca8a5bbac4692e7de006fa95e4f60747cd6ee64b44ff",
+    "deshdak-video-binding-lint.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "deshdak-video-binding-schema.log": "919c26cbd154c540c8a110d57d3f91dc02c8c73f4e8edb56cddc7bb0b4beea22",
+    "deshdak-video-binding-api.log": "aa351de0b6e98a953a499194162eb55dc2080e91ccf6876469df38d85612487f"
+  },
+  "remaining": [
+    "Durable pre-transcoding queue and public intake transport/admission controls",
+    "Approved publication, customer playback/range delivery and original access policy",
+    "Retention, holds, linked object cleanup and controlled recovery UI",
+    "Staging service identity/TLS/image/scanner acceptance, independent security, load and physical-device acceptance"
+  ]
+}

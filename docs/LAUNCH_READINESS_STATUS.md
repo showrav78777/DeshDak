@@ -794,3 +794,47 @@ evidence binding, public intake transport limits/CSRF/rate controls, customer
 playback/original access, retention/holds/cleanup/recovery UI and staging/security/
 device/live acceptance. Production capture and the Admin engineering gate remain
 blocked. The owner procedure folder NIloy stays local and ignored.
+
+
+## 27 November 2026 — processing receipts and staged inspection evidence
+
+The processor handoff now writes a local receipt atomically with encrypted
+staging. Profile, source/video/poster digests and sizes are bound to the job and
+verified against its prepared objects; receipts/job creation use the database
+clock. Raw unproven storage jobs cannot bind evidence. These are local provenance
+receipts, not provider-signed certificates or live-deployment acceptance.
+
+The internal binder validates current uploader access, receipt chronology and
+manifest, namespace, three exact references and authenticated object reads. It
+rechecks access/references after I/O, then atomically creates normalized VIDEO
+InspectionEvidence and its unique STAGED link. Concurrent retries reuse one link.
+No original filename or raw original is published. Database constraints permit
+only STAGED links and reject external video rows without a complete binding at
+commit. Removing a link alone fails; evidence/link removal must be coordinated.
+
+Existing list/download/inspection/customer paths explicitly block or exclude
+staged records. Both VIDEO and BASIC attachment attempts fail without changing
+package/order/inspection state. No public upload runtime or activation flag was
+added. Publication, customer playback, lifecycle and original access stay disabled.
+
+Six targeted suites passed in an owned isolated web server/PostgreSQL instance:
+video intake/evidence/jobs, photo submissions/quarantine, and security regressions.
+Coverage includes real HTTP guards, concurrent binding, access changes during
+reads, malformed/missing/future proofs, unproven jobs, and database constraints.
+The quarantine fixture exercises desktop and mobile UI. Clean migration deploy/
+zero drift/seed/repeat deploy, schema/client, TypeScript, ESLint, workflow YAML,
+314-operation API contract and the 181-page production build passed. Owned test
+server/schema/database/volume cleanup was confirmed; generated test includes were
+removed from tsconfig. Full launch/audit and remote CI were not rerun.
+
+The photo fixture's positive MFA now uses the database clock; production checks
+were not relaxed. A destination-stream warning coincided with the quarantine
+browser's deliberate abort/retry scenario; browser assertions passed. That
+association is inferred, and production stream behavior still needs acceptance.
+Evidence: verification/20261127-private-video-evidence.json.
+
+Remaining engineering: durable pre-transcoding queue, public upload/admission
+controls, approved publication/range-safe customer delivery/original access,
+retention/holds/cleanup and recovery UI. Staging service identity/TLS/image/scanner,
+independent security, load, physical-device and live acceptance also remain. The
+production media engineering gate stays blocked. NIloy remains local-only.
