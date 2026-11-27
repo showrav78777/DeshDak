@@ -275,3 +275,10 @@ The internal queue's `status` operation recovers the opaque upload reference and
 current queue state using the original request key and package scope. An authorized
 employee can recover a lost acknowledgement from a fresh session without sending
 the video again. The lookup uses metadata only and never starts processing.
+
+The internal `enqueueRequest` adapter accepts a raw MP4 request body. It checks
+staff access before reading the body and rechecks access before staging the file.
+It rejects compressed bodies, inconsistent declared lengths and bodies above
+30 MiB. Reads stop on request cancellation or after 30 seconds. The adapter
+buffers up to the upload limit in memory, so a future route also needs an
+admission limit for concurrent uploads.

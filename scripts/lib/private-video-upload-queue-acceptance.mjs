@@ -15,6 +15,16 @@ export async function verifyPrivateVideoUploadQueue(ctx) {
   assert.deepEqual(await make().status(firstScope), first);
   await assert.rejects(() => queue.status({ ...firstScope, requestKey: randomUUID() }), /PRIVATE_VIDEO_QUEUE_UNAVAILABLE/);
   assert.deepEqual(counters(), before);
+  const uploadRequest = headers => new Request("https://example.test/inspection", {
+    method: "POST", headers: { "content-type": "video/mp4", ...headers }, body: raw,
+  });
+  assert.deepEqual(await queue.enqueueRequest(firstScope, uploadRequest({})), first);
+  for (const headers of [{ "content-length": "31457281" }, { "content-length": String(raw.length + 1) }, { "content-encoding": "gzip" }]) {
+    await assert.rejects(() => queue.enqueueRequest(firstScope, uploadRequest(headers)), /PRIVATE_VIDEO_QUEUE_UNAVAILABLE/);
+  }
+  const deniedRequest = uploadRequest({});
+  await assert.rejects(() => queue.enqueueRequest({ ...firstScope, actorId: randomUUID() }, deniedRequest), /PRIVATE_VIDEO_QUEUE_UNAVAILABLE/);
+  assert.equal(deniedRequest.bodyUsed, false);
   const persisted = await db.privateVideoUpload.findUniqueOrThrow({ where: { id: first.uploadId } });
   assert(!Buffer.from(persisted.encryptedBody).equals(raw)); assert.equal(persisted.encryptedBody.length, raw.length + 16); assert(!JSON.stringify(persisted).includes("PRIVATE_QUEUE_FILENAME"));
   for (const replay of await Promise.all([queue.enqueue(firstInput), queue.enqueue(firstInput)])) assert.deepEqual(replay, first);

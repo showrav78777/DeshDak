@@ -21,6 +21,40 @@ async function clock(tx: Tx) {
   return row.now;
 }
 
+const maxVideoBytes = 30 * 1024 * 1024;
+
+async function readVideoRequest(request: Request) {
+  const type = request.headers.get("content-type")?.trim().toLowerCase();
+  const encoding = request.headers.get("content-encoding")?.trim().toLowerCase();
+  const length = request.headers.get("content-length");
+  if (type !== "video/mp4" || (encoding && encoding !== "identity") || !request.body) throw new PrivateVideoQueueError();
+  if (length !== null && (!/^\d{1,8}$/.test(length) || Number(length) < 16 || Number(length) > maxVideoBytes)) throw new PrivateVideoQueueError();
+
+  const signal = AbortSignal.any([request.signal, AbortSignal.timeout(30_000)]);
+  signal.throwIfAborted();
+  const reader = request.body.getReader();
+  const chunks: Uint8Array<ArrayBuffer>[] = [];
+  let bytes = 0;
+  const cancel = () => { void reader.cancel().catch(() => {}); };
+  signal.addEventListener("abort", cancel, { once: true });
+  try {
+    for (;;) {
+      const part = await reader.read();
+      signal.throwIfAborted();
+      if (part.done) break;
+      bytes += part.value.byteLength;
+      if (bytes > maxVideoBytes || (length !== null && bytes > Number(length))) throw new PrivateVideoQueueError();
+      chunks.push(new Uint8Array(part.value));
+    }
+    if (bytes < 16 || (length !== null && bytes !== Number(length))) throw new PrivateVideoQueueError();
+    return new File(chunks, "inspection.mp4", { type: "video/mp4" });
+  } finally {
+    signal.removeEventListener("abort", cancel);
+    cancel();
+    reader.releaseLock();
+  }
+}
+
 /** Internal bounded queue. No scheduler, public transport or release authority. */
 export function createPrivateVideoUploadQueue(db: PrismaClient, store: ReturnType<typeof createPrivateVideoArtifactStore>, processor: ReturnType<typeof createPrivateInspectionVideoProcessor>, encryptionKey: Buffer) {
   const key = Buffer.from(encryptionKey);
@@ -54,12 +88,25 @@ export function createPrivateVideoUploadQueue(db: PrismaClient, store: ReturnTyp
     if (raw.length !== row.sizeBytes || digest(raw) !== row.originalSha256 || raw.toString("ascii", 4, 8) !== "ftyp") throw new PrivateVideoQueueError();
     return raw;
   }
-  return {
+  const queue = {
+    async enqueueRequest(input: Scope, request: Request) {
+      let scope: Scope;
+      let file: File;
+      try {
+        scope = scopeSchema.parse(input);
+        await db.$transaction(tx => authorize(tx, scope));
+        file = await readVideoRequest(request);
+      } catch {
+        await failed();
+        throw new PrivateVideoQueueError();
+      }
+      return queue.enqueue({ ...scope, file });
+    },
     async enqueue(input: Scope & { file: File }) {
       let actorId: string | undefined;
       try {
         const scope = scopeSchema.parse({ actorId: input.actorId, sessionId: input.sessionId, packageId: input.packageId, requestKey: input.requestKey }); actorId = scope.actorId;
-        if (!(input.file instanceof File) || input.file.type !== "video/mp4" || input.file.size < 16 || input.file.size > 30 * 1024 * 1024) throw new PrivateVideoQueueError();
+        if (!(input.file instanceof File) || input.file.type !== "video/mp4" || input.file.size < 16 || input.file.size > maxVideoBytes) throw new PrivateVideoQueueError();
         await db.$transaction(tx => authorize(tx, scope));
         const raw = Buffer.from(await input.file.arrayBuffer());
         if (raw.length !== input.file.size || raw.toString("ascii", 4, 8) !== "ftyp") throw new PrivateVideoQueueError();
@@ -171,4 +218,5 @@ export function createPrivateVideoUploadQueue(db: PrismaClient, store: ReturnTyp
       } catch { await failed(actorId); throw new PrivateVideoQueueError(); }
     },
   };
+  return queue;
 }
