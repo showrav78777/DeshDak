@@ -13,6 +13,9 @@ on:
       - services/inspection-video/**
       - services/media-scanner/clamd.mjs
       - src/modules/private-storage/video-processing.ts
+      - src/modules/private-storage/video-artifacts.ts
+      - src/modules/private-storage/photos.ts
+      - scripts/verify-private-video-artifacts.mjs
       - scripts/verify-inspection-video-component.mjs
       - scripts/verify-inspection-video-engine.mjs
       - package.json
@@ -24,6 +27,9 @@ on:
       - services/inspection-video/**
       - services/media-scanner/clamd.mjs
       - src/modules/private-storage/video-processing.ts
+      - src/modules/private-storage/video-artifacts.ts
+      - src/modules/private-storage/photos.ts
+      - scripts/verify-private-video-artifacts.mjs
       - scripts/verify-inspection-video-component.mjs
       - scripts/verify-inspection-video-engine.mjs
       - package.json
@@ -52,6 +58,19 @@ jobs:
         run: npm run test:inspection-video-component
       - name: Check real-engine runner syntax
         run: node --check scripts/verify-inspection-video-engine.mjs
+  artifacts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install locked dependencies without lifecycle scripts
+        run: npm ci --ignore-scripts
+      - name: Verify private artifact storage with synthetic loopback S3
+        run: npm run test:private-video-artifacts
   real-engine:
     if: ${{ github.event_name == 'workflow_dispatch' && inputs.real_engine }}
     needs: verify

@@ -8,7 +8,7 @@ const checks = [
   "test:warehouse-receipt-policy",
   "test:supplier-order-records",
   "test:manual-purchase-review",
-  "test:website-media-safety", "test:private-upload-safety", "test:private-photo-storage", "test:private-photo-scanner", "test:media-scanner",
+  "test:website-media-safety", "test:private-upload-safety", "test:private-photo-storage", "test:private-video-artifacts", "test:private-photo-scanner", "test:media-scanner",
   ...(process.env.VERIFY_PRIVATE_VIDEO_COMPONENT === "true" ? ["test:inspection-video-component"] : []),
   ...(process.env.VERIFY_PRIVATE_VIDEO_ENGINE === "true" ? ["test:inspection-video-engine"] : []),
   "test:isolated-route-retention", "test:identifier-layout", "test:catalog-sorting",

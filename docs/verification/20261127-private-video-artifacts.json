@@ -1,0 +1,43 @@
+{
+  "date": "2026-11-27",
+  "baseRevision": "54ce4bfa1de172b9e644265da50c6a5ab7ca91b8",
+  "result": "passed",
+  "scope": "Unwired private inspection-video artifact store; no runtime configuration or public API added",
+  "checks": [
+    "SDK-signed loopback S3 requests with synthetic credentials",
+    "Original 30 MiB, normalized video 8 MiB and poster 512 KiB round trips and bounds",
+    "Independent 256-bit role keys and role/key-bound authenticated encryption",
+    "Opaque keys, conditional writes, expected account owner, KMS and exact version checks",
+    "Ciphertext/plaintext checksum verification and tamper rejection",
+    "Corrupt persisted preparation rejected before any storage request",
+    "Interrupted-write reconciliation and duplicate-write preservation",
+    "Bounded and stalled reads; fixed redacted failures",
+    "TypeScript, ESLint, workflow YAML and diff checks"
+  ],
+  "cloudResponsesSimulated": true,
+  "cloudAccountAccessed": false,
+  "databaseAccessed": false,
+  "schemaChanged": false,
+  "productionVideoEnabled": false,
+  "productionAccepted": false,
+  "remoteCiVerified": false,
+  "fullLaunchOrBuildRerun": false,
+  "sourceSha256": {
+    "src/modules/private-storage/video-artifacts.ts": "5754bf62cca70a3dd273edd08385ccafca8e6b6ea2465b16d784a6919df173a1",
+    "scripts/verify-private-video-artifacts.mjs": "2705fa5b027f05ceef96f96d4fd472ade8047d0677d5606564ab1143b709494a",
+    "package.json": "e0cc721c94f15a35c2614c7f9da5ee15ef561a62a336e70ec598fa3b200f95ba",
+    "scripts/verify-launch-candidate.mjs": "bb39f351fb09058da7dd224d01816382df30b3588e324dc0829bccb83d74cdcb",
+    ".github/workflows/private-video.yml": "dab58cbf63cf3415c629638274bc3af7ef136833b780a020bf635359d44ecf4b"
+  },
+  "logsSha256": {
+    "deshdak-video-artifacts.log": "d56271d03125833f736b61446cb0edf34e30bdec235bdd9957de7dd65ac3df64",
+    "deshdak-video-artifacts-lint.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "deshdak-video-artifacts-types.log": "7684d584acb1a029f887ca8a5bbac4692e7de006fa95e4f60747cd6ee64b44ff"
+  },
+  "remaining": [
+    "Durable job ledger and interrupted multi-object-write recovery",
+    "Authenticated upload and evidence/provenance binding",
+    "Authorized customer delivery and original/derivative retention, holds and cleanup",
+    "Staging AWS/KMS/IAM, TLS, deployment, independent security, load and physical-device acceptance"
+  ]
+}

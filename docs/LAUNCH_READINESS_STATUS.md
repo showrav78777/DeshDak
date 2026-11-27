@@ -709,3 +709,27 @@ unverified local 30-MiB engine check. Application upload/job/storage/provenance/
 evidence/delivery/lifecycle integration, TLS/image/security/load/device and live
 acceptance remain unfinished. Production video and the Admin engineering gate
 remain disabled/blocked. Owner procedures stay in ignored local NIloy.
+
+
+## 27 November 2026 — private video artifact storage component
+
+An unwired server-only store now supports the three required inspection video
+objects: original (30 MiB), normalized video (8 MiB), and JPEG poster (512 KiB).
+Each role requires a distinct 256-bit application encryption key. Authenticated
+encryption binds the role and opaque object key; storage additionally requires
+expected account ownership, KMS, exact versions, encrypted checksums and private
+conditional writes. Reads verify authenticated plaintext and remain size/time
+bounded. Reconciliation can recover a write whose confirmation was lost. Invalid
+persisted preparation is rejected before making any storage request.
+
+SDK-signed synthetic loopback S3 tests, TypeScript, ESLint and workflow YAML pass.
+The test is included in the launch gates and a dedicated read-only CI job. No AWS
+account, production database, user file or live credential was used. No schema
+or runtime route changed; full launch/build and remote CI were not rerun. Evidence:
+verification/20261127-private-video-artifacts.json.
+
+This component does not scan, approve, publish or delete media. It has no runtime
+factory or environment flag. Durable jobs, multi-object recovery, upload/evidence
+authorization and provenance, customer delivery, lifecycle/holds/cleanup and
+staging/security/device acceptance remain unfinished. The production video and
+Admin engineering gates remain blocked. NIloy stays local and ignored.

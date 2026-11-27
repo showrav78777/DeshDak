@@ -104,3 +104,20 @@ The website/photo engine retains its 8-MiB policy and 9-second default client
 timeout. The shorter video scan budget rejected a clean 30-MiB test file with
 MaxScanTime; limit alerts remain enabled. Synthetic signature format follows
 https://docs.clamav.net/manual/Signatures/ExtendedSignatures.html.
+
+## Private artifact storage boundary
+
+`src/modules/private-storage/video-artifacts.ts` provides an unwired store for
+original MP4, normalized MP4 and JPEG poster objects. It uses role-separated
+application encryption, opaque keys, private conditional S3 writes, expected
+owner/KMS checks, exact-version reads and authenticated integrity checks. A
+prepared encrypted object can be reconciled after a lost write acknowledgement;
+this is not durable multi-object job recovery. `test:private-video-artifacts`
+verifies the SDK protocol with synthetic loopback S3 responses, not live AWS.
+
+The store grants no scan approval or upload/evidence/delivery/deletion authority.
+It has no runtime flag and is not connected to this processor. Required work still
+includes durable original/derivative jobs, scan provenance, atomic evidence
+binding, current authorization, customer delivery and lifecycle/hold recovery.
+Production activation remains blocked until that integration and live acceptance
+are complete. See docs/verification/20261127-private-video-artifacts.json.
