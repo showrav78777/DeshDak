@@ -21,6 +21,9 @@ async function clock(tx: Tx) {
   return row.now;
 }
 
+const maxConcurrentVideoRequests = 2;
+let activeVideoRequests = 0;
+
 const maxVideoBytes = 30 * 1024 * 1024;
 
 async function readVideoRequest(request: Request) {
@@ -90,17 +93,19 @@ export function createPrivateVideoUploadQueue(db: PrismaClient, store: ReturnTyp
   }
   const queue = {
     async enqueueRequest(input: Scope, request: Request) {
-      let scope: Scope;
-      let file: File;
+      if (activeVideoRequests >= maxConcurrentVideoRequests) throw new PrivateVideoQueueError();
+      activeVideoRequests++;
       try {
-        scope = scopeSchema.parse(input);
+        const scope = scopeSchema.parse(input);
         await db.$transaction(tx => authorize(tx, scope));
-        file = await readVideoRequest(request);
+        const file = await readVideoRequest(request);
+        return await queue.enqueue({ ...scope, file });
       } catch {
         await failed();
         throw new PrivateVideoQueueError();
+      } finally {
+        activeVideoRequests--;
       }
-      return queue.enqueue({ ...scope, file });
     },
     async enqueue(input: Scope & { file: File }) {
       let actorId: string | undefined;

@@ -280,5 +280,5 @@ The internal `enqueueRequest` adapter accepts a raw MP4 request body. It checks
 staff access before reading the body and rechecks access before staging the file.
 It rejects compressed bodies, inconsistent declared lengths and bodies above
 30 MiB. Reads stop on request cancellation or after 30 seconds. The adapter
-buffers up to the upload limit in memory, so a future route also needs an
-admission limit for concurrent uploads.
+buffers up to the upload limit in memory and accepts two requests per process.
+The limit covers reading and encrypted staging. Replicas each have their own limit.
