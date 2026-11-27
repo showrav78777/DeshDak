@@ -121,3 +121,24 @@ includes durable original/derivative jobs, scan provenance, atomic evidence
 binding, current authorization, customer delivery and lifecycle/hold recovery.
 Production activation remains blocked until that integration and live acceptance
 are complete. See docs/verification/20261127-private-video-artifacts.json.
+
+## Durable storage staging
+
+`video-jobs.ts` stages the already-processed original/video/poster bundle in
+PrivateVideoJob/PrivateVideoArtifact. Only encrypted candidates are persisted.
+The worker journals each write before network I/O, reconciles uncertain writes,
+fences expired/replaced leases and checks current account/package state. Five
+unsuccessful claims require review; a missing uncertain object is not reuploaded.
+All three references must be committed before bundle success clears staged bytes.
+The store's SDK may retry conditional requests within its own bounded policy; the
+ledger does not call write again after a journaled attempt.
+
+`test:private-video-jobs` requires a generated disposable local PostgreSQL schema.
+The dedicated CI job supplies an ephemeral database; local tests must never use
+the owner's database. Tests use synthetic bytes/cloud replies and do not certify
+media codecs or actual AWS. See docs/verification/20261127-private-video-jobs.json.
+
+The job ledger is not a processing queue, a role/session authorization service,
+a scan certificate or an evidence approval. It remains unwired. Authorized intake,
+processor provenance, evidence binding, customer delivery, retention/holds and
+controlled recovery remain required before production activation.

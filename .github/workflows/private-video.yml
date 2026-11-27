@@ -16,6 +16,10 @@ on:
       - src/modules/private-storage/video-artifacts.ts
       - src/modules/private-storage/photos.ts
       - scripts/verify-private-video-artifacts.mjs
+      - src/modules/private-storage/video-jobs.ts
+      - scripts/verify-private-video-jobs.mjs
+      - prisma/schema.prisma
+      - prisma/migrations/**
       - scripts/verify-inspection-video-component.mjs
       - scripts/verify-inspection-video-engine.mjs
       - package.json
@@ -30,6 +34,10 @@ on:
       - src/modules/private-storage/video-artifacts.ts
       - src/modules/private-storage/photos.ts
       - scripts/verify-private-video-artifacts.mjs
+      - src/modules/private-storage/video-jobs.ts
+      - scripts/verify-private-video-jobs.mjs
+      - prisma/schema.prisma
+      - prisma/migrations/**
       - scripts/verify-inspection-video-component.mjs
       - scripts/verify-inspection-video-engine.mjs
       - package.json
@@ -61,6 +69,20 @@ jobs:
   artifacts:
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: video_verify
+          POSTGRES_USER: synthetic
+          POSTGRES_PASSWORD: synthetic_ci_video_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U synthetic -d video_verify"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -71,6 +93,17 @@ jobs:
         run: npm ci --ignore-scripts
       - name: Verify private artifact storage with synthetic loopback S3
         run: npm run test:private-video-artifacts
+      - name: Select a generated schema in the ephemeral CI database
+        run: >-
+          node -e 'const fs=require("node:fs"),crypto=require("node:crypto");
+          const schema="crossly_launch_verify_"+crypto.randomBytes(8).toString("hex");
+          fs.appendFileSync(process.env.GITHUB_ENV,"DATABASE_URL=postgresql://synthetic:synthetic_ci_video_password@localhost:5432/video_verify?schema="+schema+"\n");'
+      - name: Prepare the generated client and disposable database
+        run: |
+          npx prisma generate
+          npx prisma migrate deploy
+      - name: Verify durable video jobs and interrupted-write recovery
+        run: npm run test:private-video-jobs
   real-engine:
     if: ${{ github.event_name == 'workflow_dispatch' && inputs.real_engine }}
     needs: verify

@@ -733,3 +733,31 @@ factory or environment flag. Durable jobs, multi-object recovery, upload/evidenc
 authorization and provenance, customer delivery, lifecycle/holds/cleanup and
 staging/security/device acceptance remain unfinished. The production video and
 Admin engineering gates remain blocked. NIloy stays local and ignored.
+
+
+## 27 November 2026 — durable private video storage jobs
+
+PrivateVideoJob and PrivateVideoArtifact now persist encrypted candidates for a
+three-object storage bundle. Actor-scoped idempotency binds package, profile, all
+three digests and namespace. Each object is journaled before network I/O; a later
+ledger attempt reconciles an uncertain write instead of calling write again.
+An absent uncertain object remains in review. Object references survive partial
+failure; all three are required before bundle success clears staged ciphertext.
+Leases use the database clock and replacement tokens fence old workers. Account
+and package state are rechecked before successful mutations; audits are redacted.
+
+Disposable PostgreSQL tests pass for failures at each object position, missing
+objects/attempt limits, concurrent workers, expired/crashed workers, replacement
+leases and account/package revocation. Storage SDK regressions, schema validation,
+TypeScript, ESLint, clean migration deploy/zero drift/seed/repeat deploy and the
+181-page production build passed. Both owned test databases, schemas and volumes
+were removed. Full launch/audit and remote CI were not rerun. The release gates
+and private-video CI now include job acceptance in disposable databases. Evidence:
+verification/20261127-private-video-jobs.json.
+
+This is storage staging after a processor result, not a durable transcoding queue
+or a scan approval. No scheduler, public intake, role/warehouse/session access
+workflow, evidence binding or customer delivery was enabled. Those integrations,
+original/derivative holds/retention/cleanup, controlled recovery UI and independent
+staging/security/device/live acceptance remain unfinished. Production video and
+the Admin engineering gate stay blocked; NIloy remains local-only.

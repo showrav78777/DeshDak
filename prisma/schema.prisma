@@ -737,6 +737,7 @@ model User {
   advertisementsCreated       Advertisement[]                       @relation("AdvertisementCreator")
   marketingCampaignRecipients MarketingCampaignRecipient[]          @relation("MarketingCampaignRecipientUser")
   securityTokens              SecurityToken[]
+  privateVideoJobs            PrivateVideoJob[]
   privatePhotoUploads         PrivatePhotoUpload[]
   privatePhotoLinks           PrivatePhotoLink[]
   privatePhotoQuarantines     PrivatePhotoQuarantine[]
@@ -1750,6 +1751,7 @@ model Package {
   order                 Order                   @relation(fields: [orderId], references: [id], onDelete: Restrict)
   warehouse             Warehouse?              @relation(fields: [warehouseId], references: [id], onDelete: Restrict)
   warehouseLocation     WarehouseLocation?      @relation(fields: [warehouseLocationId], references: [id], onDelete: SetNull)
+  privateVideoJobs      PrivateVideoJob[]
   inspections           Inspection[]
   inspectionEvidence    InspectionEvidence[]
   shipmentPackages      ShipmentPackage[]
@@ -3775,4 +3777,41 @@ model PrivateMediaCleanupObservation {
   actor User @relation(fields: [actorId], references: [id], onDelete: Restrict)
   @@unique([actorId, idempotencyKey])
   @@unique([attemptId, sequence])
+}
+
+// Internal staging only: a completed bundle is not approved inspection evidence.
+model PrivateVideoJob {
+  id String @id @default(uuid())
+  actorId String
+  packageId String
+  idempotencyKey String @db.VarChar(128)
+  fingerprint String @db.VarChar(64)
+  storageNamespace String @db.VarChar(64)
+  profile Json
+  status String @default("PREPARED") @db.VarChar(24)
+  attempts Int @default(0)
+  leaseToken String? @db.VarChar(36)
+  leaseExpiresAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  actor User @relation(fields: [actorId], references: [id], onDelete: Restrict)
+  package Package @relation(fields: [packageId], references: [id], onDelete: Restrict)
+  artifacts PrivateVideoArtifact[]
+  @@unique([actorId, idempotencyKey])
+  @@index([status, leaseExpiresAt])
+  @@index([packageId, createdAt])
+}
+
+model PrivateVideoArtifact {
+  id String @id @default(uuid())
+  jobId String
+  role String @db.VarChar(16)
+  status String @default("PREPARED") @db.VarChar(24)
+  preparedReference Json
+  encryptedBody Bytes?
+  storedReference Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  job PrivateVideoJob @relation(fields: [jobId], references: [id], onDelete: Restrict)
+  @@unique([jobId, role])
 }

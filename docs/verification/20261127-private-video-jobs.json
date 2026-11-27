@@ -1,0 +1,53 @@
+{
+  "date": "2026-11-27",
+  "baseRevision": "3ef1ddace489912a2fed8f4860b1355244edf093",
+  "result": "passed",
+  "scope": "Unwired durable three-object storage jobs; not a transcoding queue or approved evidence workflow",
+  "checks": [
+    "Original/video/poster candidates encrypted before database persistence",
+    "Actor-scoped idempotency binds package, profile, all three digests and storage namespace",
+    "Journaled per-object writes and interrupted acknowledgement reconciliation",
+    "Each object position tested for lost acknowledgement without another ledger write call",
+    "Uncertain missing object remains review-required; bounded five attempts",
+    "Concurrent workers report BUSY",
+    "Crashed/expired lease recovery and replacement-token fencing",
+    "Suspended account and inactive package prevent successful state commits",
+    "All three exact references committed before bundle success; staged ciphertext cleared only after completion",
+    "Redacted durable audit records; no inspection evidence created",
+    "Clean migration deployment, zero schema drift, seed and repeat deployment",
+    "TypeScript, Prisma schema/client, ESLint, workflow YAML and production build passed"
+  ],
+  "generatedPageCount": 181,
+  "cloudResponsesAndMediaSimulated": true,
+  "actualDatabase": "Owned local Docker PostgreSQL 16 with generated crossly_launch_verify schemas",
+  "ownerDatabaseAccessed": false,
+  "ownedDatabaseAndVolumesRemoved": true,
+  "schemaChanged": true,
+  "productionVideoEnabled": false,
+  "productionAccepted": false,
+  "remoteCiVerified": false,
+  "fullLaunchAndAuditRerun": false,
+  "sourceSha256": {
+    "src/modules/private-storage/video-jobs.ts": "63e9b6d075691e06b04c1fc9a66edd3bb1a3c50398c67e2bedb61b2c2ed2f805",
+    "scripts/verify-private-video-jobs.mjs": "2bb1d0211274c64b5fe56b4f21005e42c96704daed2a0e3f66058529a4507338",
+    "prisma/schema.prisma": "38eaf8084205c9cd19112b85d08d3fc90840a94957bedab9e5fe691d2ff1118a",
+    "prisma/migrations/20261127100000_private_video_jobs/migration.sql": "97e95d2aaf7424fba012efd35440b67627becafda21e841c03a1937c758d3eec",
+    "package.json": "2d3a1bb0c313e764c2e9b8961de139e657c118e82a3181ae63d2be86ba8f5939",
+    "scripts/verify-launch-candidate.mjs": "17acb1fc05f6be639386539ce925ba7100ee3bb645e6a1466554a5886f16375a",
+    ".github/workflows/private-video.yml": "9488b026275afd47615220917ac3e10e0bdc3dd3a768e9bd4c3f15d90be2cf63"
+  },
+  "logsSha256": {
+    "deshdak-video-jobs-final.log": "c9f567f3467c6058def2a74fbbc115753d0bbf991a54d89d94b11c161390639b",
+    "deshdak-video-jobs-acceptance.log": "b8d022b87bb718bc4699be45a1c7816e4280760f51339dc9fa534fb5cfcd925a",
+    "deshdak-video-jobs-types.log": "7684d584acb1a029f887ca8a5bbac4692e7de006fa95e4f60747cd6ee64b44ff",
+    "deshdak-video-jobs-lint.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "deshdak-video-jobs-schema.log": "919c26cbd154c540c8a110d57d3f91dc02c8c73f4e8edb56cddc7bb0b4beea22"
+  },
+  "remaining": [
+    "Durable processing queue before transcoding, provider provenance and authorized intake",
+    "Session/role/warehouse authorization and atomic inspection evidence binding",
+    "Customer-authorized delivery and playback",
+    "Holds, retention, linked original/derivative cleanup and controlled recovery UI",
+    "Staging infrastructure, independent security, physical device and live-service acceptance"
+  ]
+}
