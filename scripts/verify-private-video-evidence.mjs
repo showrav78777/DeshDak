@@ -7,6 +7,7 @@ import { pathToFileURL } from "node:url";
 import { PrismaClient } from "@prisma/client";
 import { SignJWT } from "jose";
 import { verifyPrivateVideoPreview } from "./lib/private-video-preview-acceptance.mjs";
+import { verifyPrivateVideoSafety } from "./lib/private-video-safety-acceptance.mjs";
 
 const database = new URL(process.env.DATABASE_URL ?? "postgresql://invalid/invalid"), origin = process.env.TEST_BASE_URL;
 if (!["localhost", "127.0.0.1", "[::1]"].includes(database.hostname) || !/^crossly_launch_verify_[a-f0-9]{16}$/.test(database.searchParams.get("schema") ?? "") || !origin || !["localhost", "127.0.0.1"].includes(new URL(origin).hostname)) throw new Error("Video evidence tests require an isolated local database and test server.");
@@ -28,11 +29,11 @@ const { createPrivateInspectionVideoProcessor } = await import(await source("mod
 const { createPrivateVideoIntake } = await import(await source("modules/private-storage/video-intake", { "./video-jobs": jobsUrl, "./video-provenance": provenance, "./video-authorization": authorization }));
 const { createPrivateVideoEvidence } = await import(await source("modules/private-storage/video-evidence", { "./video-artifacts": artifacts, "./video-provenance": provenance, "./video-authorization": authorization }));
 const db = new PrismaClient(), marker = randomBytes(8).toString("hex"), users = [], parcels = [], orders = [], warehouses = [];
-const objects = new Map(), readKeys = []; let reads = 0, onRead = null;
+const objects = new Map(), readKeys = []; let reads = 0, onRead = null, onPut = null;
 const config = { bucket: "deshdak-private-test", region: "us-east-1", expectedOwner: "123456789012", kmsKeyArn: "arn:aws:kms:us-east-1:123456789012:key/11111111-1111-4111-8111-111111111111" };
 const store = createPrivateVideoArtifactStore({ config, keys: { original: randomBytes(32), video: randomBytes(32), poster: randomBytes(32) }, client: { send: async command => {
   const data = command.input, kind = command.constructor.name;
-  if (kind === "PutObjectCommand") { assert(!objects.has(data.Key)); objects.set(data.Key, { bytes: Buffer.from(data.Body), checksum: data.ChecksumSHA256, version: `synthetic-${objects.size + 1}` }); }
+  if (kind === "PutObjectCommand") { assert(!objects.has(data.Key)); objects.set(data.Key, { bytes: Buffer.from(data.Body), checksum: data.ChecksumSHA256, version: `synthetic-${objects.size + 1}` }); if (onPut) { const action = onPut; onPut = null; await action(); } }
   const value = objects.get(data.Key); if (!value) throw new Error("PRIVATE_PROVIDER_DIAGNOSTIC");
   const metadata = { VersionId: value.version, ContentLength: value.bytes.length, ContentType: "application/octet-stream", ServerSideEncryption: "aws:kms", SSEKMSKeyId: config.kmsKeyArn, ChecksumSHA256: value.checksum };
   if (kind === "GetObjectCommand") { reads++; readKeys.push(data.Key); if (onRead) { const action = onRead; onRead = null; await action(); } return { ...metadata, Body: Readable.from([value.bytes]) }; }
@@ -118,9 +119,10 @@ try {
   assert.equal(await db.inspection.count({ where: { packageId: parcel.id } }), 0);
   const page = await fetch(`${origin}/orders/${order.id}`, { headers: { Cookie: owner.cookie } }); assert.equal(page.status, 200); const html = await page.text(); assert(!html.includes(linked.evidenceId)); assert(!html.includes(concurrent[0].evidenceId));
   await verifyPrivateVideoPreview({ db, store, source, artifacts, provenance, account, staff, owner, other, actor, parcel, order, warehouse, assignment, jobId: first.jobId, evidenceId: linked.evidenceId, video, poster, objects, readKeys, setOnRead: callback => { onRead = callback; } });
+  await verifyPrivateVideoSafety({ db, source, artifacts, provenance, account, store, processor, raw, binding, readKeys, setOnRead: callback => { onRead = callback; }, setOnPut: callback => { onPut = callback; } });
   console.log("Private video evidence passed: atomic processor provenance and staged binding, exact-version verification, missing/tampered/future proof denial, actor/session/namespace guards, revocation during storage reads, concurrent idempotency, raw unproven job rejection, real HTTP list/download/inspection rejection and customer-page exclusion. Actual PostgreSQL; media/processor/S3 were simulated. Publication, playback and production remain disabled.");
 } finally {
-  onRead = null; store.close();
+  onRead = null; onPut = null; store.close();
   const ids = (await db.privateVideoJob.findMany({ where: { actorId: { in: users } }, select: { id: true } })).map(row => row.id);
   await db.auditLog.deleteMany({ where: { OR: [{ actorId: { in: users } }, { entityType: "PrivateVideoJob", entityId: { in: ids } }, { entityType: "Package", entityId: { in: parcels } }] } });
   await db.$transaction(async tx => {

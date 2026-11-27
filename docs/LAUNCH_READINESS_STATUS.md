@@ -873,3 +873,39 @@ Evidence: verification/20261127-private-video-preview.json. Remaining: durable
 processing queue, public ingress/admission/cancellation/runtime wiring, customer
 publication/playback/original-access policy, lifecycle/holds/recovery, and live/
 independent security/load/device acceptance. NIloy remains local and ignored.
+
+
+## 27 November 2026 — Admin video quarantine and retention review
+
+`/admin/private-videos` now provides a metadata-only queue, permanent bundle
+quarantine and conservative retention review. Its versioned APIs enforce fresh
+Admin MFA, trusted mutation origins, bounded validation, rate limits, stable retry
+keys and audited outcomes. Quarantine is immutable in PostgreSQL and blocks job
+recovery, evidence binding and staff preview, including changes during storage
+reads/writes. It preserves the original, normalized video, poster and history.
+
+Retention review honors approved policy, account/order/package holds, delivery
+evidence, claim deadlines, open cases, payment/compliance/settlement blockers,
+completion timestamps and bounded history. An elapsed date means independent
+review is required; `deletionAllowed` is always false. No removal/release executor
+or customer playback was added. The queue exposes no storage references, bytes,
+processing manifests, customer identity or case contents.
+
+Owned local HTTP/PostgreSQL acceptance covered MFA/CSRF/validation, redaction,
+immutable quarantine, retry/binding/preview fences, quarantine during I/O,
+retention blockers, and desktop/mobile forms with exact lost-response replay.
+Legal-hold fixtures retain the existing independent Admin/Compliance release
+requirement. Permanent synthetic records were confined to a disposable schema.
+See verification/20261127-private-video-safety.json for final checks and limits.
+
+Still required: durable pre-processing queue and public capture/preview transport,
+approved customer publication/playback, linked retention execution and controlled
+replacement/recovery, plus live infrastructure, security/load/device acceptance.
+Production capture, customer publication and video deletion remain disabled.
+NIloy remains local-only and excluded from GitHub.
+
+Final local checks passed: TypeScript, targeted ESLint, workflow YAML, 316-operation
+API contract, zero-drift migrations, six targeted suites and 182-page production
+build. All owned verification databases/servers/container/volume were removed;
+generated tsconfig includes were cleaned. Full launch/audit and remote CI were
+not rerun; live cloud/media transport was simulated.

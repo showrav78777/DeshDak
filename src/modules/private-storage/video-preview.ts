@@ -63,6 +63,7 @@ export function createPrivateVideoPreview(db: PrismaClient, store: Pick<ReturnTy
     await tx.$queryRaw`SELECT "id" FROM "PrivateVideoEvidenceLink" WHERE "id" = ${initialLink.id} FOR SHARE`;
     await tx.$queryRaw`SELECT "id" FROM "InspectionEvidence" WHERE "id" = ${input.evidenceId} FOR SHARE`;
     await tx.$queryRaw`SELECT "id" FROM "PrivateVideoArtifact" WHERE "jobId" = ${initialLink.jobId} FOR SHARE`;
+    if (await tx.privateVideoQuarantine.findUnique({ where: { jobId: initialLink.jobId }, select: { id: true } })) throw deny();
     const link = await tx.privateVideoEvidenceLink.findUniqueOrThrow({ where: { id: initialLink.id }, include: { evidence: true, processingProof: true, job: { include: { artifacts: true } } } });
     const { job, evidence, processingProof: proof } = link;
     if (link.status !== "STAGED" || link.evidenceId !== input.evidenceId || link.jobId !== initialLink.jobId || link.processingProofId !== initialLink.processingProofId || proof.jobId !== job.id || link.linkedById !== job.actorId || evidence.uploadedById !== job.actorId || evidence.packageId !== parcel.id || job.packageId !== parcel.id || job.status !== "STORED" || job.leaseToken || job.leaseExpiresAt || job.storageNamespace !== store.namespace || evidence.mediaKind !== "VIDEO" || evidence.ciphertext || evidence.iv || evidence.authTag) throw deny();

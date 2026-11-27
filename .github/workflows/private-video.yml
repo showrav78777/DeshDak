@@ -16,6 +16,12 @@ on:
       - src/modules/private-storage/video-artifacts.ts
       - src/modules/private-storage/photos.ts
       - scripts/verify-private-video-artifacts.mjs
+      - src/modules/private-storage/video-safety.ts
+      - src/modules/private-storage/video-retention.ts
+      - src/components/private-video-quarantine.tsx
+      - src/app/admin/private-videos/**
+      - src/app/api/v1/admin/private-videos/**
+      - scripts/lib/private-video-safety-acceptance.mjs
       - src/modules/private-storage/video-preview.ts
       - src/modules/private-storage/video-preview-response.ts
       - src/modules/private-storage/video-byte-range.ts
@@ -44,6 +50,12 @@ on:
       - src/modules/private-storage/video-artifacts.ts
       - src/modules/private-storage/photos.ts
       - scripts/verify-private-video-artifacts.mjs
+      - src/modules/private-storage/video-safety.ts
+      - src/modules/private-storage/video-retention.ts
+      - src/components/private-video-quarantine.tsx
+      - src/app/admin/private-videos/**
+      - src/app/api/v1/admin/private-videos/**
+      - scripts/lib/private-video-safety-acceptance.mjs
       - src/modules/private-storage/video-preview.ts
       - src/modules/private-storage/video-preview-response.ts
       - src/modules/private-storage/video-byte-range.ts

@@ -17,6 +17,7 @@ export function createPrivateVideoEvidence(db: PrismaClient, store: Pick<ReturnT
     const scope = await tx.privateVideoJob.findUnique({ where: { id: input.jobId }, select: { actorId: true, packageId: true } });
     if (!scope || scope.actorId !== input.actorId || !await authorizeVideoStaging(tx, { ...input, packageId: scope.packageId })) throw new PrivateVideoBindingError();
     await tx.$queryRaw`SELECT "id" FROM "PrivateVideoJob" WHERE "id" = ${input.jobId} FOR UPDATE`;
+    if (await tx.privateVideoQuarantine.findUnique({ where: { jobId: input.jobId }, select: { id: true } })) throw new PrivateVideoBindingError();
     const job = await tx.privateVideoJob.findUniqueOrThrow({ where: { id: input.jobId }, include: { artifacts: true, processingProof: true, evidenceLink: { include: { evidence: true } } } });
     if (job.actorId !== input.actorId || job.packageId !== scope.packageId || job.status !== "STORED" || job.leaseToken || job.leaseExpiresAt || job.storageNamespace !== store.namespace || !job.processingProof) throw new PrivateVideoBindingError();
     const manifest = videoManifestSchema.parse(job.processingProof.manifest);

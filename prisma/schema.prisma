@@ -737,6 +737,7 @@ model User {
   advertisementsCreated       Advertisement[]                       @relation("AdvertisementCreator")
   marketingCampaignRecipients MarketingCampaignRecipient[]          @relation("MarketingCampaignRecipientUser")
   securityTokens              SecurityToken[]
+  privateVideoQuarantines     PrivateVideoQuarantine[]
   privateVideoEvidenceLinks   PrivateVideoEvidenceLink[]
   privateVideoJobs            PrivateVideoJob[]
   privatePhotoUploads         PrivatePhotoUpload[]
@@ -3799,6 +3800,7 @@ model PrivateVideoJob {
   actor User @relation(fields: [actorId], references: [id], onDelete: Restrict)
   package Package @relation(fields: [packageId], references: [id], onDelete: Restrict)
   artifacts PrivateVideoArtifact[]
+  quarantine PrivateVideoQuarantine?
   processingProof PrivateVideoProcessingProof?
   evidenceLink PrivateVideoEvidenceLink?
   @@unique([actorId, idempotencyKey])
@@ -3844,4 +3846,19 @@ model PrivateVideoEvidenceLink {
   evidence InspectionEvidence @relation(fields: [evidenceId], references: [id], onDelete: Restrict)
   processingProof PrivateVideoProcessingProof @relation(fields: [processingProofId], references: [id], onDelete: Restrict)
   linkedBy User @relation(fields: [linkedById], references: [id], onDelete: Restrict)
+}
+
+// Permanent deny marker. Release requires a separate reviewed replacement workflow.
+model PrivateVideoQuarantine {
+  id String @id @default(uuid())
+  jobId String @unique
+  actorId String
+  reason String @db.VarChar(32)
+  caseReference String @db.VarChar(80)
+  idempotencyKey String @db.VarChar(36)
+  createdAt DateTime @default(now())
+  job PrivateVideoJob @relation(fields: [jobId], references: [id], onDelete: Restrict)
+  actor User @relation(fields: [actorId], references: [id], onDelete: Restrict)
+  @@unique([actorId, idempotencyKey])
+  @@index([createdAt, id])
 }

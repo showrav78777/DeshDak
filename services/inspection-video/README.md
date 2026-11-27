@@ -211,3 +211,25 @@ and credential resolution; it is not live TLS or device/codec acceptance.
 The existing isolated evidence suite includes the preview checks. See
 docs/verification/20261127-private-video-preview.json. Customer publication,
 retention/holds/cleanup and production acceptance remain unfinished.
+
+
+## Admin quarantine and retention review
+
+Admin → System → Private video safety (`/admin/private-videos`) exposes a
+metadata-only queue with fresh MFA. A confirmed controlled case permanently
+quarantines the entire bundle; PostgreSQL prevents editing/removing its incident
+record. Storage recovery, binding and internal preview check this block before
+and after I/O. Files are preserved; this page has no release or delete action.
+
+The review date is conservative: approved policy plus delivery, claim windows,
+legal holds, case completion and finance/compliance checks. Incomplete or excessive
+history requires review. Even elapsed retention always returns deletionAllowed
+false. Existing legal holds apply to uploader/customer accounts, order or package.
+The quarantine API requires trusted origin, fresh Admin MFA, a UUID idempotency
+header, a reason, controlled case reference and confirmation. A retry must retain
+exact payload/key. The form locks both after its first request.
+
+The isolated evidence suite tests the real page/API on desktop/mobile and local
+PostgreSQL, with synthetic processor/cloud media transport. Migration
+20261127200000_private_video_safety is additive. This increment does not enable
+capture, customer playback, linked cleanup or production deployment.

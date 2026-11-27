@@ -5684,6 +5684,150 @@
         }
       }
     },
+    "/admin/private-videos": {
+      "get": {
+        "operationId": "get_admin_private_videos",
+        "tags": [
+          "admin"
+        ],
+        "summary": "List redacted private video safety and conservative retention metadata with fresh Admin MFA",
+        "security": [
+          {
+            "cookieSession": []
+          }
+        ],
+        "x-crossly-access": "authenticated",
+        "x-crossly-error-codes": [
+          "ADMIN_MFA_REQUIRED",
+          "VALIDATION_ERROR",
+          "VIDEO_SAFETY_DENIED",
+          "VIDEO_SAFETY_UNAVAILABLE"
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 10000,
+              "default": 1
+            }
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "all",
+                "quarantined"
+              ],
+              "default": "all"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Success"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "#/components/responses/Unprocessable"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/admin/private-videos/{jobId}/quarantine": {
+      "post": {
+        "operationId": "post_admin_private_videos_jobId_quarantine",
+        "tags": [
+          "admin"
+        ],
+        "summary": "Permanently quarantine a video bundle while preserving all media and history",
+        "security": [
+          {
+            "cookieSession": []
+          }
+        ],
+        "x-crossly-access": "authenticated",
+        "x-crossly-error-codes": [
+          "ADMIN_MFA_REQUIRED",
+          "UNTRUSTED_ORIGIN",
+          "IDEMPOTENCY_KEY_REQUIRED",
+          "VALIDATION_ERROR",
+          "RATE_LIMITED",
+          "VIDEO_SAFETY_DENIED",
+          "VIDEO_SAFETY_CONFLICT",
+          "VIDEO_SAFETY_UNAVAILABLE"
+        ],
+        "parameters": [
+          {
+            "name": "jobId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Success"
+          },
+          "201": {
+            "$ref": "#/components/responses/Created"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "#/components/responses/Unprocessable"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
     "/admin/product-revisions/{revisionId}/review": {
       "patch": {
         "operationId": "patch_admin_product_revisions_revisionId_review",
@@ -20559,6 +20703,35 @@
             "maximum": 1000000
           },
           "blockedConfirmed": {
+            "type": "boolean",
+            "const": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "PrivateVideoQuarantineRequest": {
+        "type": "object",
+        "required": [
+          "reason",
+          "caseReference",
+          "confirmed"
+        ],
+        "properties": {
+          "reason": {
+            "type": "string",
+            "enum": [
+              "SUSPECTED_MALWARE",
+              "PRIVACY_REVIEW",
+              "INTEGRITY_FAILURE"
+            ]
+          },
+          "caseReference": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 80,
+            "pattern": "^(INC|SEC|KYC|OPS)-[A-Z0-9]+(-[A-Z0-9]+){0,5}$"
+          },
+          "confirmed": {
             "type": "boolean",
             "const": true
           }
