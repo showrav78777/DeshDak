@@ -6,6 +6,8 @@ const API_ROOT = join(process.cwd(), "src", "app", "api", "v1");
 const OPTIONAL_SESSION_PATHS = new Set(["/payments/providers"]);
 const OPTIONAL_SESSION_PREFIXES = ["/identifiers/products/"];
 const EXACT_OPERATIONS = {
+  "get /operations/packages/{packageId}/inspection-video": { summary: "Read an assigned employee's private video upload status", parameters: [{ name: "X-Upload-Request-Key", in: "header", required: true, schema: { type: "string", minLength: 16, maxLength: 128 } }], errors: ["VIDEO_ACCESS_REQUIRED", "VALIDATION_ERROR", "VIDEO_UPLOAD_UNAVAILABLE", "RATE_LIMITED", "VIDEO_REQUEST_UNAVAILABLE"] },
+  "post /operations/packages/{packageId}/inspection-video": { summary: "Stage a private MP4 for an assigned employee", idempotent: true, successStatuses: ["202"], errors: ["VIDEO_ACCESS_REQUIRED", "UNTRUSTED_ORIGIN", "VALIDATION_ERROR", "VIDEO_UPLOAD_UNAVAILABLE", "RATE_LIMITED", "VIDEO_REQUEST_UNAVAILABLE"] },
   "get /operations/packages/{packageId}/inspection-evidence": { summary: "List assigned package evidence and non-secret supported upload capabilities", authenticated: true, successSchema: "InspectionEvidenceAvailabilityResponse", errors: ["EVIDENCE_ACCESS_REQUIRED", "PACKAGE_NOT_FOUND"] },
   "get /admin/private-media/deletion-reviews": {"authenticated":true,"summary":"Read bounded immutable deletion-review history; cleanup remains disabled","successSchema":"MediaDeletionListResponse","parameters":[{"name":"page","in":"query","schema":{"type":"integer","minimum":1,"maximum":10000,"default":1}},{"name":"state","in":"query","schema":{"type":"string","enum":["pending","all"],"default":"pending"}}],"errors":["ADMIN_MFA_REQUIRED","VALIDATION_ERROR","MEDIA_LIFECYCLE_DENIED","MEDIA_LIFECYCLE_UNAVAILABLE"]},
   "post /admin/private-media/deletion-reviews": {"authenticated":true,"idempotent":true,"summary":"Request a 24-hour independent deletion review of ready version-bound photo metadata; never execute deletion","requestSchema":"MediaDeletionRequest","successSchema":"MediaDeletionResponse","errors":["ADMIN_MFA_REQUIRED","UNTRUSTED_ORIGIN","IDEMPOTENCY_KEY_REQUIRED","VALIDATION_ERROR","MEDIA_LIFECYCLE_DENIED","MEDIA_LIFECYCLE_CONFLICT","MEDIA_LIFECYCLE_UNAVAILABLE"]},
@@ -590,6 +592,7 @@ function parameterList(method, path, source, exact) {
 function requestBody(method, path, source, exact) {
   if (!["post", "put", "patch"].includes(method)) return undefined;
   if (exact?.externalProtocol === "provider-ipn") return { required: true, content: { "application/x-www-form-urlencoded": { schema: { type: "object", required: ["tran_id", "val_id"], properties: { tran_id: { type: "string", maxLength: 30 }, val_id: { type: "string", maxLength: 100 } }, additionalProperties: true } } } };
+  if (path === "/operations/packages/{packageId}/inspection-video") return { required: true, content: { "video/mp4": { schema: { type: "string", format: "binary" } } } };
   if (path === "/search/image") return {
     required: true,
     content: { "multipart/form-data": { schema: { type: "object", required: ["image"], properties: { image: { type: "string", format: "binary" } } } } },

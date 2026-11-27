@@ -13742,6 +13742,154 @@
         }
       }
     },
+    "/operations/packages/{packageId}/inspection-video": {
+      "get": {
+        "operationId": "get_operations_packages_packageId_inspection_video",
+        "tags": [
+          "operations"
+        ],
+        "summary": "Read an assigned employee's private video upload status",
+        "security": [
+          {
+            "cookieSession": []
+          }
+        ],
+        "x-crossly-access": "authenticated",
+        "x-crossly-error-codes": [
+          "VIDEO_ACCESS_REQUIRED",
+          "VALIDATION_ERROR",
+          "VIDEO_UPLOAD_UNAVAILABLE",
+          "RATE_LIMITED",
+          "VIDEO_REQUEST_UNAVAILABLE"
+        ],
+        "parameters": [
+          {
+            "name": "packageId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "X-Upload-Request-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 16,
+              "maxLength": 128
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Success"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "#/components/responses/Unprocessable"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      },
+      "post": {
+        "operationId": "post_operations_packages_packageId_inspection_video",
+        "tags": [
+          "operations"
+        ],
+        "summary": "Stage a private MP4 for an assigned employee",
+        "security": [
+          {
+            "cookieSession": []
+          }
+        ],
+        "x-crossly-access": "authenticated",
+        "x-crossly-error-codes": [
+          "VIDEO_ACCESS_REQUIRED",
+          "UNTRUSTED_ORIGIN",
+          "VALIDATION_ERROR",
+          "VIDEO_UPLOAD_UNAVAILABLE",
+          "RATE_LIMITED",
+          "VIDEO_REQUEST_UNAVAILABLE"
+        ],
+        "parameters": [
+          {
+            "name": "packageId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "video/mp4": {
+              "schema": {
+                "type": "string",
+                "format": "binary"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Success"
+          },
+          "201": {
+            "$ref": "#/components/responses/Created"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "#/components/responses/Unprocessable"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
     "/operations/packages/{packageId}/label/print-log": {
       "post": {
         "operationId": "post_operations_packages_packageId_label_print_log",
