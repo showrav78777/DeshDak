@@ -740,6 +740,7 @@ model User {
   privateVideoQuarantines     PrivateVideoQuarantine[]
   privateVideoEvidenceLinks   PrivateVideoEvidenceLink[]
   privateVideoJobs            PrivateVideoJob[]
+  privateVideoUploads         PrivateVideoUpload[]
   privatePhotoUploads         PrivatePhotoUpload[]
   privatePhotoLinks           PrivatePhotoLink[]
   privatePhotoQuarantines     PrivatePhotoQuarantine[]
@@ -1754,6 +1755,7 @@ model Package {
   warehouse             Warehouse?              @relation(fields: [warehouseId], references: [id], onDelete: Restrict)
   warehouseLocation     WarehouseLocation?      @relation(fields: [warehouseLocationId], references: [id], onDelete: SetNull)
   privateVideoJobs      PrivateVideoJob[]
+  privateVideoUploads   PrivateVideoUpload[]
   inspections           Inspection[]
   inspectionEvidence    InspectionEvidence[]
   shipmentPackages      ShipmentPackage[]
@@ -3803,6 +3805,7 @@ model PrivateVideoJob {
   quarantine PrivateVideoQuarantine?
   processingProof PrivateVideoProcessingProof?
   evidenceLink PrivateVideoEvidenceLink?
+  uploads PrivateVideoUpload[]
   @@unique([actorId, idempotencyKey])
   @@index([status, leaseExpiresAt])
   @@index([packageId, createdAt])
@@ -3861,4 +3864,30 @@ model PrivateVideoQuarantine {
   actor User @relation(fields: [actorId], references: [id], onDelete: Restrict)
   @@unique([actorId, idempotencyKey])
   @@index([createdAt, id])
+}
+
+// Encrypted pre-conversion staging only; never evidence or publication authority.
+model PrivateVideoUpload {
+  id String @id @default(uuid())
+  actorId String
+  packageId String
+  requestKey String @db.VarChar(128)
+  keyScope String @db.VarChar(64)
+  originalSha256 String @db.VarChar(64)
+  sizeBytes Int
+  encryptedBody Bytes
+  iv Bytes
+  sessionId String
+  status String @default("QUEUED") @db.VarChar(24)
+  attempts Int @default(0)
+  leaseToken String? @db.VarChar(36)
+  leaseExpiresAt DateTime?
+  storedJobId String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  actor User @relation(fields: [actorId], references: [id], onDelete: Restrict)
+  package Package @relation(fields: [packageId], references: [id], onDelete: Restrict)
+  storedJob PrivateVideoJob? @relation(fields: [storedJobId], references: [id], onDelete: Restrict)
+  @@unique([actorId, requestKey])
+  @@index([status, leaseExpiresAt])
 }

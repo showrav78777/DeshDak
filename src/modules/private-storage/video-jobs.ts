@@ -46,6 +46,7 @@ export function createPrivateVideoJobs(db: PrismaClient, store: Store, authorize
       const existing = await tx.privateVideoJob.findUnique({ where: { actorId_idempotencyKey: { actorId: scope.actorId, idempotencyKey: scope.idempotencyKey } } });
       if (existing) {
         if (await tx.privateVideoQuarantine.findUnique({ where: { jobId: existing.id }, select: { id: true } })) throw new PrivateVideoJobError();
+        if (await tx.privateVideoUpload.findFirst({ where: { storedJobId: existing.id, status: { in: ["CANCELLED", "REVIEW_REQUIRED"] } }, select: { id: true } })) throw new PrivateVideoJobError();
         if (existing.packageId !== scope.packageId || existing.fingerprint !== fingerprint || existing.storageNamespace !== store.namespace) throw new PrivateVideoJobError("PRIVATE_VIDEO_JOB_CONFLICT");
         if (recordProcessing) await recordProcessing(tx, existing.id);
         if (authorize && !await authorize(tx, scope.actorId, scope.packageId)) throw new PrivateVideoJobError();
@@ -65,6 +66,7 @@ export function createPrivateVideoJobs(db: PrismaClient, store: Store, authorize
       await tx.$queryRaw`SELECT "id" FROM "PrivateVideoJob" WHERE "id" = ${jobId} FOR UPDATE`;
       const job = await tx.privateVideoJob.findUniqueOrThrow({ where: { id: jobId } });
       if (await tx.privateVideoQuarantine.findUnique({ where: { jobId }, select: { id: true } })) throw new PrivateVideoJobError();
+      if (await tx.privateVideoUpload.findFirst({ where: { storedJobId: jobId, status: { in: ["CANCELLED", "REVIEW_REQUIRED"] } }, select: { id: true } })) throw new PrivateVideoJobError();
       if (job.actorId !== scope.actorId || job.packageId !== scope.packageId || job.storageNamespace !== store.namespace) throw new PrivateVideoJobError();
       const result = await callback(tx, job, await clock(tx));
       if (authorize && !await authorize(tx, scope.actorId, scope.packageId)) throw new PrivateVideoJobError();

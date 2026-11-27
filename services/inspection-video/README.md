@@ -233,3 +233,40 @@ The isolated evidence suite tests the real page/API on desktop/mobile and local
 PostgreSQL, with synthetic processor/cloud media transport. Migration
 20261127200000_private_video_safety is additive. This increment does not enable
 capture, customer playback, linked cleanup or production deployment.
+
+
+## Encrypted pre-conversion queue component
+
+`createPrivateVideoUploadQueue` is an internal, unwired staging/worker factory.
+It accepts verified server actor/session/package IDs, a stable request key and
+bounded MP4 input. It persists only AES-256-GCM ciphertext with immutable identity
+and source digest before contacting the processor. Treat this as untrusted
+pre-scan quarantine; it grants no evidence, delivery or publication permission.
+Use a dedicated 32-byte staging key from the secret manager, separate from all
+artifact keys. The key scope includes the artifact-store namespace; wrong or
+rotated keys cannot silently process old records. Retain approved old keys until
+a controlled re-encryption/retention plan exists. No runtime environment flag
+activates this component.
+
+`run` needs only the upload reference and original actor/package/request scope
+with a currently authorized session; the file is recovered from encrypted staging.
+Claims serialize to one active global worker, using a five-minute DB-clock lease.
+Restarted workers may replace expired leases; old-worker commits are fenced by
+transactional guards throughout intake/storage. Five attempts, failed processing
+or corrupt input require review. `cancel` is idempotent for queued/processing
+records, preserves media and fences late commits. Stored/review records cannot be
+reset, released or deleted here. Storage success is never inspection approval.
+
+Hard preserved-capacity limits are 20 records per actor, 40 globally and 300 MiB
+total. Cancellations/completions do not free space; independent retention work
+remains necessary. Public ingress limits/rates/admission, status/cancel UI, worker
+scheduler, deployment capacity/keys, backup/restore and lifecycle execution remain
+required before production wiring. The isolated intake suite verifies persistence,
+restart, exact/concurrent retry, cancellation during conversion/PUT, authorization,
+fresh-session recovery, competing/expired leases and capacity. Actual PostgreSQL;
+media/cloud/processor transport is synthetic.
+
+Upload-to-job association is recorded in the staging transaction before cloud
+writes. Cancelled/review uploads block direct job retries; any unfinished upload
+blocks evidence binding, preview and retention eligibility checks. These fences
+also apply when a caller bypasses the queue worker and uses an internal component.

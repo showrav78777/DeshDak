@@ -1,0 +1,68 @@
+{
+  "date": "2026-11-28",
+  "baseRevision": "ef2b7f3d9ae2301f22c1f4fe8718e174ccc59088",
+  "result": "passed",
+  "scope": "Internal encrypted pre-conversion video queue and cancellation/recovery fences; no public transport or activation",
+  "checks": [
+    "Encrypted source persisted before processor; factory restart simulation resumes without file resubmission",
+    "Exact/concurrent enqueue retry and changed-source conflict; immutable ciphertext/source identity",
+    "Current role/session/warehouse authorization; same actor with fresh replacement session can recover",
+    "Cancellation before processing and during conversion/PUT preserves source and fences late commits",
+    "Upload/job association before cloud writes; cancelled upload blocks direct job retries and evidence binding",
+    "One active global worker, expired lease replacement, competing worker BUSY, stale-worker fence and five-attempt review cap",
+    "Preserved per-actor capacity cannot be bypassed by cancellation/completion; processor errors preserve source for review",
+    "Six targeted video/photo/security suites including existing Admin desktop/mobile quarantine acceptance passed",
+    "Prisma validation, zero-drift migrations/reference seed/repeat deploy, TypeScript, targeted ESLint, workflow YAML and diff whitespace passed",
+    "316-operation API contract and 182-page production build passed"
+  ],
+  "generatedPageCount": 182,
+  "documentedApiOperations": 316,
+  "schemaChanged": true,
+  "newPublicRoutes": false,
+  "ownerDatabaseAccessed": false,
+  "actualLocalHttpAndPostgresql": true,
+  "cloudMediaProcessorTransportSimulated": true,
+  "processRestartSimulatedByFactoryRecreation": true,
+  "ownedServersSchemaContainerAndVolumeRemoved": true,
+  "productionCaptureEnabled": false,
+  "customerPlaybackEnabled": false,
+  "videoDeletionEnabled": false,
+  "productionAccepted": false,
+  "remoteCiVerified": false,
+  "fullLaunchAndAuditRerun": false,
+  "sourceSha256": {
+    "prisma/schema.prisma": "c7992012473d35b0bbd1c7622e1cf15b3a433d5314bbe8397629abb03d40f964",
+    "prisma/migrations/20261128010000_private_video_upload_queue/migration.sql": "1191c8ada9020c081828629ea49e65e4c49a38e24680ff5b3f70ef8bec19613c",
+    "src/modules/private-storage/video-upload-queue.ts": "01c53957d1d0ae302cd8a193d6ae06d7c194c30d39c8ad4ac7e5f498234f5104",
+    "src/modules/private-storage/video-intake.ts": "0feea0eea4e3f8cca4d7708a0567817abfbdef89855a8d6f46c94cca05c8bdfe",
+    "src/modules/private-storage/video-jobs.ts": "671878f144f5142a10dfe737a1b8672a0eec10441de9f6439830f5ab2717aa0a",
+    "src/modules/private-storage/video-evidence.ts": "cf88be1829300b42c9be47a7ac72184efb79d5a97a14fc4187261e2d4f7f6503",
+    "src/modules/private-storage/video-preview.ts": "49931179689efba9af3417e8221d18d114ab62a3e053599c55bbf8f6ff51b411",
+    "src/modules/private-storage/video-retention.ts": "64b4824bdcb2f87d5acb4313a33fff833d4f4c171dbda8f5d790104203a3c901",
+    "scripts/lib/private-video-upload-queue-acceptance.mjs": "633909415fe64648fe7208ac60880c672deeecb1821c9134da54919f35914a44",
+    "scripts/verify-private-video-intake.mjs": "5c54539597ee3d0ea51dd0bec38859de313622046d3844dfa89360dd9d41de95",
+    "scripts/lib/private-video-safety-acceptance.mjs": "162f63e6af9cee51e637e3b1923a896f310477ebe8abf2c695e0ad2c3748de78",
+    ".github/workflows/private-video.yml": "7119e1c66e6eeed89a79bc2b6a341568760a83ec32cae5e0ab29cef8e8b7959f"
+  },
+  "logsSha256": {
+    "deshdak-video-queue-acceptance-final.log": "5e08762c4ae40f39c77c66f7ea3a34201ddde64401efb12afaa9506049b7cf52",
+    "deshdak-video-queue-schema.log": "919c26cbd154c540c8a110d57d3f91dc02c8c73f4e8edb56cddc7bb0b4beea22",
+    "deshdak-video-queue-lint.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "deshdak-video-queue-types-final.log": "7684d584acb1a029f887ca8a5bbac4692e7de006fa95e4f60747cd6ee64b44ff",
+    "deshdak-video-queue-api.log": "9496e6a61d742e772d9d7dd08f4d58770e38192854316a301117ef817ed09102"
+  },
+  "observations": [
+    "Initial verification found an extra schema relation; corrected before successful final migration verification.",
+    "Admin browser selector initially matched multiple forms during page load. Final test targets displayed bundle codes and waits for the page network load to settle; no first-match workaround was used.",
+    "Factory recreation/lease fixtures exercise durable recovery; actual host crash, cloud transport, physical devices and deployed load remain uncertified.",
+    "Processing/integrity errors remain REVIEW_REQUIRED. No reset, release, scheduler or cleanup executor was added.",
+    "Cancelled/completed encrypted sources consume the hard 20-per-actor/40-global/300-MiB capacity until approved lifecycle execution exists."
+  ],
+  "remaining": [
+    "Public upload/admission/status/cancellation transport, operations UI and worker scheduler",
+    "Deployed key management/rotation, capacity and backup/restore acceptance",
+    "Approved customer publication/playback and original access policy",
+    "Linked retention execution, controlled replacement/recovery and independent approvals",
+    "Live TLS/service/storage/scanner plus security/load/device acceptance"
+  ]
+}

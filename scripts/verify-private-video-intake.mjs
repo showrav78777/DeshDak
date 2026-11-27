@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { verifyPrivateVideoUploadQueue } from "./lib/private-video-upload-queue-acceptance.mjs";
 import { randomBytes, createHash, randomUUID } from "node:crypto";
 import { Readable } from "node:stream";
 import { readFile } from "node:fs/promises";
@@ -100,6 +101,7 @@ try {
   await db.warehouseStaffAssignment.update({ where: { id: assignmentId }, data: { isActive: true } });
   const processed = processCalls; assert.equal((await submit("mid-write")).state, "STORED"); assert.equal(processCalls, processed);
 
+  await verifyPrivateVideoUploadQueue({ db, source, artifacts, provenance, authorization, jobsUrl, store, processor, raw, actorId, parcelId, sessionId, assignmentId, setOnProcess: value => { onProcess = value; }, setOnPut: value => { onPut = value; }, counters: () => ({ processCalls, puts }) });
   const workerRole = await db.role.upsert({ where: { code: "warehouse_worker" }, create: { code: "warehouse_worker", description: "Synthetic intake verification" }, update: {} });
   await db.userRole.create({ data: { userId: actorId, roleId: workerRole.id } });
   await db.authSession.update({ where: { id: sessionId }, data: { portal: "warehouse" } });
@@ -136,6 +138,7 @@ try {
   onProcess = null; onPut = null; store.close();
   const ids = (await db.privateVideoJob.findMany({ where: { actorId: { in: users } }, select: { id: true } })).map(row => row.id);
   await db.auditLog.deleteMany({ where: { OR: [{ actorId: { in: users } }, { entityType: "PrivateVideoJob", entityId: { in: ids } }, { entityType: "Package", entityId: { in: parcels } }] } });
+  await db.privateVideoUpload.deleteMany({ where: { actorId: { in: users } } });
   await db.privateVideoProcessingProof.deleteMany({ where: { jobId: { in: ids } } });
   await db.privateVideoArtifact.deleteMany({ where: { jobId: { in: ids } } }); await db.privateVideoJob.deleteMany({ where: { id: { in: ids } } });
   await db.package.deleteMany({ where: { id: { in: parcels } } }); await db.order.deleteMany({ where: { id: { in: orders } } });

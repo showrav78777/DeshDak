@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { randomBytes, randomUUID, createHash } from "node:crypto";
 import { SignJWT } from "jose";
+import { writeFile } from "node:fs/promises";
 
 /** Permanent quarantine fixtures are retained until the owned schema is dropped. */
 export async function verifyPrivateVideoSafety(context) {
@@ -100,7 +101,10 @@ export async function verifyPrivateVideoSafety(context) {
       await context.addCookies([{ name: "crossly_session", value: admin.token, url: origin }]);
       const page = await context.newPage(); await page.goto(`${origin}/admin/private-videos`);
       await page.getByRole("heading", { name: "Review inspection video bundles" }).waitFor();
-      const card = page.locator("article").filter({ hasText: ui.jobId }); await card.locator("summary").click();
+      await page.waitForLoadState("networkidle");
+      const card = page.locator(".private-photo-list > article").filter({ has: page.locator("code").filter({ hasText: ui.jobId }) });
+      if (await card.count() !== 1 || await card.locator("summary").count() !== 1) await writeFile("/tmp/deshdak-video-safety-ambiguous-dom.html", await page.content());
+      await card.locator("summary").click();
       await card.getByLabel("Reason", { exact: true }).selectOption("PRIVACY_REVIEW"); await card.getByLabel("Case reference", { exact: true }).fill("SEC-VIDEO-UI-20261127"); await card.getByRole("checkbox").check();
       const attempts = []; let interrupted = false;
       if (label === "desktop") await page.route("**/api/v1/admin/private-videos/*/quarantine", async route => { attempts.push({ key: route.request().headers()["idempotency-key"], body: route.request().postData() }); if (!interrupted) { interrupted = true; const response = await route.fetch(); await response.body(); await response.dispose(); await route.abort(); } else await route.continue(); });

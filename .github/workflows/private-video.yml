@@ -16,6 +16,8 @@ on:
       - src/modules/private-storage/video-artifacts.ts
       - src/modules/private-storage/photos.ts
       - scripts/verify-private-video-artifacts.mjs
+      - src/modules/private-storage/video-upload-queue.ts
+      - scripts/lib/private-video-upload-queue-acceptance.mjs
       - src/modules/private-storage/video-safety.ts
       - src/modules/private-storage/video-retention.ts
       - src/components/private-video-quarantine.tsx
@@ -50,6 +52,8 @@ on:
       - src/modules/private-storage/video-artifacts.ts
       - src/modules/private-storage/photos.ts
       - scripts/verify-private-video-artifacts.mjs
+      - src/modules/private-storage/video-upload-queue.ts
+      - scripts/lib/private-video-upload-queue-acceptance.mjs
       - src/modules/private-storage/video-safety.ts
       - src/modules/private-storage/video-retention.ts
       - src/components/private-video-quarantine.tsx

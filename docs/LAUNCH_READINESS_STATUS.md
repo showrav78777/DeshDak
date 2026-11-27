@@ -909,3 +909,48 @@ API contract, zero-drift migrations, six targeted suites and 182-page production
 build. All owned verification databases/servers/container/volume were removed;
 generated tsconfig includes were cleaned. Full launch/audit and remote CI were
 not rerun; live cloud/media transport was simulated.
+
+
+## 28 November 2026 — encrypted pre-conversion video queue component
+
+`video-upload-queue.ts` persists the bounded MP4 source before conversion, using a
+dedicated AES-256-GCM key and authenticated upload/actor/package/request identity.
+The database prevents changes to the source and its identity. Neither filenames
+nor plaintext media are stored in the queue. An exact retry returns the same
+opaque upload reference; a changed source or package conflicts without processing.
+
+An internal worker can resume a queued/crashed upload without receiving the file
+again. Current staff/account/session/warehouse authorization is required for each
+claim, including a fresh session for the same actor. Five-minute database-clock
+leases and transactional intake guards fence old workers at staging/storage
+commits. Cancellation preserves the encrypted source and prevents late success.
+Expired leases allow replacement; five attempts require review. Processing or
+integrity errors fail into review rather than automatically resending untrusted
+media. No manual review reset/release is provided by this component.
+
+The staging boundary admits at most 20 preserved uploads per actor, 40 globally
+and 300 MiB total, with one unexpired processing lease globally. Completed and
+cancelled sources still count; there is no hidden pruning or deletion executor.
+This deliberately bounded component is not a production scheduler or scalable
+transport. Its encrypted staging key must remain available for recovery; rotation
+and retention execution need controlled engineering before runtime activation.
+
+Migration 20261128010000_private_video_upload_queue adds the queue and integrity
+constraints. Production upload/capture remains disabled. Remaining: protected
+public upload/admission/status/cancellation transport and operations UI, worker
+scheduling and deployed capacity/key management, approved publication/playback,
+linked cleanup/replacement/recovery and live security/load/device acceptance.
+Final local verification is recorded in verification/20261128-private-video-upload-queue.json.
+
+Upload-to-job association is recorded in the staging transaction before cloud
+writes. Cancelled/review uploads block direct job retries; any unfinished upload
+blocks evidence binding, preview and retention eligibility checks. These fences
+also apply when a caller bypasses the queue worker and uses an internal component.
+
+Final local checks pass: six targeted media/security suites, existing Admin
+desktop/mobile acceptance, schema validation, zero-drift migrations and a
+182-page production build. TypeScript, targeted ESLint, workflow YAML and the
+316-operation API contract pass. Owned test servers/schemas/container/volume
+were removed; generated tsconfig includes were cleaned. Restart was simulated
+by factory recreation and expired leases, not a deployed host crash. No live
+cloud/provider, full-launch/audit or remote-CI acceptance was performed.

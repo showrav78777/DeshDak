@@ -24,6 +24,7 @@ export async function videoRetentionReview(tx: Tx, job: Job, policy: Policy, now
   const valid = (date: Date | null | undefined) => Boolean(date && Number.isFinite(date.getTime()) && date <= now);
   const track = (date: Date | null | undefined) => { if (date) anchor = Math.max(anchor, date.getTime()); };
   if (job.quarantine) return result("QUARANTINED");
+  if (await tx.privateVideoUpload.findFirst({ where: { storedJobId: job.id, status: { not: "STORED" } }, select: { id: true } })) return result("CONTEXT_REVIEW_REQUIRED");
   const orderId = job.package.orderId, customerId = job.package.order.customerId;
   if (await tx.privateMediaHold.findFirst({ where: { release: null, OR: [{ accountId: { in: [job.actorId, customerId] } }, { orderId }, { packageId: job.packageId }] }, select: { id: true } })) return result("LEGAL_HOLD");
   if (!policy) return result("POLICY_REQUIRED");

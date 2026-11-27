@@ -1,6 +1,6 @@
 import "server-only";
 import { createHash } from "node:crypto";
-import type { PrismaClient } from "@prisma/client";
+import type { Prisma, PrismaClient } from "@prisma/client";
 import { z } from "zod";
 import { createPrivateVideoJobs } from "./video-jobs";
 import { authorizeVideoStaging } from "./video-authorization";
@@ -16,19 +16,20 @@ export class PrivateVideoIntakeError extends Error {
 
 /** Internal handoff; actor/session IDs must come from verified server authentication.
  * No HTTP route, scan certificate or evidence release is provided here. */
-export function createPrivateVideoIntake(db: PrismaClient, store: ReturnType<typeof createPrivateVideoArtifactStore>, processVideo: ReturnType<typeof createPrivateInspectionVideoProcessor>) {
+export function createPrivateVideoIntake(db: PrismaClient, store: ReturnType<typeof createPrivateVideoArtifactStore>, processVideo: ReturnType<typeof createPrivateInspectionVideoProcessor>, guard?: (tx: Prisma.TransactionClient) => Promise<boolean>) {
+  const authorize = async (tx: Prisma.TransactionClient, scope: z.infer<typeof schema>) => await authorizeVideoStaging(tx, scope) && (!guard || await guard(tx));
   return { async submit(input: { actorId: string; sessionId: string; packageId: string; requestKey: string; file: File }) {
     let auditScope: z.infer<typeof schema> | undefined;
     try {
       const scope = schema.parse({ actorId: input.actorId, sessionId: input.sessionId, packageId: input.packageId, requestKey: input.requestKey });
       auditScope = scope;
       if (!(input.file instanceof File) || input.file.type !== "video/mp4" || input.file.size < 16 || input.file.size > 30 * 1024 * 1024) throw new PrivateVideoIntakeError();
-      if (!await db.$transaction(tx => authorizeVideoStaging(tx, scope))) throw new PrivateVideoIntakeError("PRIVATE_VIDEO_INTAKE_ACCESS_CHANGED");
+      if (!await db.$transaction(tx => authorize(tx, scope))) throw new PrivateVideoIntakeError("PRIVATE_VIDEO_INTAKE_ACCESS_CHANGED");
       const original = Buffer.from(await input.file.arrayBuffer());
       if (original.length !== input.file.size || original.toString("ascii", 4, 8) !== "ftyp") throw new PrivateVideoIntakeError();
       const originalSha256 = hash(original);
       const idempotencyKey = hash(Buffer.from(JSON.stringify(["inspection-video-intake:v1", scope.requestKey])));
-      const jobs = createPrivateVideoJobs(db, store, (tx, actorId, packageId) => authorizeVideoStaging(tx, { actorId, packageId, sessionId: scope.sessionId }));
+      const jobs = createPrivateVideoJobs(db, store, (tx, actorId, packageId) => authorize(tx, { ...scope, actorId, packageId }));
       const existing = await db.privateVideoJob.findUnique({ where: { actorId_idempotencyKey: { actorId: scope.actorId, idempotencyKey } }, include: { processingProof: true, artifacts: { select: { role: true, preparedReference: true } } } });
       let jobId: string;
       if (existing) {
@@ -47,7 +48,7 @@ export function createPrivateVideoIntake(db: PrismaClient, store: ReturnType<typ
         ({ jobId } = await jobs.stage({ actorId: scope.actorId, packageId: scope.packageId, idempotencyKey, profile, original, video: video.bytes, poster: poster.bytes }, (tx, id) => recordVideoProcessingProof(tx, { jobId: id, actorId: scope.actorId, sessionId: scope.sessionId, manifest })));
       }
       const stored = await jobs.run(jobId);
-      if (!await db.$transaction(tx => authorizeVideoStaging(tx, scope))) throw new PrivateVideoIntakeError("PRIVATE_VIDEO_INTAKE_ACCESS_CHANGED");
+      if (!await db.$transaction(tx => authorize(tx, scope))) throw new PrivateVideoIntakeError("PRIVATE_VIDEO_INTAKE_ACCESS_CHANGED");
       // Only the opaque job state leaves this internal handoff. Storage completion
       // does not publish the original or approve an InspectionEvidence record.
       return stored;
