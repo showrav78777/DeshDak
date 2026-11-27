@@ -10,12 +10,18 @@ export async function verifyPrivateVideoUploadQueue(ctx) {
   const scope = (input, uploadId) => { const { file, ...rest } = input; void file; return { ...rest, uploadId }; };
   const firstInput = input("restart"), before = counters(), first = await queue.enqueue(firstInput);
   assert.deepEqual(Object.keys(first).sort(), ["state", "uploadId"]); assert.equal(first.state, "QUEUED"); assert.deepEqual(counters(), before);
+  const { file: originalFile, ...firstScope } = firstInput;
+  assert(originalFile instanceof File);
+  assert.deepEqual(await make().status(firstScope), first);
+  await assert.rejects(() => queue.status({ ...firstScope, requestKey: randomUUID() }), /PRIVATE_VIDEO_QUEUE_UNAVAILABLE/);
+  assert.deepEqual(counters(), before);
   const persisted = await db.privateVideoUpload.findUniqueOrThrow({ where: { id: first.uploadId } });
   assert(!Buffer.from(persisted.encryptedBody).equals(raw)); assert.equal(persisted.encryptedBody.length, raw.length + 16); assert(!JSON.stringify(persisted).includes("PRIVATE_QUEUE_FILENAME"));
   for (const replay of await Promise.all([queue.enqueue(firstInput), queue.enqueue(firstInput)])) assert.deepEqual(replay, first);
   const modified = Buffer.from(raw); modified[39] = 7;
   await assert.rejects(() => queue.enqueue({ ...firstInput, file: new File([modified], "changed.mp4", { type: "video/mp4" }) }), /PRIVATE_VIDEO_QUEUE_UNAVAILABLE/);
   const stored = await make().run(scope(firstInput, first.uploadId)); assert.equal(stored.state, "STORED");
+  assert.deepEqual(await queue.status(firstScope), stored);
   const processed = counters(); assert.deepEqual(await make().run(scope(firstInput, first.uploadId)), stored); assert.deepEqual(counters(), processed);
   assert.equal(await db.inspectionEvidence.count({ where: { packageId: parcelId } }), 0);
   await assert.rejects(() => db.privateVideoUpload.update({ where: { id: first.uploadId }, data: { originalSha256: "0".repeat(64) } }), /immutable/);

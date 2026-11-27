@@ -83,6 +83,27 @@ export function createPrivateVideoUploadQueue(db: PrismaClient, store: ReturnTyp
         });
       } catch { await failed(actorId); throw new PrivateVideoQueueError(); }
     },
+    // Recover an acknowledgement or poll progress without resending media.
+    async status(input: Scope) {
+      let actorId: string | undefined;
+      try {
+        const scope = scopeSchema.parse(input);
+        actorId = scope.actorId;
+        return await db.$transaction(async tx => {
+          await authorize(tx, scope);
+          const row = await tx.privateVideoUpload.findUnique({
+            where: { actorId_requestKey: { actorId: scope.actorId, requestKey: scope.requestKey } },
+            select: { id: true, status: true, packageId: true, keyScope: true },
+          });
+          if (!row || row.packageId !== scope.packageId || row.keyScope !== keyScope) throw new PrivateVideoQueueError();
+          await authorize(tx, scope);
+          return dto(row);
+        });
+      } catch {
+        await failed(actorId);
+        throw new PrivateVideoQueueError();
+      }
+    },
     async cancel(input: Scope & { uploadId: string }) {
       let actorId: string | undefined;
       try {

@@ -270,3 +270,8 @@ Upload-to-job association is recorded in the staging transaction before cloud
 writes. Cancelled/review uploads block direct job retries; any unfinished upload
 blocks evidence binding, preview and retention eligibility checks. These fences
 also apply when a caller bypasses the queue worker and uses an internal component.
+
+The internal queue's `status` operation recovers the opaque upload reference and
+current queue state using the original request key and package scope. An authorized
+employee can recover a lost acknowledgement from a fresh session without sending
+the video again. The lookup uses metadata only and never starts processing.
