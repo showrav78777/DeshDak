@@ -13817,7 +13817,7 @@
         "tags": [
           "operations"
         ],
-        "summary": "Stage a private MP4 for an assigned employee",
+        "summary": "Stage a private MP4 or start processing a staged upload",
         "security": [
           {
             "cookieSession": []
@@ -13843,10 +13843,21 @@
           },
           {
             "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "name": "X-Video-Action",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "process"
+              ]
+            },
+            "description": "Use process with no request body. Otherwise send an MP4."
           }
         ],
         "requestBody": {
-          "required": true,
+          "required": false,
           "content": {
             "video/mp4": {
               "schema": {

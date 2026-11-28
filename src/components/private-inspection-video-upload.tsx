@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 
 const states: Record<string, string> = {
+  BUSY: "The processor is busy. Check status before trying again.",
   QUEUED: "Video received and waiting for processing.",
   PROCESSING: "Video processing is underway.",
   STORED: "Video stored privately.",
@@ -18,19 +19,21 @@ export function PrivateInspectionVideoUpload({ packageId, disabled }: { packageI
   const [confirmed, setConfirmed] = useState(false);
   const pending = useRef(false);
 
-  async function request(upload: boolean) {
+  async function request(action: "upload" | "status" | "process") {
+    const upload = action === "upload";
+    const processUpload = action === "process";
     if (pending.current || !key || (upload && (!file || confirmed))) return;
     pending.current = true;
     setBusy(true);
     setMessage("");
     try {
       const response = await fetch(`/api/v1/operations/packages/${encodeURIComponent(packageId)}/inspection-video`, {
-        method: upload ? "POST" : "GET",
+        method: action !== "status" ? "POST" : "GET",
         credentials: "same-origin",
         cache: "no-store",
         redirect: "error",
-        signal: AbortSignal.timeout(upload ? 60_000 : 10_000),
-        headers: upload ? { "Content-Type": "video/mp4", "Idempotency-Key": key } : { "X-Upload-Request-Key": key },
+        signal: AbortSignal.timeout(processUpload ? 180_000 : upload ? 60_000 : 10_000),
+        headers: upload ? { "Content-Type": "video/mp4", "Idempotency-Key": key } : processUpload ? { "Idempotency-Key": key, "X-Video-Action": "process" } : { "X-Upload-Request-Key": key },
         body: upload ? file : undefined,
       });
       const result = await response.json();
@@ -71,8 +74,9 @@ export function PrivateInspectionVideoUpload({ packageId, disabled }: { packageI
       <input value={key} readOnly={Boolean(file)} onChange={event => { setKey(event.target.value.trim()); setConfirmed(false); setMessage(""); }} />
     </label>
     <p>Keep the request key to check this upload after reloading. Video is staged separately from the inspection decision.</p>
-    <button type="button" disabled={!file || confirmed} onClick={() => void request(true)}>Upload video</button>
-    <button type="button" disabled={!/^[A-Za-z0-9:_-]{16,128}$/.test(key)} onClick={() => void request(false)}>Check video status</button>
+    <button type="button" disabled={!file || confirmed} onClick={() => void request("upload")}>Upload video</button>
+    <button type="button" disabled={!/^[A-Za-z0-9:_-]{16,128}$/.test(key)} onClick={() => void request("status")}>Check video status</button>
+    <button type="button" disabled={!confirmed} onClick={() => void request("process")}>Process video</button>
     <p role="status">{busy ? "Contacting the video service…" : message}</p>
   </fieldset>;
 }

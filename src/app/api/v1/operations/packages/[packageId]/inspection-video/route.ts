@@ -25,7 +25,9 @@ async function handle(request: NextRequest, context: Context, upload: boolean) {
   const runtime = privateVideoRuntime();
   if (!runtime) return apiError("VIDEO_UPLOAD_UNAVAILABLE", "Private video upload is unavailable.", 503);
 
-  const action = upload ? "upload" : "status";
+  const processUpload = upload && request.headers.get("X-Video-Action") === "process";
+  if (processUpload && request.body) return apiError("VALIDATION_ERROR", "Start processing without sending a file.", 422);
+  const action = processUpload ? "process" : upload ? "upload" : "status";
   const limits = await Promise.all([
     consumeSecurityRateLimit(`inspection-video:${action}:staff`, session.userId, upload ? 20 : 120, 60 * 60_000),
     consumeSecurityRateLimit(`inspection-video:${action}:ip`, requestIp(request), upload ? 60 : 360, 60 * 60_000),
@@ -38,6 +40,11 @@ async function handle(request: NextRequest, context: Context, upload: boolean) {
 
   try {
     const scope = { packageId, requestKey, actorId: session.userId, sessionId: session.sessionId };
+    if (processUpload) {
+      const { uploadId } = await runtime.queue.status(scope);
+      const result = await runtime.queue.run({ ...scope, uploadId });
+      return apiSuccess(result, { status: 200, headers: noStore });
+    }
     const result = upload ? await runtime.queue.enqueueRequest(scope, request) : await runtime.queue.status(scope);
     return apiSuccess(result, { status: upload ? 202 : 200, headers: noStore });
   } catch {
